@@ -39,7 +39,7 @@ var handleCommand = message => {
 
 var cmdPing = (message, args) => {
 	var embed = new Discord.RichEmbed()
-			.setColor(Math.floor(Math.random() * 16777216))
+			.setColor('RANDOM')
 			.setDescription('🏓 Pong!');
 
 	message.channel.send({embed})
@@ -76,7 +76,7 @@ var cmdUptime = (message, args) => {
 		uptime.push(formatTime(seconds, 'second'));
 	}
 	var embed = new Discord.RichEmbed()
-			.setColor(Math.floor(Math.random() * 16777216))
+			.setColor('RANDOM')
 			.setDescription(uptime.join(', '));
 
 	message.channel.send({embed});
@@ -95,20 +95,35 @@ var cmdTeam = (message, args) => {
 
 		http.request({
 			host: 'api.vexdb.io',
-			path: '/v1/get_teams?team=' + teamId
+			path: '/v1/get_teams?apikey=shNhxcphXlIXQVE2Npeu&team=' + teamId
 		}, response => {
 			response.on('data', chunk => {
 				body += chunk;
 			});
 			response.on('end', () => {
 				body = JSON.parse(body);
-				console.log('body: ' + body);
+
 				if (body.status == 1) {
 					if (body.size > 0) {
 						var team = body.result[0];
-						var embed;
+						var number = team.number;
+						var teamName = team.team_name;
+						var robotName = team.robot_name;
+						var organization = team.organisation;
+						var location = [team.city, team.region, team.country].join(', ');
+
+						var embed = new Discord.RichEmbed()
+								.setColor('BLUE')
+								.setTitle(number)
+								.setURL('https://vexdb.io/teams/view/' + number)
+								.addField('Team Name', teamName)
+								.addField('Robot Name', robotName)
+								.addField('Organization', organization)
+								.addField('Location', location);
+
+						message.channel.send({embed});
 					} else {
-						message.reply('That team is not registered.');
+						message.reply('That team ID has never been registered.');
 					}
 				} else {
 					message.reply('Sorry, VexDB messed up.');
