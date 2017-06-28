@@ -16,6 +16,7 @@ client.on('message', message => {
 
 var handleCommand = message => {
 	const [cmd, args] = message.content.substring(prefix.length).split(' ', 2);
+
 	switch (cmd) {
 		case 'ping':
 			cmdPing(message, args);
@@ -39,6 +40,7 @@ var cmdPing = (message, args) => {
 	const embed = new Discord.RichEmbed()
 			.setColor(Math.floor(Math.random() * 16777216))
 			.setDescription('🏓 Pong!');
+
 	message.channel.send({embed})
 			.then(reply => {
 				embed.setDescription(embed.description + ' `' + client.ping + 'ms`');
@@ -59,6 +61,7 @@ var cmdUptime = (message, args) => {
 	hours %= 24;
 
 	var uptime = [];
+
 	if (days > 0) {
 		uptime.push(formatTime(days, 'day'));
 	}
@@ -79,13 +82,39 @@ var cmdUptime = (message, args) => {
 }
 
 var cmdTeam = (message, args) => {
-	var team;
+	var teamId;
+
 	if (args) {
-		team = args.trim().toUpperCase();
+		teamId = args.trim().toUpperCase();
 	} else {
-		team = message.member.nickname.split(' | ', 2)[1];
+		teamId = message.member.nickname.split(' | ', 2)[1];
 	}
-	console.log(team);
+	if (/^([0-9]{1,5}[A-Z]?|[A-Z]{2,6}[0-9]{0,2})$/.test(teamId)) {
+		var request = new XMLHttpRequest();
+
+		request.open('GET', '', true);
+
+		request.onreadystatechange = () => {
+			if (request.readystate == XMLHttpRequest.DONE && request.status == 200) {
+				console.log('responseText: ' + request.responseText);
+				var body = JSON.parse(request.responseText);
+				console.log('body: ' + body);
+				if (body.status == 1) {
+					if (body.size > 0) {
+						var team = body.result[0];
+						var embed;
+					} else {
+						message.reply('That team is not registered.');
+					}
+				} else {
+					message.reply('Sorry, VexDB messed up.');
+				}
+			}
+		}
+		request.send();
+	} else {
+		message.reply('Invalid team ID.')
+	}
 }
 
 var formatTime = (time, unit) => time + ' ' + unit + ((time == 1) ? '' : 's');
