@@ -94,7 +94,7 @@ var cmdTeam = (message, args) => {
 		var body;
 
 		http.request({
-			host: 'http://api.vexdb.io',
+			host: 'api.vexdb.io',
 			path: '/v1/get_teams?team=' + teamId
 		}, response => {
 			response.on('data', chunk => {
