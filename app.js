@@ -82,7 +82,7 @@ var cmdTeam = (message, args) => {
 	var team;
 	console.log(args);
 	if (args) {
-		team = args.trim().toUpper();
+		team = args.trim().toUpperCase();
 	} else {
 		team = message.member.nickname;
 	}
