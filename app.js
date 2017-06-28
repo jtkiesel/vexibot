@@ -9,16 +9,20 @@ client.on('ready', () => {
 });
 
 client.on('message', message => {
-	if (message.content.substring(0, prefix.length) == prefix) {
+	if (message.content.startsWith(prefix)) {
 		handleCommand(message);
 	}
 });
 
 var handleCommand = message => {
-	var cmd = message.content.substring(prefix.length).split(' ', 1);
-	switch (cmd[0]) {
+	const [cmd, args] = message.content.substring(prefix.length).split(' ', 1);
+	switch (cmd) {
 		case 'ping':
-			cmdPing(message, cmd[1]);
+			cmdPing(message, args);
+			break;
+
+		case 'uptime':
+			cmdUptime(message, args);
 			break;
 
 		default:
@@ -27,15 +31,47 @@ var handleCommand = message => {
 	}
 }
 
-var cmdPing = (message, arguments) => {
+var cmdPing = (message, args) => {
 	const embed = new Discord.RichEmbed()
 			.setColor(Math.floor(Math.random() * 16777216))
 			.setDescription('🏓 Pong!');
 	message.channel.send({embed})
 			.then(reply => {
-				embed.setDescription(embed.description + ' ' + (reply.createdTimestamp - message.createdTimestamp) + 'ms');
+				embed.setDescription(embed.description + ' `' + client.ping + 'ms`');
 				reply.edit({embed});
 			}).catch(console.error);
 }
+
+var cmdUptime = (message, args) => {
+	const milliseconds = new Date(client.uptime);
+
+	var seconds = Math.floor(milliseconds / 1000);
+	var minutes = Math.floor(seconds / 60);
+	var hours = Math.floor(minutes / 60);
+	var days = Math.floor(hours / 24);
+
+	seconds %= 60;
+	minutes %= 60;
+	hours %= 24;
+
+	var uptime = [];
+	if (days > 0) {
+		uptime.push(formatTime(days, 'day'));
+	}
+	if (hours > 0) {
+		uptime.push(formatTime(hours, 'hour'));
+	}
+	if (minutes > 0) {
+		uptime.push(formatTime(minutes, 'minute'));
+	}
+	if (seconds > 0) {
+		uptime.push(formatTime(seconds, 'second'));
+	}
+	const embed = new Discord.RichEmbed()
+			.setColor(Math.floor(Math.random() * 16777216))
+			.setDescription(uptime.join(', '));
+}
+
+var formatTime = (time, unit) => time + ' ' + unit + ((time == 1) ? '' : 's');
 
 client.login(token);
