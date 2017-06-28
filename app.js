@@ -15,7 +15,7 @@ client.on('message', message => {
 });
 
 var handleCommand = message => {
-	const [cmd, args] = message.content.substring(prefix.length).split(' ', 1);
+	const [cmd, args] = message.content.substring(prefix.length).split(' ', 2);
 	switch (cmd) {
 		case 'ping':
 			cmdPing(message, args);
