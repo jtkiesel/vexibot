@@ -91,7 +91,7 @@ var cmdTeam = (message, args) => {
 		teamId = message.member.nickname.split(' | ', 2)[1];
 	}
 	if (/^([0-9]{1,5}[A-Z]?|[A-Z]{2,6}[0-9]{0,2})$/.test(teamId)) {
-		var body;
+		var body = '';
 
 		http.request({
 			host: 'api.vexdb.io',
