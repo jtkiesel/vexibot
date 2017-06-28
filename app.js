@@ -25,6 +25,10 @@ var handleCommand = message => {
 			cmdUptime(message, args);
 			break;
 
+		case 'team':
+			cmdTeam(message, args);
+			break;
+
 		default:
 			message.reply('Unrecognized command.');
 			break;
@@ -72,6 +76,13 @@ var cmdUptime = (message, args) => {
 			.setDescription(uptime.join(', '));
 
 	message.channel.send({embed});
+}
+
+var cmdTeam = (message, args) => {
+	console.log(args);
+	if (args.length > 0) {
+
+	}
 }
 
 var formatTime = (time, unit) => time + ' ' + unit + ((time == 1) ? '' : 's');
