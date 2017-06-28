@@ -9,15 +9,13 @@ client.on('ready', () => {
 });
 
 client.on('message', message => {
-	var content = message.content.split('', 1);
-	console.log('content: ' + content);
-	if (content[0] == prefix) {
-		handleCommand(message, content[1]);
+	if (message.content.substring(0, prefix.length) == prefix) {
+		handleCommand(message);
 	}
 });
 
-function handleCommand(message, command) {
-	var cmd = command.split(' ', 1);
+function handleCommand(message) {
+	var cmd = message.content.substring(prefix.length).split(' ', 1);
 	console.log('cmd: ' + cmd);
 	switch (cmd[0]) {
 		case 'ping':
