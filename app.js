@@ -81,6 +81,7 @@ var cmdUptime = (message, args) => {
 var cmdTeam = (message, args) => {
 	var team;
 	if (args) {
+		console.log(args);
 		team = args.trim().toUpper();
 	} else {
 		team = message.member.nickname;
