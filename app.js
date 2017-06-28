@@ -17,6 +17,7 @@ client.on('message', message => {
 
 function handleCommand(message, command) {
 	var cmd = command.split(' ', 1);
+	console.log('cmd: ' + cmd);
 	switch (cmd[0]) {
 		case 'ping':
 			cmdPing(message, cmd[1]);
