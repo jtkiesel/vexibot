@@ -14,9 +14,8 @@ client.on('message', message => {
 	}
 });
 
-function handleCommand(message) {
+var handleCommand = message => {
 	var cmd = message.content.substring(prefix.length).split(' ', 1);
-	console.log('cmd: ' + cmd);
 	switch (cmd[0]) {
 		case 'ping':
 			cmdPing(message, cmd[1]);
@@ -28,13 +27,15 @@ function handleCommand(message) {
 	}
 }
 
-function cmdPing(message, arguments) {
+var cmdPing = (message, arguments) => {
 	const embed = new Discord.RichEmbed()
 			.setColor(Math.floor(Math.random() * 16777216))
 			.setDescription('🏓 Pong!');
 	message.channel.send({embed})
-			.then(msg => msg.edit(embed.setDescription(embed.description + ' ' + (message.createdTimestamp - msg.createdTimestamp) + 'ms')))
-			.catch(console.error);
+			.then(msg => {
+				embed.setDescription(embed.description + ' ' + (message.createdTimestamp - msg.createdTimestamp) + 'ms');
+				msg.edit({embed});
+			}).catch(console.error);
 }
 
 client.login(token);
