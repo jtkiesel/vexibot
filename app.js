@@ -79,10 +79,13 @@ var cmdUptime = (message, args) => {
 }
 
 var cmdTeam = (message, args) => {
-	console.log(args);
-	if (args.length > 0) {
-
+	var team;
+	if (args) {
+		team = args.trim().toUpper();
+	} else {
+		team = message.member.nickname;
 	}
+	console.log(team);
 }
 
 var formatTime = (time, unit) => time + ' ' + unit + ((time == 1) ? '' : 's');
