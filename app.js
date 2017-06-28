@@ -80,11 +80,10 @@ var cmdUptime = (message, args) => {
 
 var cmdTeam = (message, args) => {
 	var team;
-	console.log(args);
 	if (args) {
 		team = args.trim().toUpperCase();
 	} else {
-		team = message.member.nickname;
+		team = message.member.nickname.split(' | ', 2)[1];
 	}
 	console.log(team);
 }
