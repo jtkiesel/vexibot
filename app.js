@@ -70,6 +70,8 @@ var cmdUptime = (message, args) => {
 	const embed = new Discord.RichEmbed()
 			.setColor(Math.floor(Math.random() * 16777216))
 			.setDescription(uptime.join(', '));
+
+	message.channel.send({embed});
 }
 
 var formatTime = (time, unit) => time + ' ' + unit + ((time == 1) ? '' : 's');
