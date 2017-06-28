@@ -9,7 +9,7 @@ client.on('ready', () => {
 });
 
 client.on('message', message => {
-	var content = message.content.split(prefix, 1);
+	var content = message.content.split('', 1);
 	console.log('content: ' + content);
 	if (content[0] == prefix) {
 		handleCommand(message, content[1]);
