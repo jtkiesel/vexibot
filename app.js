@@ -108,8 +108,8 @@ var cmdTeam = (message, args) => {
 						var team = body.result[0];
 						var number = team.number;
 						var teamName = team.team_name;
-						var robotName = team.robot_name || ' ';
-						var organization = team.organisation || ' ';
+						var robotName = team.robot_name || '``';
+						var organization = team.organisation || '``';
 						var location = [team.city, team.region, team.country].join(', ');
 
 						var embed = new Discord.RichEmbed()
