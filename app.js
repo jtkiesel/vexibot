@@ -32,9 +32,9 @@ var cmdPing = (message, arguments) => {
 			.setColor(Math.floor(Math.random() * 16777216))
 			.setDescription('🏓 Pong!');
 	message.channel.send({embed})
-			.then(msg => {
-				embed.setDescription(embed.description + ' ' + (message.createdTimestamp - msg.createdTimestamp) + 'ms');
-				msg.edit({embed});
+			.then(reply => {
+				embed.setDescription(embed.description + ' ' + (reply.createdTimestamp - message.createdTimestamp) + 'ms');
+				reply.edit({embed});
 			}).catch(console.error);
 }
 
