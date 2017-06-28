@@ -116,10 +116,11 @@ var cmdTeam = (message, args) => {
 								.setColor('BLUE')
 								.setTitle(number)
 								.setURL('https://vexdb.io/teams/view/' + number)
-								.addField('Team Name', teamName)
-								.addField('Robot Name', robotName)
-								.addField('Organization', organization)
-								.addField('Location', location);
+								.addField('Team Name', teamName, true)
+								.addField('Robot Name', robotName, true)
+								.addBlankField()
+								.addField('Organization', organization, true)
+								.addField('Location', location, true);
 
 						message.channel.send({embed});
 					} else {
