@@ -1,8 +1,9 @@
-const Discord = require('discord.js');
-const client = new Discord.Client();
-const token = process.env.DISCORD_TOKEN;
+var Discord = require('discord.js');
+var http = require('http');
 
-const prefix = '^';
+var client = new Discord.Client();
+var token = process.env.DISCORD_TOKEN;
+var prefix = '^';
 
 client.on('ready', () => {
 	console.log('I am ready!');
@@ -15,7 +16,7 @@ client.on('message', message => {
 });
 
 var handleCommand = message => {
-	const [cmd, args] = message.content.substring(prefix.length).split(' ', 2);
+	var [cmd, args] = message.content.substring(prefix.length).split(' ', 2);
 
 	switch (cmd) {
 		case 'ping':
@@ -37,7 +38,7 @@ var handleCommand = message => {
 }
 
 var cmdPing = (message, args) => {
-	const embed = new Discord.RichEmbed()
+	var embed = new Discord.RichEmbed()
 			.setColor(Math.floor(Math.random() * 16777216))
 			.setDescription('🏓 Pong!');
 
@@ -49,7 +50,7 @@ var cmdPing = (message, args) => {
 }
 
 var cmdUptime = (message, args) => {
-	const milliseconds = new Date(client.uptime);
+	var milliseconds = new Date(client.uptime);
 
 	var seconds = Math.floor(milliseconds / 1000);
 	var minutes = Math.floor(seconds / 60);
@@ -74,7 +75,7 @@ var cmdUptime = (message, args) => {
 	if (seconds > 0) {
 		uptime.push(formatTime(seconds, 'second'));
 	}
-	const embed = new Discord.RichEmbed()
+	var embed = new Discord.RichEmbed()
 			.setColor(Math.floor(Math.random() * 16777216))
 			.setDescription(uptime.join(', '));
 
@@ -90,14 +91,17 @@ var cmdTeam = (message, args) => {
 		teamId = message.member.nickname.split(' | ', 2)[1];
 	}
 	if (/^([0-9]{1,5}[A-Z]?|[A-Z]{2,6}[0-9]{0,2})$/.test(teamId)) {
-		var request = new XMLHttpRequest();
+		var body;
 
-		request.open('GET', '', true);
-
-		request.onreadystatechange = () => {
-			if (request.readystate == XMLHttpRequest.DONE && request.status == 200) {
-				console.log('responseText: ' + request.responseText);
-				var body = JSON.parse(request.responseText);
+		http.request({
+			host: 'http://api.vexdb.io',
+			path: '/v1/get_teams?team=' + teamId
+		}, response => {
+			response.on('data', chunk => {
+				body += chunk;
+			});
+			response.on('end', () => {
+				body = JSON.parse(body);
 				console.log('body: ' + body);
 				if (body.status == 1) {
 					if (body.size > 0) {
@@ -109,9 +113,8 @@ var cmdTeam = (message, args) => {
 				} else {
 					message.reply('Sorry, VexDB messed up.');
 				}
-			}
-		}
-		request.send();
+			});
+		}).end();
 	} else {
 		message.reply('Invalid team ID.')
 	}
