@@ -4,6 +4,7 @@ var http = require('http');
 var cmdPing = require('./commands/ping');
 var cmdUptime = require('./commands/uptime');
 var cmdTeam = require('./commands/team');
+var cmdAwards = require('./commands/awards');
 
 var client = new Discord.Client();
 var token = process.env.DISCORD_TOKEN;
@@ -34,6 +35,9 @@ var handleCommand = message => {
 		case 'team':
 			cmdTeam(message, args);
 			break;
+
+		case 'awards':
+			cmdAwards(message, args);
 
 		default:
 			message.reply('Unrecognized command.');
