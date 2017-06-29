@@ -120,13 +120,9 @@ var cmdTeam = (message, args) => {
 
 						if (robotName) {
 							embed.addField('Robot Name', robotName, true);
-						} else {
-							embed.addBlankField(true);
 						}
 						if (organization) {
 							embed.addField('Organization', organization, true);
-						} else {
-							embed.addBlankField(true);
 						}
 						embed.addField('Location', location, true);
 
