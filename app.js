@@ -1,4 +1,4 @@
-var Discord = require('discord');
+var Discord = require('discord.js');
 var http = require('http');
 
 var cmdPing = require('./commands/ping');
