@@ -1,10 +1,10 @@
-var Discord = require('discord.js');
+var Discord = require('discord');
 var http = require('http');
 
-var cmdPing = require('./commands/ping.js');
-var cmdUptime = require('./commands/uptime.js');
-var cmdTeam = require('./commands/team.js');
-var cmdAwards = require('./commands/awards.js');
+var cmdPing = require('./commands/ping');
+var cmdUptime = require('./commands/uptime');
+var cmdTeam = require('./commands/team');
+var cmdAwards = require('./commands/awards');
 
 var client = new Discord.Client();
 var token = process.env.DISCORD_TOKEN;
