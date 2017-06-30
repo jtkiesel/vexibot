@@ -1,3 +1,4 @@
+const Discord = require('discord.js');
 const http = require('http');
 
 module.exports = (message, args) => {
