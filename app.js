@@ -4,7 +4,7 @@ const sql = require('sqlite');
 
 var commandNames = ['ping', 'uptime', 'update', 'team', 'awards'];
 var commands = {};
-for (var name in commandNames) {
+for (var name of commandNames) {
 	commands[name] = require('./commands/' + name);
 }
 /*
