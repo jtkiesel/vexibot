@@ -1,3 +1,5 @@
+const http = require('http');
+
 module.exports = (message, args) => {
 	var teamId;
 

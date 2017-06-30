@@ -1,5 +1,4 @@
 const Discord = require('discord.js');
-const http = require('http');
 const sql = require('sqlite');
 
 var commandNames = ['ping', 'uptime', 'update', 'team', 'awards'];
