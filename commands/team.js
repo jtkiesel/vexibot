@@ -1,5 +1,6 @@
 const Discord = require('discord.js');
 const http = require('http');
+const he = require('he');
 
 module.exports = (message, args) => {
 	var teamId;
@@ -20,7 +21,7 @@ module.exports = (message, args) => {
 				body += chunk;
 			});
 			response.on('end', () => {
-				body = JSON.parse(body);
+				body = JSON.parse(he.decode(body));
 
 				if (body.status == 1) {
 					if (body.size > 0) {
