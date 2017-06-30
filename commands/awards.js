@@ -24,7 +24,7 @@ module.exports = (message, args) => {
 						var team = body.result[0];
 
 						var embed = new Discord.RichEmbed()
-								.setColor('BLUE');
+								.setColor('BLUE')
 								.setTitle(teamId)
 								.setURL('https://vexdb.io/teams/view/' + teamId + '?t=awards');
 
