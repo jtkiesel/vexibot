@@ -31,8 +31,8 @@ var addResourceBatchToTable = (resourceIndex, startIndex, embed, reply, startTim
 			if (body.status == 1) {
 				if (body.size > 0) {
 					for (var element of body.result) {
-						console.log(element);
-						//sql.run('INSERT INTO ' + resource + ' VALUES ', element);
+						//console.log(Object.values(element));
+						//sql.run('INSERT INTO ' + resource + ' VALUES ', Object.values(element);
 					}
 					addResourceBatchToTable(resourceIndex, startIndex + body.size, embed, reply, startTime);
 				} else {
