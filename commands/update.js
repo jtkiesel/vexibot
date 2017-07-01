@@ -29,13 +29,12 @@ var addResourceBatchToTable = (resourceIndex, startIndex, startTime) => {
 			if (body.status == 1) {
 				if (body.size > 0) {
 					for (var element of body.result) {
-console.log(element);
 						var row = '';
 						for (var attribute in element) {
 							if (row != '') {
-								row += ','
+								row += ',';
 							}
-							row += attribute;
+							row += element[attribute];
 						}
 console.log(row);
 					}
