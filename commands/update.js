@@ -23,13 +23,14 @@ var addResourceBatchToTable = (resourceIndex, startIndex, startTime) => {
 			body += chunk;
 		});
 		response.on('end', () => {
+console.log('end');
 			body = JSON.parse(he.decode(body));
-
+console.log(body);
 			if (body.status == 1) {
 				if (body.size > 0) {
-					console.log(body);
+console.log(body);
 					for (var element of body.result) {
-						console.log(element);
+console.log(element);
 						var row = '';
 						for (var attribute in element) {
 							if (row != '') {
@@ -37,10 +38,10 @@ var addResourceBatchToTable = (resourceIndex, startIndex, startTime) => {
 							}
 							row += attribute;
 						}
-						console.log(row);
+console.log(row);
 					}
 				} else {
-					console.log('done');
+console.log('done');
 				}
 			} else {
 				message.reply('Sorry, VexDB messed up.');
