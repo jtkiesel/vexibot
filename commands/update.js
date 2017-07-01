@@ -34,7 +34,7 @@ var addResourceBatchToTable = (resourceIndex, startIndex, startTime) => {
 							if (row != '') {
 								row += ',';
 							}
-							row += JSON.stringify(element[attribute]);
+							row += Object.toString(element[attribute]);
 						}
 console.log(row);
 					}
