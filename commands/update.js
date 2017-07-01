@@ -1,5 +1,6 @@
 const Discord = require('discord.js');
 const http = require('http');
+const he = require('he');
 const sql = require('sqlite');
 
 const resources = ['events', 'teams', 'matches', 'rankings', 'season_rankings', 'awards', 'skills'];
