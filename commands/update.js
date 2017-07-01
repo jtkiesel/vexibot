@@ -24,12 +24,10 @@ var addResourceBatchToTable = (resourceIndex, startIndex, startTime) => {
 			body += chunk;
 		});
 		response.on('end', () => {
-console.log('end');
-			body = JSON.parse(he.decode(body));
-console.log(body);
+			body = JSON.parse(body);
+
 			if (body.status == 1) {
 				if (body.size > 0) {
-console.log(body);
 					for (var element of body.result) {
 console.log(element);
 						var row = '';
