@@ -1,10 +1,10 @@
-var Discord = require('discord.js');
+const Discord = require('discord.js');
 
-var client = require('../app');
+const app = require('../app');
 
 module.exports = (message, args) => {
-	var milliseconds = new Date(client.uptime);
-console.log(client);
+	var milliseconds = new Date(app.client.uptime);
+console.log(app.client);
 	var seconds = Math.floor(milliseconds / 1000);
 	var minutes = Math.floor(seconds / 60);
 	var hours = Math.floor(minutes / 60);

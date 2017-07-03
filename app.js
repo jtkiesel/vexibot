@@ -1,11 +1,11 @@
-var Discord = require('discord.js');
+const Discord = require('discord.js');
 
-var update = require('./update');
+const update = require('./update');
 
-var client = new Discord.Client();
-var token = process.env.DISCORD_TOKEN;
-var prefix = '^';
-var commandNames = ['ping', 'uptime', 'reset', 'team', 'awards'];
+const client = new Discord.Client();
+const token = process.env.DISCORD_TOKEN;
+const prefix = '^';
+const commandNames = ['ping', 'uptime', 'reset', 'team', 'awards'];
 
 var commands = {};
 for (var name of commandNames) {
@@ -34,4 +34,4 @@ var handleCommand = message => {
 	}
 }
 
-module.exports = client;
+module.exports.client = client;
