@@ -9,7 +9,7 @@ db.open('./vexdb.sqlite')
 	.then(() => Object.entries(dbinfo.tablesToColumns).forEach(([table, columns]) => {
 		var columnDefinitions = [];
 		Object.entries(columns).forEach(([column, type]) => {
-			columnDefinitions.push(`"${column}" ${type}`);
+			columnDefinitions.push(`\`${column}\` ${type}`);
 		});
 		//db.run(`DROP TABLE ${table}`);
 		db.run(`CREATE TABLE IF NOT EXISTS ${table} (${columnDefinitions.join(', ')})`)

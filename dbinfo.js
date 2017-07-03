@@ -214,7 +214,7 @@ const formatValues = {
 	}
 };
 
-var formatText = value => `'${value}'`;
+var formatText = value => `\`${value}\``;
 
 var formatDateTime = value => Date.parse(value);
 
