@@ -70,7 +70,7 @@ module.exports = {
 		'name': 'TEXT',
 		'team': 'TEXT',
 		'qualifies': 'TEXT',
-		'order': 'TEXT'
+		'order': 'INTEGER'
 	},
 	'skills': {
 		'sku': 'TEXT',
