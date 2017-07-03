@@ -19,9 +19,8 @@ var addResourceToTable = (tableIndex, embed, reply) => {
 	const table = Object.keys(dbinfo.tablesToColumns)[tableIndex];
 
 	db.run(`DELETE FROM ${table}`)
-		.then(() => {
-			addResourceBatchToTable(tableIndex, 0, embed, reply, Date.now());
-		}).catch(error => {
+		.then(addResourceBatchToTable(tableIndex, 0, embed, reply, Date.now()))
+		.catch(error => {
 			console.log(`DELETE FROM ${table}`);
 			console.error(error);
 		});

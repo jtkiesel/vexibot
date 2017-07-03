@@ -6,7 +6,7 @@ const db = require('sqlite');
 const dbinfo = require('./dbinfo');
 
 db.open('./vexdb.sqlite')
-	.then(() => Object.entries(dbinfo.tablesToColumns).forEach(([table, columns]) => {
+	.then(Object.entries(dbinfo.tablesToColumns).forEach(([table, columns]) => {
 		var columnDefinitions = [];
 		Object.entries(columns).forEach(([column, type]) => {
 			columnDefinitions.push(`'${column}' ${type}`);

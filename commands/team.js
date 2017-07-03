@@ -1,5 +1,6 @@
 const Discord = require('discord.js');
-const http = require('http');
+const db = require('sqlite');
+//const http = require('http');
 const he = require('he');
 
 module.exports = (message, args) => {
@@ -11,7 +12,41 @@ module.exports = (message, args) => {
 		teamId = message.member.nickname.split(' | ', 2)[1];
 	}
 	if (/^([0-9]{1,5}[A-Z]?|[A-Z]{2,6}[0-9]{0,2})$/.test(teamId)) {
-		var body = '';
+		db.get(`SELECT * FROM teams WHERE number = '${teamId}'`)
+			.then(team => {
+				if (team) {
+					var location = [team.city];
+					if (team.region !== 'N/A' && team.region !== 'Not Applicable or Not Listed') {
+						location.push(team.region);
+					}
+					if (team.country) {
+						location.push(team.country);
+					}
+					location = location.join(', ');
+
+					var embed = new Discord.RichEmbed()
+						.setColor('AQUA')
+						.setTitle(team.number);
+						.setURL(`https://vexdb.io/teams/view/${team.number}`)
+						.addField('Team Name', team.team_name, true);
+
+					if (team.robot_name) {
+						embed.addField('Robot Name', team.robot_name, true);
+					}
+					if (team.organisation) {
+						embed.addField('Organization' team.organisation, true);
+					}
+					embed.addField('Location', location, true);
+
+					message.channel.send({embed});
+				} else {
+					message.reply('That team ID has never been registered.');
+				}
+			}).catch(error => {
+				console.log(`SELECT * FROM teams WHERE number = '${teamId}'`);
+				console.error(error);
+			});
+		/*var body = '';
 
 		http.request({
 			host: 'api.vexdb.io',
@@ -54,7 +89,7 @@ module.exports = (message, args) => {
 					message.reply('Sorry, VexDB messed up.');
 				}
 			});
-		}).end();
+		}).end();*/
 	} else {
 		message.reply('Invalid team ID.');
 	}

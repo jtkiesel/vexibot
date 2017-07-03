@@ -1,7 +1,7 @@
 {
   "name": "vexibot",
   "version": "1.0.0",
-  "description": "Provides services related to the VEX Robotics Competition, primarily spitting out statistics related to the competition.",
+  "description": "Provides services related to the VEX Robotics Competition, primarily providing statistics related to the competition.",
   "main": "app.js",
   "author": "Jordan Kiesel",
   "license": "MIT",
