@@ -149,9 +149,11 @@ const formatValues = {
 		values.push(
 			match.redscore,
 			match.bluescore,
-			match.scored,
-			match.scheduled
+			match.scored
 		);
+		values.push(formatDateTime(
+			match.scheduled
+		));
 		return values.join(', ');
 	},
 	'rankings': ranking => {
