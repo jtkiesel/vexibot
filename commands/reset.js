@@ -6,7 +6,7 @@ const db = require('sqlite');
 const dbinfo = require('../dbinfo');
 
 module.exports = (message, args) => {
-	if (message.member.roles.has(message.guild.roles.find('name', 'Admins').id)) {
+	if (message.member.id === '197781934116569088') {
 		var embed = new Discord.RichEmbed()
 			.setColor('RANDOM')
 			.setDescription('Resetting...');
