@@ -26,7 +26,7 @@ module.exports = (message, args) => {
 
 					var embed = new Discord.RichEmbed()
 						.setColor('AQUA')
-						.setTitle(team.number);
+						.setTitle(team.number)
 						.setURL(`https://vexdb.io/teams/view/${team.number}`)
 						.addField('Team Name', team.team_name, true);
 
