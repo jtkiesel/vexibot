@@ -16,7 +16,7 @@ module.exports = (message, args) => {
 };
 
 var addResourceToTable = (tableIndex, embed, reply) => {
-	db.run(`DELETE FROM ${Object.keys(dbinfo.tablesToColumns)[0]}`)
+	db.run(`DELETE FROM ${Object.keys(dbinfo.tablesToColumns)[tableIndex]}`)
 		.then(() => {
 			addResourceBatchToTable(tableIndex, 0, embed, reply, Date.now());
 		}).catch(console.error);
@@ -38,9 +38,12 @@ var addResourceBatchToTable = (tableIndex, startIndex, embed, reply, startTime) 
 			if (body.status == 1) {
 				if (body.size > 0) {
 					for (var row of body.result) {
-						//console.log(`INSERT INTO ${table} VALUES (${dbinfo.formatValues[table](row)})`);
-						db.run(`INSERT INTO ${table} VALUES (${dbinfo.formatValues[table](row)})`)
-							.catch(console.error);
+						var temp = dbinfo.formatValues[table](row);
+						db.run(`INSERT INTO ${table} VALUES (${temp})`)
+							.catch(error => {
+								console.log(`INSERT INTO ${table} VALUES (${temp})`);
+								console.error(error);
+							});
 					}
 					addResourceBatchToTable(tableIndex, startIndex + body.size, embed, reply, startTime);
 				} else {
