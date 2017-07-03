@@ -18,7 +18,7 @@ module.exports = (message, args) => {
 					var robot_name = he.decode(team.robot_name);
 					var organisation = he.decode(team.organisation);
 					var location = [team.city];
-					if (team.region !== 'N/A' && team.region !== 'Not Applicable or Not Listed') {
+					if (team.region && team.region !== 'N/A' && team.region !== 'Not Applicable or Not Listed') {
 						location.push(team.region);
 					}
 					if (team.country) {
