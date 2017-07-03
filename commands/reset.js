@@ -53,13 +53,16 @@ var addResourceBatchToTable = (tableIndex, startIndex, embed, reply, startTime) 
 					addResourceBatchToTable(tableIndex, startIndex + body.size, embed, reply, startTime);
 				} else {
 					var duration = (Date.now() - startTime) / 1000;
-					embed.setDescription(`${embed.description}\n${table} \`${duration}s\``);
+					embed.setColor('RANDOM')
+						.setDescription(`${embed.description}\n${table} \`${duration}s\``);
 					reply.edit({embed})
-						.then(msg => addResourceToTable(tableIndex + 1, embed, msg))
-						.catch(console.error);
+						.then(msg => {
+							if (++tableIndex < Object.keys(dbinfo.tablesToColumns).length) {
+								addResourceToTable(tableIndex, embed, msg);
+							}
+						}).catch(console.error);
 				}
 			} else {
-				message.reply('Sorry, VexDB messed up.');
 				console.error(`Error: VEXDB_ERROR: ${body.error_text} errno: ${body.error_code}`);
 			}
 		});
