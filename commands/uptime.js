@@ -4,7 +4,7 @@ const client = require('../app');
 
 module.exports = (message, args) => {
 	var milliseconds = new Date(client.uptime);
-console.log(client.uptime);
+console.log(client);
 	var seconds = Math.floor(milliseconds / 1000);
 	var minutes = Math.floor(seconds / 60);
 	var hours = Math.floor(minutes / 60);
