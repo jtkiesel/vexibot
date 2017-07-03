@@ -34,7 +34,7 @@ module.exports = (message, args) => {
 						embed.addField('Robot Name', team.robot_name, true);
 					}
 					if (team.organisation) {
-						embed.addField('Organization' team.organisation, true);
+						embed.addField('Organization', team.organisation, true);
 					}
 					embed.addField('Location', location, true);
 
