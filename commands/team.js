@@ -12,7 +12,7 @@ module.exports = (message, args) => {
 		teamId = message.member.nickname.split(' | ', 2)[1];
 	}
 	if (/^([0-9]{1,5}[A-Z]?|[A-Z]{2,6}[0-9]{0,2})$/.test(teamId)) {
-		db.get(`SELECT * FROM teams WHERE number = '${teamId}'`)
+		db.get(`SELECT * FROM teams WHERE number = ?`, teamId)
 			.then(team => {
 				if (team) {
 					var location = [team.city];
