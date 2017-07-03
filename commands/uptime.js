@@ -4,7 +4,7 @@ const client = require('../app');
 
 module.exports = (message, args) => {
 	var milliseconds = new Date(client.uptime);
-
+console.log(milliseconds);
 	var seconds = Math.floor(milliseconds / 1000);
 	var minutes = Math.floor(seconds / 60);
 	var hours = Math.floor(minutes / 60);
@@ -15,7 +15,6 @@ module.exports = (message, args) => {
 	hours %= 24;
 
 	var uptime = [];
-
 	if (days > 0) {
 		uptime.push(formatTime(days, 'day'));
 	}
@@ -26,6 +25,7 @@ module.exports = (message, args) => {
 		uptime.push(formatTime(minutes, 'minute'));
 	}
 	if (seconds > 0) {
+		console.log(seconds);
 		uptime.push(formatTime(seconds, 'second'));
 	}
 	var embed = new Discord.RichEmbed()
