@@ -28,8 +28,8 @@ module.exports = (message, args) => {
 		uptime.push(formatTime(seconds, 'second'));
 	}
 	var embed = new Discord.RichEmbed()
-			.setColor('RANDOM')
-			.setDescription(uptime.join(', '));
+		.setColor('RANDOM')
+		.setDescription(uptime.join(', '));
 
 	message.channel.send({embed});
 };

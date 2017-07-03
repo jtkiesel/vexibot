@@ -7,19 +7,19 @@ const dbinfo = require('../dbinfo');
 
 module.exports = (message, args) => {
 	var embed = new Discord.RichEmbed()
-			.setColor('RANDOM')
-			.setDescription('Resetting...');
+		.setColor('RANDOM')
+		.setDescription('Resetting...');
 
 	message.channel.send({embed})
-			.then(reply => addResourceToTable(0, embed, reply))
-			.catch(console.error);
+		.then(reply => addResourceToTable(0, embed, reply))
+		.catch(console.error);
 };
 
 var addResourceToTable = (tableIndex, embed, reply) => {
 	db.run(`DELETE FROM ${Object.keys(dbinfo.tablesToColumns)[0]}`)
-			.then(() => {
-				addResourceBatchToTable(tableIndex, 0, embed, reply, Date.now());
-			}).catch(console.error);
+		.then(() => {
+			addResourceBatchToTable(tableIndex, 0, embed, reply, Date.now());
+		}).catch(console.error);
 }
 
 var addResourceBatchToTable = (tableIndex, startIndex, embed, reply, startTime) => {
@@ -38,17 +38,17 @@ var addResourceBatchToTable = (tableIndex, startIndex, embed, reply, startTime) 
 			if (body.status == 1) {
 				if (body.size > 0) {
 					for (var row of body.result) {
-						console.log(`INSERT INTO ${table} VALUES (${dbinfo.formatValues[table](row)})`);
-						//db.run(`INSERT INTO ${table} ('${Object.keys(row).join('\', \'')}') VALUES (${Object.values(row).join(', ')})`)
-						//		.catch(console.error);
+						//console.log(`INSERT INTO ${table} VALUES (${dbinfo.formatValues[table](row)})`);
+						db.run(`INSERT INTO ${table} VALUES (${dbinfo.formatValues[table](row)})`)
+							.catch(console.error);
 					}
 					addResourceBatchToTable(tableIndex, startIndex + body.size, embed, reply, startTime);
 				} else {
 					var duration = (Date.now() - startTime) / 1000;
 					embed.setDescription(`${embed.description}\n${table} \`${duration}s\``);
 					reply.edit({embed})
-							.then(msg => addResourceToTable(tableIndex + 1, embed, msg))
-							.catch(console.error);
+						.then(msg => addResourceToTable(tableIndex + 1, embed, msg))
+						.catch(console.error);
 				}
 			} else {
 				message.reply('Sorry, VexDB messed up.');
