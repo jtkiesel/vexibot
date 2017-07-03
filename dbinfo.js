@@ -202,7 +202,7 @@ const formatValues = {
 			skill.type,
 			skill.rank
 		);
-		values.apply.push(values, [
+		values.push.apply(values, [
 			skill.team,
 			skill.program
 		].map(formatText));
