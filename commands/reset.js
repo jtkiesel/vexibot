@@ -38,10 +38,11 @@ var addResourceBatchToTable = (tableIndex, startIndex, embed, reply, startTime) 
 			if (body.status == 1) {
 				if (body.size > 0) {
 					for (var row of body.result) {
-						var temp = dbinfo.formatValues[table](row);
-						db.run(`INSERT INTO ${table} VALUES (${temp})`)
+						var values = dbinfo.formatValues[table](row);
+						var temp = Array(values.length).fill('?').join(', ');
+						db.run(`INSERT INTO ${table} VALUES (${temp})`, values)
 							.catch(error => {
-								console.log(`INSERT INTO ${table} VALUES (${temp})`);
+								console.log(`INSERT INTO ${table} VALUES (${temp}), ${values}`);
 								console.error(error);
 							});
 					}

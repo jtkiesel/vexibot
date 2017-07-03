@@ -98,15 +98,15 @@ const formatValues = {
 			event.loc_postalcode,
 			event.loc_country,
 			event.season
-		].map(formatText);
+		];
 		values.push.apply(values, [
 			event.start,
 			event.end
 		].map(formatDateTime));
-		values.push(formatText(
+		values.push(
 			event.divisions
-		));
-		return values.join(', ');
+		);
+		return values;
 	},
 	'teams': team => {
 		var values = [
@@ -118,24 +118,18 @@ const formatValues = {
 			team.city,
 			team.region,
 			team.country,
-			team.grade
-		].map(formatText);
-		values.push(
+			team.grade,
 			team.is_registered
-		);
-		return values.join(', ');
+		];
+		return values;
 	},
 	'matches': match => {
 		var values = [
 			match.sku,
-			match.division
-		].map(formatText);
-		values.push(
+			match.division,
 			match.round,
 			match.instance,
-			match.matchnum
-		);
-		values.push.apply(values, [
+			match.matchnum,
 			match.field,
 			match.red1,
 			match.red2,
@@ -144,30 +138,22 @@ const formatValues = {
 			match.blue1,
 			match.blue2,
 			match.blue3,
-			match.bluesit
-		].map(formatText));
-		values.push(
+			match.bluesit,
 			match.redscore,
 			match.bluescore,
 			match.scored
-		);
+		];
 		values.push(formatDateTime(
 			match.scheduled
 		));
-		return values.join(', ');
+		return values;
 	},
 	'rankings': ranking => {
 		var values = [
 			ranking.sku,
-			ranking.division
-		].map(formatText);
-		values.push(
-			ranking.rank
-		);
-		values.push(formatText(
-			ranking.team
-		));
-		values.push(
+			ranking.division,
+			ranking.rank,
+			ranking.team,
 			ranking.wins,
 			ranking.losses,
 			ranking.ties,
@@ -179,46 +165,37 @@ const formatValues = {
 			ranking.opr,
 			ranking.dpr,
 			ranking.ccwm
-		);
-		return values.join(', ');
+		];
+		return values;
 	},
 	'awards': award => {
 		var values = [
 			award.sku,
 			award.name,
 			award.team,
-			award.qualifies
-		].map(formatText);
-		values.push(
+			award.qualifies,
 			award.order
-		);
-		return values.join(', ');
+		];
+		return values;
 	},
 	'skills': skill => {
-		var values = [formatText(
-			skill.sku
-		)];
-		values.push(
+		var values = [
+			skill.sku,
 			skill.type,
-			skill.rank
-		);
-		values.push.apply(values, [
+			skill.rank,
 			skill.team,
-			skill.program
-		].map(formatText));
-		values.push(
+			skill.program,
 			skill.attempts,
 			skill.score
-		);
-		return values.join(', ');
+		];
+		return values;
 	}
 };
-
-var formatText = value => `\`${value}\``;
 
 var formatDateTime = value => Date.parse(value);
 
 module.exports = {
 	'tablesToColumns': tablesToColumns,
-	'formatValues': formatValues
+	'formatValues': formatValues,
+	''
 };
