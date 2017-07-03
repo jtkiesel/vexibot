@@ -3,8 +3,8 @@ const Discord = require('discord.js');
 const app = require('../app');
 
 module.exports = (message, args) => {
-	var milliseconds = new Date(app.client.uptime);
-console.log(app.client);
+	const milliseconds = new Date(app.client.uptime);
+
 	var seconds = Math.floor(milliseconds / 1000);
 	var minutes = Math.floor(seconds / 60);
 	var hours = Math.floor(minutes / 60);
