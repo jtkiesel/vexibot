@@ -196,6 +196,5 @@ var formatDateTime = value => Date.parse(value);
 
 module.exports = {
 	'tablesToColumns': tablesToColumns,
-	'formatValues': formatValues,
-	''
+	'formatValues': formatValues
 };
