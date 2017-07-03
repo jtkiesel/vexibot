@@ -6,13 +6,17 @@ const db = require('sqlite');
 const dbinfo = require('../dbinfo');
 
 module.exports = (message, args) => {
-	var embed = new Discord.RichEmbed()
-		.setColor('RANDOM')
-		.setDescription('Resetting...');
+	if (message.member.roles.has(message.guild.roles.find('name', 'Admins').id)) {
+		var embed = new Discord.RichEmbed()
+			.setColor('RANDOM')
+			.setDescription('Resetting...');
 
-	message.channel.send({embed})
-		.then(reply => addResourceToTable(0, embed, reply))
-		.catch(console.error);
+		message.channel.send({embed})
+			.then(reply => addResourceToTable(0, embed, reply))
+			.catch(console.error);
+	} else {
+		message.reply('You lack the role required to run that command.');
+	}
 };
 
 var addResourceToTable = (tableIndex, embed, reply) => {

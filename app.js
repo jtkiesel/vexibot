@@ -5,12 +5,16 @@ const update = require('./update');
 const client = new Discord.Client();
 const token = process.env.DISCORD_TOKEN;
 const prefix = '^';
-const commandNames = ['ping', 'uptime', 'reset', 'team', 'awards'];
+const commandInfo = {
+	'ping': 'Pong!',
+	'uptime': 'Time since bot last restarted.',
+	'reset': 'Reset all data from VexDB.',
+	'team': 'Get general information about a VEX team.',
+	'awards': 'Get awards received by a VEX team.'
+};
 
 var commands = {};
-for (var name of commandNames) {
-	commands[name] = require('./commands/' + name);
-}
+Object.keys(commandInfo).forEach(name => commands[name] = require('./commands/' + name));
 
 client.on('ready', () => {
 	console.log('I am ready!');
