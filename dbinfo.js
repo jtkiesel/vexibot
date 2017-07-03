@@ -153,7 +153,7 @@ const formatValues = {
 			match.scheduled
 		);
 		return values.join(', ');
-	}
+	},
 	'rankings': ranking => {
 		var values = [
 			ranking.sku,
