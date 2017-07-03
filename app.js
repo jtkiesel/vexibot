@@ -1,17 +1,16 @@
 const Discord = require('discord.js');
-const sql = require('sqlite');
+
+const update = require('./update');
 
 const client = new Discord.Client();
 const token = process.env.DISCORD_TOKEN;
 const prefix = '^';
-const commandNames = ['ping', 'uptime', 'update', 'team', 'awards'];
+const commandNames = ['ping', 'uptime', 'reset', 'team', 'awards'];
 
 var commands = {};
 for (var name of commandNames) {
 	commands[name] = require('./commands/' + name);
 }
-
-sql.open('./vexdb.sqlite');
 
 client.on('ready', () => {
 	console.log('I am ready!');

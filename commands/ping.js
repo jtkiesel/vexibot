@@ -1,3 +1,5 @@
+const Discord = require('discord.js');
+
 module.exports = (message, args) => {
 	var embed = new Discord.RichEmbed()
 			.setColor('RANDOM')

@@ -1,3 +1,5 @@
+const Discord = require('discord.js');
+
 module.exports = (message, args) => {
 	var milliseconds = new Date(client.uptime);
 
