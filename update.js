@@ -11,5 +11,7 @@ db.open('./vexdb.sqlite')
 			Object.entries(columns).forEach((column, type) => {
 				columnDefinitions.push(`${column} ${type}`);
 			});
-			db.run(`CREATE TABLE IF NOT EXISTS ${table} (${columnDefinitions.join(', ')})`);
+			console.log(`CREATE TABLE IF NOT EXISTS ${table} (${columnDefinitions.join(', ')})`);
+			db.run(`CREATE TABLE IF NOT EXISTS ${table} (${columnDefinitions.join(', ')})`)
+					.catch(console.error);
 		})).catch(console.error);
