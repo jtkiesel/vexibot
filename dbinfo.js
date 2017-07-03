@@ -180,6 +180,7 @@ const formatValues = {
 			ranking.dpr,
 			ranking.ccwm
 		);
+		return values.join(', ');
 	},
 	'awards': award => {
 		var values = [
