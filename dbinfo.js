@@ -187,7 +187,7 @@ const formatValues = {
 			award.qualifies
 		].map(formatText);
 		values.push(
-			award.order;
+			award.order
 		);
 		return values.join(', ');
 	},
