@@ -1,11 +1,10 @@
 const Discord = require('discord.js');
 const http = require('http');
 const he = require('he');
-const db = require('sqlite');
+const sqlite = require('sqlite');
 
 const dbinfo = require('./dbinfo');
-
-db.open('./vexdb.sqlite')
+const db = new sqlite.Database('./vexdb.sqlite')
 	.then(Object.entries(dbinfo.tablesToColumns).forEach(([table, columns]) => {
 		var columnDefinitions = [];
 		Object.entries(columns).forEach(([column, type]) => {
