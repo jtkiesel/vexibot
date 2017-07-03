@@ -1,11 +1,11 @@
-const Discord = require('discord.js');
+var Discord = require('discord.js');
 
-const update = require('./update');
+var update = require('./update');
 
-const client = new Discord.Client();
-const token = process.env.DISCORD_TOKEN;
-const prefix = '^';
-const commandNames = ['ping', 'uptime', 'reset', 'team', 'awards'];
+var client = new Discord.Client();
+var token = process.env.DISCORD_TOKEN;
+var prefix = '^';
+var commandNames = ['ping', 'uptime', 'reset', 'team', 'awards'];
 
 var commands = {};
 for (var name of commandNames) {
