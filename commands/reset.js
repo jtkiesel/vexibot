@@ -3,7 +3,7 @@ const http = require('http');
 const he = require('he');
 const db = require('sqlite');
 
-const tablesToColumns = require('../dbinfo');
+const dbinfo = require('../dbinfo');
 
 module.exports = (message, args) => {
 	var embed = new Discord.RichEmbed()
@@ -16,14 +16,14 @@ module.exports = (message, args) => {
 };
 
 var addResourceToTable = (tableIndex, embed, reply) => {
-	db.run(`DELETE FROM ${Object.keys(tablesToColumns)[0]}`)
+	db.run(`DELETE FROM ${Object.keys(dbinfo.tablesToColumns)[0]}`)
 			.then(() => {
 				addResourceBatchToTable(tableIndex, 0, embed, reply, Date.now());
 			}).catch(console.error);
 }
 
 var addResourceBatchToTable = (tableIndex, startIndex, embed, reply, startTime) => {
-	const table = Object.keys(tablesToColumns)[tableIndex];
+	const table = Object.keys(dbinfo.tablesToColumns)[tableIndex];
 
 	var body = '';
 	http.request({
@@ -38,7 +38,7 @@ var addResourceBatchToTable = (tableIndex, startIndex, embed, reply, startTime) 
 			if (body.status == 1) {
 				if (body.size > 0) {
 					for (var row of body.result) {
-						console.log(`INSERT INTO ${table} ('${Object.keys(row).join('\', \'')}') VALUES (${JSON.stringify(Object.values(row)).join(', ')})`);
+						console.log(`INSERT INTO ${table} VALUES (${dbinfo.formatValues[table](row)})`);
 						//db.run(`INSERT INTO ${table} ('${Object.keys(row).join('\', \'')}') VALUES (${Object.values(row).join(', ')})`)
 						//		.catch(console.error);
 					}
