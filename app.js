@@ -31,7 +31,7 @@ client.login(token);
 var handleCommand = message => {
 	var [cmd, args] = message.content.substring(prefix.length).split(' ', 2);
 
-	if (commandNames.includes(cmd)) {
+	if (commands.hasOwnProperty(cmd)) {
 		commands[cmd](message, args);
 	} else {
 		message.reply('Unrecognized command.');
