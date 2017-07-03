@@ -38,8 +38,9 @@ var addResourceBatchToTable = (tableIndex, startIndex, embed, reply, startTime) 
 			if (body.status == 1) {
 				if (body.size > 0) {
 					for (var row of body.result) {
-						db.run(`INSERT INTO ${table} ('${Object.keys(row).join('\', \'')}') VALUES (${Object.values(row).join(', ')})`)
-								.catch(console.error);
+						console.log(`INSERT INTO ${table} ('${Object.keys(row).join('\', \'')}') VALUES (${Object.values(row).join(', ')})`);
+						//db.run(`INSERT INTO ${table} ('${Object.keys(row).join('\', \'')}') VALUES (${Object.values(row).join(', ')})`)
+						//		.catch(console.error);
 					}
 					addResourceBatchToTable(tableIndex, startIndex + body.size, embed, reply, startTime);
 				} else {
