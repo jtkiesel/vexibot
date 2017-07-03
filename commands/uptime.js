@@ -4,7 +4,7 @@ const client = require('../app');
 
 module.exports = (message, args) => {
 	var milliseconds = new Date(client.uptime);
-console.log(milliseconds);
+console.log(client.uptime);
 	var seconds = Math.floor(milliseconds / 1000);
 	var minutes = Math.floor(seconds / 60);
 	var hours = Math.floor(minutes / 60);
@@ -25,7 +25,6 @@ console.log(milliseconds);
 		uptime.push(formatTime(minutes, 'minute'));
 	}
 	if (seconds > 0) {
-		console.log(seconds);
 		uptime.push(formatTime(seconds, 'second'));
 	}
 	var embed = new Discord.RichEmbed()
@@ -35,4 +34,4 @@ console.log(milliseconds);
 	message.channel.send({embed});
 };
 
-var formatTime = (time, unit) => time + ' ' + unit + ((time == 1) ? '' : 's');
+var formatTime = (time, unit) => `${time} ${unit}${((time == 1) ? '' : 's')}`;
