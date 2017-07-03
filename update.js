@@ -11,7 +11,12 @@ db.open('./vexdb.sqlite')
 		Object.entries(columns).forEach(([column, type]) => {
 			columnDefinitions.push(`'${column}' ${type}`);
 		});
-		//db.run(`DROP TABLE ${table}`);
 		db.run(`CREATE TABLE IF NOT EXISTS ${table} (${columnDefinitions.join(', ')})`)
-			.catch(console.error);
-	})).catch(console.error);
+			.catch(error => {
+				console.log(`CREATE TABLE IF NOT EXISTS ${table} (${columnDefinitions.join(', ')})`);
+				console.error(error)
+			});
+	})).catch(error => {
+		console.log('db.open(\'./vexdb.sqlite\')');
+		console.error(error);
+	});

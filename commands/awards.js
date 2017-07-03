@@ -27,9 +27,9 @@ module.exports = (message, args) => {
 						var team = body.result[0];
 
 						var embed = new Discord.RichEmbed()
-								.setColor('BLUE')
-								.setTitle(teamId)
-								.setURL('https://vexdb.io/teams/view/' + teamId + '?t=awards');
+							.setColor('BLUE')
+							.setTitle(teamId)
+							.setURL('https://vexdb.io/teams/view/' + teamId + '?t=awards');
 
 						message.channel.send({embed});
 					} else {

@@ -7,7 +7,7 @@ module.exports = (message, args) => {
 
 	message.channel.send({embed})
 		.then(reply => {
-			embed.setDescription(embed.description + ' `' + (reply.client.ping / 1000) + 's`');
+			embed.setDescription(`${embed.description} \`${reply.client.ping / 1000}s\``);
 			reply.edit({embed});
 		}).catch(console.error);
 };

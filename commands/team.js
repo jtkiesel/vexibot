@@ -33,10 +33,10 @@ module.exports = (message, args) => {
 						var location = [team.city, team.region, team.country].filter(String).join(', ');
 
 						var embed = new Discord.RichEmbed()
-								.setColor('BLUE')
-								.setTitle(number)
-								.setURL('https://vexdb.io/teams/view/' + number)
-								.addField('Team Name', teamName, true);
+							.setColor('BLUE')
+							.setTitle(number)
+							.setURL('https://vexdb.io/teams/view/' + number)
+							.addField('Team Name', teamName, true);
 
 						if (robotName) {
 							embed.addField('Robot Name', robotName, true);
