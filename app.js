@@ -33,3 +33,5 @@ var handleCommand = message => {
 		message.reply('Unrecognized command.');
 	}
 }
+
+module.exports = client;
