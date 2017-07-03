@@ -16,7 +16,7 @@ module.exports = (message, args) => {
 };
 
 var addResourceToTable = (tableIndex, embed, reply) => {
-	db.run(`TRUNCATE TABLE ${Object.keys(tablesToColumns)[0]}`)
+	db.run(`DELETE FROM ${Object.keys(tablesToColumns)[0]}`)
 			.then(() => {
 				addResourceBatchToTable(tableIndex, 0, embed, reply, Date.now());
 			}).catch(console.error);
