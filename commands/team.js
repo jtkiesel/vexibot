@@ -4,7 +4,6 @@ const he = require('he');
 
 module.exports = (message, args) => {
 	var teamId;
-
 	if (args) {
 		teamId = args.trim().toUpperCase();
 	} else {
@@ -49,6 +48,6 @@ module.exports = (message, args) => {
 				console.error(error);
 			});
 	} else {
-		message.reply('Invalid team ID.');
+		message.reply('Please provide a valid team ID.');
 	}
 };
