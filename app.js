@@ -12,12 +12,12 @@ const commandInfo = {
 	'team': 'Get general information about a VEX team.',
 	'awards': 'Get awards received by a VEX team.'
 };
-var helpDescription = `\`${prefix}help\`: Provides information about all commands.`;
+let helpDescription = `\`${prefix}help\`: Provides information about all commands.`;
 Object.entries(commandInfo).forEach(([name, desc]) => {
 	helpDescription += `\n\`${prefix}${name}\`: ${desc}`;
 });
 
-var commands = {};
+let commands = {};
 Object.keys(commandInfo).forEach(name => commands[name] = require('./commands/' + name));
 
 client.on('ready', () => {
@@ -32,13 +32,13 @@ client.on('message', message => {
 
 client.login(token);
 
-var handleCommand = message => {
-	var [cmd, args] = message.content.substring(prefix.length).split(' ', 2);
+let handleCommand = message => {
+	const [cmd, args] = message.content.substring(prefix.length).split(' ', 2);
 
 	if (commands.hasOwnProperty(cmd)) {
 		commands[cmd](message, args);
-	} else if (cmd === 'help') {
-		var embed = new Discord.RichEmbed()
+	} else if (cmd == 'help') {
+		const embed = new Discord.RichEmbed()
 			.setColor('RANDOM')
 			.setTitle('Commands')
 			.setDescription(helpDescription);

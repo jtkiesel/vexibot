@@ -1,13 +1,12 @@
 const Discord = require('discord.js');
 const http = require('http');
-const he = require('he');
 const db = require('sqlite');
 
 const dbinfo = require('../dbinfo');
 
 module.exports = (message, args) => {
 	if (message.member.id === '197781934116569088') {
-		var embed = new Discord.RichEmbed()
+		const embed = new Discord.RichEmbed()
 			.setColor('RANDOM')
 			.setDescription('Resetting...');
 
@@ -33,30 +32,30 @@ var addResourceToTable = (tableIndex, embed, reply) => {
 var addResourceBatchToTable = (tableIndex, startIndex, embed, reply, startTime) => {
 	const table = Object.keys(dbinfo.tablesToColumns)[tableIndex];
 
-	var body = '';
 	http.request({
 		host: 'api.vexdb.io',
 		path: `/v1/get_${table}?apikey=shNhxcphXlIXQVE2Npeu&limit_start=${startIndex}`
 	}, response => {
+		let body = '';
+
 		response.on('data', chunk => body += chunk);
 
 		response.on('end', () => {
 			body = JSON.parse(body);
-
 			if (body.status == 1) {
 				if (body.size > 0) {
-					for (var row of body.result) {
-						var values = dbinfo.formatValues[table](row);
-						var temp = Array(values.length).fill('?').join(', ');
-						db.run(`INSERT INTO ${table} VALUES (${temp})`, values)
+					for (let row of body.result) {
+						const values = dbinfo.formatValues[table](row);
+						const placeholders = Array(values.length).fill('?').join(', ');
+						db.run(`INSERT INTO ${table} VALUES (${placeholders})`, values)
 							.catch(error => {
-								console.log(`INSERT INTO ${table} VALUES (${temp}), ${values}`);
+								console.log(`INSERT INTO ${table} VALUES (${placeholders}), ${values}`);
 								console.error(error);
 							});
 					}
 					addResourceBatchToTable(tableIndex, startIndex + body.size, embed, reply, startTime);
 				} else {
-					var duration = (Date.now() - startTime) / 1000;
+					const duration = (Date.now() - startTime) / 1000;
 					embed.setColor('RANDOM')
 						.setDescription(`${embed.description}\n${table} \`${duration}s\``);
 					reply.edit({embed})
