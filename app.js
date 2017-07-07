@@ -10,7 +10,7 @@ const commandInfo = {
 	'uptime': 'Time since bot last restarted.',
 	'reset': 'Reset all data from VexDB.',
 	'team': 'Get general information about a VEX team.',
-	'awards': 'Get awards received by a VEX team.'
+	'awards': 'Get awards earned by a VEX team.'
 };
 let helpDescription = `\`${prefix}help\`: Provides information about all commands.`;
 Object.entries(commandInfo).forEach(([name, desc]) => {
