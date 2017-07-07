@@ -1,6 +1,4 @@
 const Discord = require('discord.js');
-const http = require('http');
-const he = require('he');
 const db = require('sqlite');
 
 const dbinfo = require('./dbinfo');

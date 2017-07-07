@@ -21,10 +21,10 @@ module.exports = (message, args) => {
 var addResourceToTable = (tableIndex, embed, reply) => {
 	const table = Object.keys(dbinfo.tablesToColumns)[tableIndex];
 
-	db.run(`DELETE FROM ${table}`)
+	db.run(`DELETE * FROM ${table}`)
 		.then(addResourceBatchToTable(tableIndex, 0, embed, reply, Date.now()))
 		.catch(error => {
-			console.log(`DELETE FROM ${table}`);
+			console.log(`DELETE * FROM ${table}`);
 			console.error(error);
 		});
 }
@@ -58,12 +58,11 @@ var addResourceBatchToTable = (tableIndex, startIndex, embed, reply, startTime) 
 					const duration = (Date.now() - startTime) / 1000;
 					embed.setColor('RANDOM')
 						.setDescription(`${embed.description}\n${table} \`${duration}s\``);
-					reply.edit({embed})
-						.then(msg => {
-							if (++tableIndex < Object.keys(dbinfo.tablesToColumns).length) {
-								addResourceToTable(tableIndex, embed, msg);
-							}
-						}).catch(console.error);
+					reply.edit({embed}).then(msg => {
+						if (++tableIndex < Object.keys(dbinfo.tablesToColumns).length) {
+							addResourceToTable(tableIndex, embed, msg);
+						}
+					}).catch(console.error);
 				}
 			} else {
 				console.error(`Error: VEXDB_ERROR: ${body.error_text} errno: ${body.error_code}`);
