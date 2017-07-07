@@ -43,8 +43,6 @@ let handleCommand = message => {
 			.setTitle('Commands')
 			.setDescription(helpDescription);
 		message.channel.send({embed});
-	} else {
-		message.reply('Unrecognized command.');
 	}
 }
 
