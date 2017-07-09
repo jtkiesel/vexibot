@@ -8,8 +8,6 @@ const prefix = '^';
 const commandInfo = {
 	'ping': 'Pong!',
 	'uptime': 'Time since bot last restarted.',
-	'messages': 'Fetch all messages to reload leaderboard.',
-	'leaderboard': 'Get users with the most messages on the server.',
 	'reset': 'Reset all data from VexDB.',
 	'team': 'Get general information about a VEX team.',
 	'awards': 'Get awards earned by a VEX team.'
