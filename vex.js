@@ -1,7 +1,7 @@
 const db = require('sqlite');
 
 module.exports = {
-	'getTeam': (message, args) => new Promise((resolve, reject) => {
+	getTeam: (message, args) => new Promise((resolve, reject) => {
 		const teamId = args ? args.split(' ')[0].toUpperCase() : message.member.nickname.split(' | ', 2)[1];
 		if (/^([0-9]{1,5}[A-Z]?|[A-Z]{2,6}[0-9]{0,2})$/.test(teamId)) {
 			return db.get(`SELECT * FROM teams WHERE number = ?`, teamId).then(team => {
@@ -18,4 +18,4 @@ module.exports = {
 			resolve(undefined);
 		}
 	})
-}
+};

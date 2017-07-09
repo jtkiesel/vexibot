@@ -5,7 +5,7 @@ const db = require('sqlite');
 const dbinfo = require('../dbinfo');
 
 module.exports = (message, args) => {
-	if (message.member.id === '197781934116569088') {
+	if (message.member.id == '197781934116569088') {
 		const embed = new Discord.RichEmbed()
 			.setColor('RANDOM')
 			.setDescription('Resetting...');
@@ -14,22 +14,22 @@ module.exports = (message, args) => {
 			.then(reply => addResourceToTable(0, embed, reply))
 			.catch(console.error);
 	} else {
-		message.reply('You lack the role required to run that command.');
+		message.reply('You do not have permission to run that command.');
 	}
 };
 
-var addResourceToTable = (tableIndex, embed, reply) => {
+const addResourceToTable = (tableIndex, embed, reply) => {
 	const table = Object.keys(dbinfo.tablesToColumns)[tableIndex];
 
-	db.run(`DELETE * FROM ${table}`)
+	db.run(`DELETE FROM ${table}`)
 		.then(addResourceBatchToTable(tableIndex, 0, embed, reply, Date.now()))
 		.catch(error => {
-			console.log(`DELETE * FROM ${table}`);
+			console.log(`DELETE FROM ${table}`);
 			console.error(error);
 		});
-}
+};
 
-var addResourceBatchToTable = (tableIndex, startIndex, embed, reply, startTime) => {
+const addResourceBatchToTable = (tableIndex, startIndex, embed, reply, startTime) => {
 	const table = Object.keys(dbinfo.tablesToColumns)[tableIndex];
 
 	http.request({

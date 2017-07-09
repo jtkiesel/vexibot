@@ -21,7 +21,7 @@ module.exports = (message, args) => {
 					const season = totalAwards[0].season;
 
 					let awards = totalAwards.filter(award => award.season == season);
-					let description = `**${totalAwards.length} Awards**\n***[${dbinfo.seasons[season]}](${dbinfo.seasonUrls[season]})*** (${awards.length}):`;
+					let description = `**${totalAwards.length} Award${totalAwards.length == 1 ? '' : 's'}**\n***[${dbinfo.seasons[season]}](${dbinfo.seasonUrls[season]})*** (${awards.length}):`;
 					let event = '';
 					let sku = '';
 					for (let award of awards) {

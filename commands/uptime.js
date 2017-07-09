@@ -30,7 +30,7 @@ module.exports = (message, args) => {
 	if (seconds) {
 		uptime.push(formatTime(seconds, 'second'));
 	}
-	let emojis = Array(days).join('📆');
+	let emojis = Array(days + 1).join('📆');
 	if (hours > 12) {
 		emojis += clockEmojis[0];
 		hours -= 12;

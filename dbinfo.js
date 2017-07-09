@@ -126,7 +126,7 @@ const tablesToColumns = {
 };
 
 const formatValues = {
-	'events': event => [
+	events: event => [
 		event.sku,
 		event.key, programs.indexOf(
 		event.program),
@@ -143,7 +143,7 @@ const formatValues = {
 		event.end),
 		event.divisions
 	],
-	'teams': team => [
+	teams: team => [
 		team.number, programs.indexOf(
 		team.program),
 		team.team_name,
@@ -155,7 +155,7 @@ const formatValues = {
 		team.grade),
 		team.is_registered
 	],
-	'matches': match => [
+	matches: match => [
 		match.sku,
 		match.division,
 		match.round,
@@ -175,7 +175,7 @@ const formatValues = {
 		match.scored, Date.parse(
 		match.scheduled)
 	],
-	'rankings': ranking => [
+	rankings: ranking => [
 		ranking.sku,
 		ranking.division,
 		ranking.rank,
@@ -192,14 +192,14 @@ const formatValues = {
 		ranking.dpr,
 		ranking.ccwm
 	],
-	'awards': award => [
+	awards: award => [
 		award.sku,
 		award.name,
 		award.team,
 		award.qualifies,
 		award.order
 	],
-	'skills': skill => [
+	skills: skill => [
 		skill.sku,
 		skill.type,
 		skill.rank,
