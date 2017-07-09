@@ -42,7 +42,6 @@ const addChannelBatchToTable = (channelIndex, lastMessageId, embed, reply, start
 	channel.fetchMessages(options).then(messages => {
 		if (messages.size) {
 			messages = Array.from(messages.values());
-console.log(messages);
 			addMessagesToTable(messages, channelIndex, embed, reply, startTime);
 		} else {
 			const duration = (Date.now() - startTime) / 1000;
