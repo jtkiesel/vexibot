@@ -1,6 +1,8 @@
 const Discord = require('discord.js');
 const db = require('sqlite');
 
+const app = require('../app');
+
 let channels;
 
 module.exports = (message, args) => {
@@ -12,7 +14,8 @@ module.exports = (message, args) => {
 
 			channels = [];
 			message.guild.channels.forEach(channel => {
-				if (channel.type == 'text') {
+				if (channel.type == 'text' && channel.permissionsFor(app.client.user).has('READ_MESSAGES')
+						&& channel.name != 'spam') {
 					channels.push(channel);
 				}
 			});
@@ -45,15 +48,24 @@ const addChannelBatchToTable = (channelIndex, lastMessageId, embed, reply, start
 			addMessagesToTable(messages, channelIndex, embed, reply, startTime);
 		} else {
 			const duration = (Date.now() - startTime) / 1000;
+			console.log(`${embed.description}\n${channel} \`${duration}s\``);
+			console.log(`${embed.description}\n${channel} \`${duration}s\``.length);
 			embed.setColor('RANDOM')
 				.setDescription(`${embed.description}\n${channel} \`${duration}s\``);
 			reply.edit({embed}).then(msg => {
 				if (++channelIndex < channels.length) {
-					addChannelToTable(channelIndex, embed, msg);
+					addChannelToTable(channelIndex, embed, reply);
+				} else {
+					embed.setDescription(`${embed.description}\nDone!`);
+					reply.edit({embed});
 				}
 			}).catch(console.error);
 		}
-	}).catch(console.error);
+	}).catch(error => {
+		console.log("error");
+		console.error(error);
+		addChannelBatchToTable(channelIndex, lastMessageId, embed, reply, startTime);
+	});
 };
 
 const addMessagesToTable = (messages, channelIndex, embed, reply, startTime) => {

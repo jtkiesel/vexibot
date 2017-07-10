@@ -5,7 +5,7 @@ module.exports = (message, args) => {
 	db.all('SELECT * FROM messages ORDER BY count DESC LIMIT 20').then(rows => {
 		const embed = new Discord.RichEmbed()
 			.setColor('RANDOM')
-			.setDescription('Users with no lives:');
+			.setDescription('**Users with no lives:**');
 		message.channel.send({embed}).then(reply => {
 			let description = embed.description;
 			rows.forEach(row => description += `\n<@${row.user}>: \`${row.count} messages\``);
