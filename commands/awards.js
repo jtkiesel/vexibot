@@ -70,11 +70,14 @@ module.exports = (message, args) => {
 						if (seasonHeaders[season]) {
 							description += seasonHeaders[season];
 							if (!atLimit) {
-								for (let event of eventsBySeason[season]) {
+								for (let i = 0; i < eventsBySeason[season].length; i++) {
+									let event = eventsBySeason[season][i];
 									charsRemaining -= event.length;
 									linesRemaining -= event.split('\n').length - 1;
 									if (charsRemaining < 0 || linesRemaining < 0) {
-										description += awardsOmitted;
+										if (i) {
+											description += awardsOmitted;
+										}
 										atLimit = true;
 										break;
 									}
