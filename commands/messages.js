@@ -3,29 +3,27 @@ const db = require('sqlite');
 
 const app = require('../app');
 
-let channels;
+let channels = [];
+let messageCounts = {};
+let users = [];
 
 module.exports = (message, args) => {
 	if (message.author.id == '197781934116569088') {
-		db.run('DELETE FROM messages').then(() => {
-			const embed = new Discord.RichEmbed()
-				.setColor('RANDOM')
-				.setDescription('Fetching messages...');
+		const embed = new Discord.RichEmbed()
+			.setColor('RANDOM')
+			.setDescription('Fetching messages...');
 
-			channels = [];
-			message.guild.channels.forEach(channel => {
-				if (channel.type == 'text' && channel.permissionsFor(app.client.user).has('READ_MESSAGES')
-						&& channel.name != 'spam') {
-					channels.push(channel);
-				}
-			});
-			message.channel.send({embed})
-				.then(reply => addChannelToTable(0, embed, reply))
-				.catch(console.error);
-		}).catch(error => {
-			console.log('DELETE FROM messages');
-			console.error(error);
+		channels = [];
+		message.guild.channels.forEach(channel => {
+			if (channel.type == 'text' && channel.permissionsFor(app.client.user).has('READ_MESSAGES')
+					&& channel.name != 'spam') {
+				channels.push(channel);
+			}
 		});
+		messageCounts = {};
+		message.channel.send({embed})
+			.then(reply => addChannelToTable(0, embed, reply))
+			.catch(console.error);
 	} else {
 		message.reply('You do not have permission to run that command.');
 	}
@@ -44,53 +42,51 @@ const addChannelBatchToTable = (channelIndex, lastMessageId, embed, reply, start
 	}
 	channel.fetchMessages(options).then(messages => {
 		if (messages.size) {
-			messages = Array.from(messages.values());
-			addMessagesToTable(messages, channelIndex, embed, reply, startTime);
+			messages.forEach(message => {
+				let id = message.author.id;
+				if (!messageCounts.hasOwnProperty(id)) {
+					messageCounts[id] = 1;
+				} else {
+					messageCounts[id]++;
+				}
+			});
+			addChannelBatchToTable(channelIndex, messages.lastKey(), embed, reply, startTime);
 		} else {
 			const duration = (Date.now() - startTime) / 1000;
-			console.log(`${embed.description}\n${channel} \`${duration}s\``);
-			console.log(`${embed.description}\n${channel} \`${duration}s\``.length);
+
 			embed.setColor('RANDOM')
 				.setDescription(`${embed.description}\n${channel} \`${duration}s\``);
 			reply.edit({embed}).then(msg => {
 				if (++channelIndex < channels.length) {
 					addChannelToTable(channelIndex, embed, reply);
 				} else {
-					embed.setDescription(`${embed.description}\nDone!`);
-					reply.edit({embed});
+					users = Object.keys(messageCounts);
+					db.run('DELETE FROM messages')
+						.then(() => addMessagesToTable(0, embed, reply))
+						.catch(error => {
+							console.log('DELETE FROM messages');
+							console.error(error);
+						});
 				}
 			}).catch(console.error);
 		}
 	}).catch(error => {
-		console.log("error");
 		console.error(error);
 		addChannelBatchToTable(channelIndex, lastMessageId, embed, reply, startTime);
 	});
 };
 
-const addMessagesToTable = (messages, channelIndex, embed, reply, startTime) => {
-	message = messages.shift();
-	db.get('SELECT count FROM messages WHERE user = ?', [message.author.id]).then(row => {
-		let query, values;
-		if (!row) {
-			query = 'INSERT INTO messages (user, count) VALUES (?, ?)';
-			values = [message.author.id, 1];
+const addMessagesToTable = (index, embed, reply) => {
+	let id = users[index];
+	db.run('INSERT INTO messages (user, count) VALUES (?, ?)', [id, messageCounts[id]]).then(() => {
+		if (index < users.length) {
+			addMessagesToTable(index + 1, embed, reply);
 		} else {
-			query = 'UPDATE messages SET count = ? WHERE user = ?';
-			values = [row.count + 1, message.author.id];
+			embed.setDescription(`${embed.description}\nDone!`);
+			reply.edit({embed});
 		}
-		db.run(query, values).then(() => {
-			if (messages.length) {
-				addMessagesToTable(messages, channelIndex, embed, reply, startTime);
-			} else {
-				addChannelBatchToTable(channelIndex, message.id, embed, reply, startTime);
-			}
-		}).catch(error => {
-			console.log(`${query}, [${values.join(', ')}]`);
-			console.error(error);
-		});
 	}).catch(error => {
-		console.log(`SELECT count FROM messages WHERE user = ${message.author.id}`);
+		console.log(`INSERT INTO messages (user, count) VALUES (${id}, ${count})`);
 		console.error(error);
 	});
 };
