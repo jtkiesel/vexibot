@@ -16,7 +16,7 @@ module.exports = (message, args) => {
 		channels = [];
 		message.guild.channels.forEach(channel => {
 			if (channel.type == 'text' && channel.permissionsFor(app.client.user).has('READ_MESSAGES')
-					&& channel.name != 'spam') {
+					&& channel.id != '322207561703227422') {
 				channels.push(channel);
 			}
 		});
