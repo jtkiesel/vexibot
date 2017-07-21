@@ -1,38 +1,56 @@
 const Discord = require('discord.js');
+const mongodb = require('mongodb');
 
-const update = require('./update');
+const messages = require('./messages');
+const vexdata = require('./vexdata');
 
 const client = new Discord.Client();
+const MongoClient = new mongodb.MongoClient();
 const token = process.env.DISCORD_TOKEN;
 const prefix = '^';
 const commandInfo = {
-	'ping': 'Pong!',
-	'uptime': 'Time since bot last restarted.',
-	'messages': 'Fetch all messages to reload leaderboard.',
-	'leaderboard': 'Get users with the most messages on the server.',
-	'reset': 'Reset all data from VexDB.',
-	'team': 'Get general information about a VEX team.',
-	'awards': 'Get awards earned by a VEX team.'
+	ping: 'Pong!',
+	uptime: 'Time since bot last restarted.',
+	leaderboard: 'Get users with the most messages on the server.',
+	team: 'Get general information about a VEX team.',
+	awards: 'Get awards earned by a VEX team.'
 };
 let helpDescription = `\`${prefix}help\`: Provides information about all commands.`;
 Object.entries(commandInfo).forEach(([name, desc]) => {
 	helpDescription += `\n\`${prefix}${name}\`: ${desc}`;
 });
-
 let commands = {};
 Object.keys(commandInfo).forEach(name => commands[name] = require('./commands/' + name));
 
 client.on('ready', () => {
-	console.log('I am ready!');
+	console.log('Ready!');
+	messages.update();
+	vexdata.update();
 });
+
+client.on('error', console.error);
 
 client.on('message', message => {
 	if (message.content.startsWith(prefix)) {
 		handleCommand(message);
 	}
+	messages.upsertMessageInDb(message, false);
 });
 
-client.login(token);
+client.on('messageUpdate', message => {
+	messages.upsertMessageInDb(message, false);
+});
+
+client.on('messageDelete', message => {
+	messages.upsertMessageInDb(message, true);
+});
+
+client.on('messageDeleteBulk', messageCollection => {
+	messageCollection.forEach(message => messages.upsertMessageInDb(message, true));
+});
+
+const db = new mongodb.Db('heroku_80kbzj2n', new mongodb.Server('ds159662.mlab.com', 59662));
+db.open().then(db => client.login(token)).catch(console.error);
 
 const handleCommand = message => {
 	const [cmd, args] = message.content.substring(prefix.length).split(' ', 2);
@@ -49,3 +67,4 @@ const handleCommand = message => {
 }
 
 module.exports.client = client;
+module.exports.db = db;
