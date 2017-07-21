@@ -7,6 +7,8 @@ const vexdata = require('./vexdata');
 const client = new Discord.Client();
 const MongoClient = new mongodb.MongoClient();
 const token = process.env.DISCORD_TOKEN;
+const [username, password, host, port, database] = process.env.MONGODB_URI.match(/^(?:mongodb:\/\/)(.+):(.+)@(.+):(.+)\/(.+)$/);
+const db = new mongodb.Db(database, new mongodb.Server(host, Number(port)));
 const prefix = '^';
 const commandInfo = {
 	ping: 'Pong!',
@@ -49,8 +51,10 @@ client.on('messageDeleteBulk', messageCollection => {
 	messageCollection.forEach(message => messages.upsertMessageInDb(message, true));
 });
 
-const db = new mongodb.Db('heroku_80kbzj2n', new mongodb.Server('ds159662.mlab.com', 59662));
-db.open().then(db => client.login(token)).catch(console.error);
+db.open()
+	.then(db => db.authenticate(username, password))
+	.then(db => client.login(token))
+	.catch(console.error);
 
 const handleCommand = message => {
 	const [cmd, args] = message.content.substring(prefix.length).split(' ', 2);
