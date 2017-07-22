@@ -53,7 +53,7 @@ db.open()
 		Object.entries(commandInfo).forEach(([name, desc]) => {
 			helpDescription += `\n\`${prefix}${name}\`: ${desc}`;
 		});
-		client.login(token).catch(console.error));
+		client.login(token).catch(console.error);
 	}).catch(console.error);
 
 module.exports.client = client;
