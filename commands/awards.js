@@ -4,7 +4,7 @@ const app = require('../app');
 const dbinfo = require('../dbinfo');
 const vex = require('../vex');
 
-const db = app.vexdb;
+const db = app.db;
 const seasons = dbinfo.seasons;
 const seasonUrls = dbinfo.seasonUrls;
 
