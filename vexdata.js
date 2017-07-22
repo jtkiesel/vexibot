@@ -137,9 +137,9 @@ const updateCollectionFromResourceBatch = (collection, resource, formatFunc, sta
 							{upsert: true}
 						).then(result => {
 							if (result.upsertedCount) {
-								console.log(`insert to ${collection}: ${JSON.stringify(document)}`);
+								//console.log(`insert to ${collection}: ${JSON.stringify(document)}`);
 							} else if (result.modifiedCount) {
-								console.log(`update to ${collection}: ${JSON.stringify(document)}`);
+								//console.log(`update to ${collection}: ${JSON.stringify(document)}`);
 							}
 						}).catch(console.error);
 					});
