@@ -35,12 +35,12 @@ module.exports = (message, args) => {
 				}
 				embed.addField('Location', location, true);
 
-				message.channel.send({embed});
+				message.channel.send({embed}).catch(console.error);
 			} else {
-				message.reply('That team ID has never been registered.');
+				message.reply('That team ID has never been registered.').catch(console.error);
 			}
 		}).catch(console.error);
 	} else {
-		message.reply('Please provide a valid team ID.');
+		message.reply('Please provide a valid team ID.').catch(console.error);
 	}
 };

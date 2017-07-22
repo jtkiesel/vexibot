@@ -1,6 +1,13 @@
 const app = require('./app');
 
-const getTeamId = (message, args) => args ? args.split(' ')[0].toUpperCase() : message.member.nickname.split(' | ', 2)[1];
+const getTeamId = (message, args) => {
+	if (args) {
+		return args.split(' ')[0].toUpperCase();
+	} else if (message.member) {
+		return message.member.nickname.split(' | ', 2)[1];
+	}
+	return '';
+};
 
 const validTeamId = teamId => /^([0-9]{1,5}[A-Z]?|[A-Z]{2,6}[0-9]{0,2})$/.test(teamId);
 

@@ -5,6 +5,8 @@ const dbinfo = require('../dbinfo');
 const vex = require('../vex');
 
 const db = app.vexdb;
+const seasons = dbinfo.seasons;
+const seasonUrls = dbinfo.seasonUrls;
 
 const emojiToRegex = {
 	'🥇': /^((?:Excellence Award)|(?:Tournament Champions)|(?:(?:Robot|Programming) Skills Winner))/,
@@ -20,7 +22,7 @@ module.exports = (message, args) => {
 	if (vex.validTeamId(teamId)) {
 		vex.getTeam(teamId).then(team => {
 			if (team) {
-				app.db.collection('awards').aggregate([
+				db.collection('awards').aggregate([
 					{$match: {team: team.number}},
 					{$lookup: {from: 'events', localField: 'sku', foreignField: 'sku', as: 'events'}},
 					{$project: {_id: 0, sku: 1, name: 1, event: {$arrayElemAt: ['$events', 0]}}},
@@ -29,16 +31,16 @@ module.exports = (message, args) => {
 				]).toArray().then(awards => {
 					if (awards.length) {
 						const descriptionHeader = `**${awards.length} Award${awards.length == 1 ? '' : 's'}**`;
-
-						let awardCount = 0;
-						let eventsBySeason = new Array(dbinfo.seasons.length);
-						for (let i = 0; i < dbinfo.seasons.length; i++) {
+						const eventsBySeason = new Array(seasons.length);
+						for (let i = 0; i < seasons.length; i++) {
 							eventsBySeason[i] = [];
 						}
 						let sku;
 						let event;
 						let seasonHeaders = [];
 						let season = awards[0].season;
+						let awardCount = 0;
+
 						for (let i = 0; i < awards.length; i++) {
 							award = awards[i];
 							if (award.sku != sku) {
@@ -50,6 +52,7 @@ module.exports = (message, args) => {
 							}
 							let awardEmoji = '🏅';
 							let awardName = award.name;
+
 							for (let [emoji, regex] of Object.entries(emojiToRegex)) {
 								let matches = awardName.match(regex);
 								if (matches) {
@@ -59,8 +62,9 @@ module.exports = (message, args) => {
 								}
 							}
 							event += `\n${awardEmoji}${awardName}`;
+
 							if (award.season != season) {
-								seasonHeaders[season] = `\n***[${dbinfo.seasons[season]}](${dbinfo.seasonUrls[season]})*** (${awardCount})`
+								seasonHeaders[season] = `\n***[${seasons[season]}](${seasonUrls[season]})*** (${awardCount})`
 								season = award.season;
 								awardCount = 1;
 							} else {
@@ -68,20 +72,21 @@ module.exports = (message, args) => {
 							}
 						}
 						eventsBySeason[season].push(event);
-						seasonHeaders[season] = `\n***[${dbinfo.seasons[season]}](${dbinfo.seasonUrls[season]})*** (${awardCount})`
+						seasonHeaders[season] = `\n***[${seasons[season]}](${seasonUrls[season]})*** (${awardCount})`
 
-						let charsRemaining = 2048 - (descriptionHeader.length + awardsOmitted);
-						seasonHeaders.forEach(header => charsRemaining -= header.length);
-						let linesRemaining = 30 - (3 + seasonHeaders.filter(header => header).length);
 						let description = descriptionHeader;
 						let atLimit = false;
+						let linesRemaining = 30 - (3 + seasonHeaders.filter(header => header).length);
+						let charsRemaining = 2048 - (descriptionHeader.length + awardsOmitted);
+						seasonHeaders.forEach(header => charsRemaining -= header.length);
 
 						for (let season = dbinfo.seasons.length - 1; season >= 0; season--) {
 							if (seasonHeaders[season]) {
 								description += seasonHeaders[season];
+
 								if (!atLimit) {
 									for (let i = 0; i < eventsBySeason[season].length; i++) {
-										let event = eventsBySeason[season][i];
+										const event = eventsBySeason[season][i];
 										charsRemaining -= event.length;
 										linesRemaining -= event.split('\n').length - 1;
 										if (charsRemaining < 0 || linesRemaining < 0) {
@@ -101,7 +106,6 @@ module.exports = (message, args) => {
 							.setTitle(team.number)
 							.setURL(`https://vexdb.io/teams/view/${team.number}?t=awards`)
 							.setDescription(description);
-
 						message.channel.send({embed});
 					} else {
 						message.reply('That team has never won an award.');
