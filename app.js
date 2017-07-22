@@ -16,12 +16,8 @@ const commandInfo = {
 	awards: 'Awards earned by a VEX team.'
 };
 const commands = {};
-Object.keys(commandInfo).forEach(name => commands[name] = require('./commands/' + name));
 
 let helpDescription = `\`${prefix}help\`: Provides information about all commands.`;
-Object.entries(commandInfo).forEach(([name, desc]) => {
-	helpDescription += `\n\`${prefix}${name}\`: ${desc}`;
-});
 
 const handleCommand = message => {
 	const [cmd, args] = message.content.substring(prefix.length).split(' ', 2);
@@ -52,8 +48,13 @@ client.on('message', message => {
 
 db.open()
 	.then(db => db.authenticate(username, password))
-	.then(db => client.login(token).catch(console.error))
-	.catch(console.error);
+	.then(db => {
+		Object.keys(commandInfo).forEach(name => commands[name] = require('./commands/' + name));
+		Object.entries(commandInfo).forEach(([name, desc]) => {
+			helpDescription += `\n\`${prefix}${name}\`: ${desc}`;
+		});
+		client.login(token).catch(console.error));
+	}).catch(console.error);
 
 module.exports.client = client;
 module.exports.db = db;
