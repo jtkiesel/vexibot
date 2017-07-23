@@ -1,11 +1,9 @@
 const Discord = require('discord.js');
 
-module.exports = (message, args) => {
+module.exports = (message, args, embed) => {
 	const time = Date.now();
-	const embed = new Discord.RichEmbed()
-		.setColor('RANDOM')
-		.setDescription('🏓 Pong!');
 
+	embed.setColor('RANDOM').setDescription('🏓 Pong!');
 	message.channel.send({embed}).then(reply => {
 		embed.setDescription(`${embed.description} \`${(Date.now() - time) / 1000}s\``);
 		reply.edit({embed});

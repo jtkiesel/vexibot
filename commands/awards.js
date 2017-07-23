@@ -17,7 +17,7 @@ const emojiToRegex = {
 
 const awardsOmitted = '\n**[Older awards omitted.]**';
 
-module.exports = (message, args) => {
+module.exports = (message, args, embed) => {
 	const teamId = vex.getTeamId(message, args);
 	if (vex.validTeamId(teamId)) {
 		vex.getTeam(teamId).then(team => {
@@ -101,9 +101,7 @@ module.exports = (message, args) => {
 								}
 							}
 						}
-						const embed = new Discord.RichEmbed()
-							.setColor('PURPLE')
-							.setTitle(team.number)
+						embed.setColor('PURPLE').setTitle(team.number)
 							.setURL(`https://vexdb.io/teams/view/${team.number}?t=awards`)
 							.setDescription(description);
 						message.channel.send({embed});

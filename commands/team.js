@@ -3,7 +3,7 @@ const he = require('he');
 
 const vex = require('../vex');
 
-module.exports = (message, args) => {
+module.exports = (message, args, embed) => {
 	const teamId = vex.getTeamId(message, args);
 	if (vex.validTeamId(teamId)) {
 		vex.getTeam(teamId).then(team => {
@@ -21,9 +21,7 @@ module.exports = (message, args) => {
 				}
 				location = location.join(', ');
 
-				const embed = new Discord.RichEmbed()
-					.setColor('GREEN')
-					.setTitle(team.number)
+				embed.setColor('GREEN').setTitle(team.number)
 					.setURL(`https://vexdb.io/teams/view/${team.number}`)
 					.addField('Team Name', team_name, true);
 
@@ -34,7 +32,6 @@ module.exports = (message, args) => {
 					embed.addField('Organization', organisation, true);
 				}
 				embed.addField('Location', location, true);
-
 				message.channel.send({embed}).catch(console.error);
 			} else {
 				message.reply('That team ID has never been registered.').catch(console.error);

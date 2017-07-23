@@ -21,14 +21,15 @@ let helpDescription = `\`${prefix}help\`: Provides information about all command
 
 const handleCommand = message => {
 	const [cmd, args] = message.content.substring(prefix.length).split(' ', 2);
+	const author = message.member ? message.member.displayName : message.author.username;
+	const embed = new Discord.RichEmbed()
+		.setFooter(`Triggered by ${author}`, message.author.displayAvatarURL)
+		.setTimestamp(message.createdAt);
 
 	if (commands.hasOwnProperty(cmd)) {
-		commands[cmd](message, args);
+		commands[cmd](message, args, embed);
 	} else if (cmd == 'help') {
-		const embed = new Discord.RichEmbed()
-			.setColor('RANDOM')
-			.setTitle('Commands')
-			.setDescription(helpDescription);
+		embed.setColor('RANDOM').setTitle('Commands').setDescription(helpDescription);
 		message.channel.send({embed});
 	}
 }

@@ -5,7 +5,9 @@ const app = require('../app');
 const clockEmojis = ['🕛', '🕧', '🕐', '🕜', '🕑', '🕝', '🕒', '🕞', '🕓', '🕟', '🕔', '🕠', '🕕',
 		'🕡', '🕖', '🕢', '🕗', '🕣', '🕘', '🕤', '🕙', '🕥', '🕚', '🕦'];
 
-module.exports = (message, args) => {
+const formatTime = (time, unit) => `${time} ${unit}${(time == 1) ? '' : 's'}`;
+
+module.exports = (message, args, embed) => {
 	const milliseconds = new Date(app.client.uptime);
 
 	let seconds = Math.floor(milliseconds / 1000);
@@ -39,11 +41,6 @@ module.exports = (message, args) => {
 	if (halfHours) {
 		emojis += clockEmojis[halfHours];
 	}
-	const embed = new Discord.RichEmbed()
-		.setColor('RANDOM')
-		.setDescription(`${emojis}\n${uptime.join(', ')}`);
-
+	embed.setColor('RANDOM').setDescription(`${emojis}\n${uptime.join(', ')}`);
 	message.channel.send({embed});
 };
-
-let formatTime = (time, unit) => `${time} ${unit}${((time == 1) ? '' : 's')}`;
