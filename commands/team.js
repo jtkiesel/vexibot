@@ -1,6 +1,7 @@
 const Discord = require('discord.js');
 const he = require('he');
 
+const app = require('../app');
 const vex = require('../vex');
 
 module.exports = (message, args, embed) => {
@@ -24,7 +25,6 @@ module.exports = (message, args, embed) => {
 				embed.setColor('GREEN').setTitle(team.number)
 					.setURL(`https://vexdb.io/teams/view/${team.number}`)
 					.addField('Team Name', team_name, true);
-
 				if (robot_name) {
 					embed.addField('Robot Name', robot_name, true);
 				}
@@ -32,7 +32,9 @@ module.exports = (message, args, embed) => {
 					embed.addField('Organization', organisation, true);
 				}
 				embed.addField('Location', location, true);
-				message.channel.send({embed}).catch(console.error);
+				message.channel.send({embed})
+					.then(reply => app.addFooter(message, embed, reply))
+					.catch(console.error);
 			} else {
 				message.reply('That team ID has never been registered.').catch(console.error);
 			}

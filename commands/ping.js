@@ -1,11 +1,16 @@
 const Discord = require('discord.js');
 
-module.exports = (message, args, embed) => {
-	const time = Date.now();
+const app = require('../app');
 
-	embed.setColor('RANDOM').setDescription('🏓 Pong!');
+module.exports = (message, args) => {
+	const ping = Date.now();
+	const embed = new Discord.RichEmbed()
+		.setColor('RANDOM')
+		.setDescription('🏓 Pong!');
 	message.channel.send({embed}).then(reply => {
-		embed.setDescription(`${embed.description} \`${(Date.now() - time) / 1000}s\``);
-		reply.edit({embed});
+		embed.setDescription(`${embed.description} \`${(Date.now() - ping) / 1000}s\``);
+		reply.edit({embed})
+			.then(reply => app.addFooter(message, embed, reply))
+			.catch(console.error);
 	}).catch(console.error);
 };

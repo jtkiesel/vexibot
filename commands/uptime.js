@@ -7,7 +7,7 @@ const clockEmojis = ['🕛', '🕧', '🕐', '🕜', '🕑', '🕝', '🕒', '�
 
 const formatTime = (time, unit) => `${time} ${unit}${(time == 1) ? '' : 's'}`;
 
-module.exports = (message, args, embed) => {
+module.exports = (message, args) => {
 	const milliseconds = new Date(app.client.uptime);
 
 	let seconds = Math.floor(milliseconds / 1000);
@@ -41,6 +41,10 @@ module.exports = (message, args, embed) => {
 	if (halfHours) {
 		emojis += clockEmojis[halfHours];
 	}
-	embed.setColor('RANDOM').setDescription(`${emojis}\n${uptime.join(', ')}`);
-	message.channel.send({embed});
+	const embed = new Discord.RichEmbed()
+		.setColor('RANDOM')
+		.setDescription(`${emojis}\n${uptime.join(', ')}`);
+	message.channel.send({embed})
+		.then(reply => app.addFooter(message, embed, reply))
+		.catch(console.error);
 };

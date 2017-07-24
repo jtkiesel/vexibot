@@ -21,17 +21,26 @@ let helpDescription = `\`${prefix}help\`: Provides information about all command
 
 const handleCommand = message => {
 	const [cmd, args] = message.content.substring(prefix.length).split(' ', 2);
-	const author = message.member ? message.member.displayName : message.author.username;
-	const embed = new Discord.RichEmbed()
-		.setFooter(`Triggered by ${author}`, message.author.displayAvatarURL)
-		.setTimestamp(message.createdAt);
 
 	if (commands.hasOwnProperty(cmd)) {
-		commands[cmd](message, args, embed);
+		commands[cmd](message, args);
 	} else if (cmd == 'help') {
-		embed.setColor('RANDOM').setTitle('Commands').setDescription(helpDescription);
-		message.channel.send({embed});
+		const embed = new Discord.RichEmbed()
+			.setColor('RANDOM')
+			.setTitle('Commands')
+			.setDescription(helpDescription);
+		message.channel.send({embed})
+			.then(reply => addFooter(message, embed, reply))
+			.catch(console.error);
 	}
+}
+
+const addFooter = (message, embed, reply) => {
+	const author = message.member ? message.member.displayName : message.author.username;
+
+	embed.setFooter(`Triggered by ${author}`, message.author.displayAvatarURL)
+		.setTimestamp(message.createdAt);
+	reply.edit({embed});
 }
 
 client.on('ready', () => {
@@ -59,3 +68,4 @@ db.open()
 
 module.exports.client = client;
 module.exports.db = db;
+module.exports.addFooter = addFooter;

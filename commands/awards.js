@@ -104,7 +104,9 @@ module.exports = (message, args, embed) => {
 						embed.setColor('PURPLE').setTitle(team.number)
 							.setURL(`https://vexdb.io/teams/view/${team.number}?t=awards`)
 							.setDescription(description);
-						message.channel.send({embed});
+						message.channel.send({embed})
+							.then(reply => app.addFooter(message, embed, reply))
+							.catch(console.error);
 					} else {
 						message.reply('That team has never won an award.');
 					}
