@@ -101,7 +101,8 @@ module.exports = (message, args, embed) => {
 								}
 							}
 						}
-						embed.setColor('PURPLE').setTitle(team.number)
+						const embed = new Discord.RichEmbed()
+							.setColor('PURPLE').setTitle(team.number)
 							.setURL(`https://vexdb.io/teams/view/${team.number}?t=awards`)
 							.setDescription(description);
 						message.channel.send({embed})

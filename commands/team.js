@@ -22,7 +22,8 @@ module.exports = (message, args, embed) => {
 				}
 				location = location.join(', ');
 
-				embed.setColor('GREEN').setTitle(team.number)
+				const embed = new Discord.RichEmbed()
+					.setColor('GREEN').setTitle(team.number)
 					.setURL(`https://vexdb.io/teams/view/${team.number}`)
 					.addField('Team Name', team_name, true);
 				if (robot_name) {
