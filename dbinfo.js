@@ -1,10 +1,9 @@
-const vexdbHost = 'api.vexdb.io';
-
 const programs = [
 	'VIQC',
 	'VRC',
 	'VEXU',
-	'CREATE'
+	'CREATE',
+	'WORKSHOP'
 ];
 
 const seasons = [
@@ -36,14 +35,13 @@ const seasonUrls = [
 ];
 
 const grades = [
-	'Elementary School',
+	'Elementary',
 	'Middle School',
 	'High School',
 	'College'
 ];
 
 module.exports = {
-	vexdbHost: vexdbHost,
 	programs: programs,
 	seasons: seasons,
 	seasonUrls: seasonUrls,

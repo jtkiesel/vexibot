@@ -17,15 +17,15 @@ const emojiToRegex = {
 
 const awardsOmitted = '\n**[Older awards omitted.]**';
 
-module.exports = (message, args, embed) => {
+module.exports = (message, args) => {
 	const teamId = vex.getTeamId(message, args);
 	if (vex.validTeamId(teamId)) {
 		vex.getTeam(teamId).then(team => {
 			if (team) {
 				db.collection('awards').aggregate([
-					{$match: {team: team.number}},
-					{$lookup: {from: 'events', localField: 'sku', foreignField: 'sku', as: 'events'}},
-					{$project: {_id: 0, sku: 1, name: 1, event: {$arrayElemAt: ['$events', 0]}}},
+					{$match: {'_id.team': team._id}},
+					{$lookup: {from: 'events', localField: '_id.sku', foreignField: '_id', as: 'events'}},
+					{$project: {sku: '$_id.sku', name: '$_id.name', event: {$arrayElemAt: ['$events', 0]}}},
 					{$sort: {'event.season': -1, 'event.end': -1, sku: -1}},
 					{$project: {sku: 1, name: 1, event: '$event.name', season: '$event.season'}}
 				]).toArray().then(awards => {
@@ -102,8 +102,9 @@ module.exports = (message, args, embed) => {
 							}
 						}
 						const embed = new Discord.RichEmbed()
-							.setColor('PURPLE').setTitle(team.number)
-							.setURL(`https://vexdb.io/teams/view/${team.number}?t=awards`)
+							.setColor('PURPLE')
+							.setTitle(team._id)
+							.setURL(`https://vexdb.io/teams/view/${team._id}?t=awards`)
 							.setDescription(description);
 						message.channel.send({embed})
 							.then(reply => app.addFooter(message, embed, reply))

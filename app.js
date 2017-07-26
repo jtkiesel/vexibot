@@ -13,7 +13,8 @@ const commandInfo = {
 	ping: 'Pong!',
 	uptime: 'Time since bot last restarted.',
 	team: 'General information about a VEX team.',
-	awards: 'Awards earned by a VEX team.'
+	awards: 'Awards earned by a VEX team.',
+	skills: 'Skills scores achieved by a VEX team.'
 };
 const commands = {};
 
@@ -45,7 +46,9 @@ const addFooter = (message, embed, reply) => {
 
 client.on('ready', () => {
 	console.log('Ready!');
-	vexdata.update();
+	//vexdata.update();
+	//vexdata.updateProgramsAndSeasons();
+	//vexdata.updateMaxSkills();
 });
 
 client.on('error', console.error);
@@ -57,8 +60,8 @@ client.on('message', message => {
 });
 
 db.open()
-	.then(db => db.authenticate(username, password))
-	.then(db => {
+	.then(db2 => db.authenticate(username, password))
+	.then(db3 => {
 		Object.keys(commandInfo).forEach(name => commands[name] = require('./commands/' + name));
 		Object.entries(commandInfo).forEach(([name, desc]) => {
 			helpDescription += `\n\`${prefix}${name}\`: ${desc}`;

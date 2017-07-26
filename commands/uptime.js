@@ -19,7 +19,7 @@ module.exports = (message, args) => {
 	minutes %= 60;
 	hours %= 24;
 
-	let uptime = [];
+	const uptime = [];
 	if (days) {
 		uptime.push(formatTime(days, 'day'));
 	}
@@ -33,11 +33,11 @@ module.exports = (message, args) => {
 		uptime.push(formatTime(seconds, 'second'));
 	}
 	let emojis = Array(days + 1).join('📆');
-	if (hours > 12) {
+	if (hours >= 12) {
 		emojis += clockEmojis[0];
 		hours -= 12;
 	}
-	let halfHours = 2 * hours + Math.floor(minutes / 30);
+	const halfHours = 2 * hours + Math.floor(minutes / 30);
 	if (halfHours) {
 		emojis += clockEmojis[halfHours];
 	}
