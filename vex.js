@@ -11,7 +11,7 @@ const getTeamId = (message, args) => {
 
 const validTeamId = teamId => /^([0-9]{1,5}[A-Z]?|[A-Z]{2,6}[0-9]{0,2})$/.test(teamId);
 
-const getTeam = teamId => app.db.collection('teams').findOne({_id: teamId});
+const getTeam = teamId => app.db.collection('reTeams').findOne({'_id.id': teamId});
 
 module.exports = {
 	getTeamId: getTeamId,

@@ -1,17 +1,75 @@
 const Discord = require('discord.js');
-const http = require('http');
 const request = require('request-promise-native');
 
 const app = require('./app');
 const dbinfo = require('./dbinfo');
 
 const update = () => {
-	updateEvents();
-	updateTeams();
-	updateMatches();
-	updateRankings();
-	updateAwards();
-	updateSkills();
+	updateReTeams();
+	//updateEvents();
+	//updateTeams();
+	//updateMatches();
+	//updateRankings();
+	//updateAwards();
+	//updateSkills();
+};
+
+const updateReTeams = () => {
+	updateTeamsForSeason(1, 119);
+	updateTeamsForSeason(4, 120);
+	/*[{_id: 1, seasons: [119, 115, 110, 102, 92, 85, 73, 7, 1]},
+		{_id: 4, seasons: [120, 116, 111, 103, 93, 88, 76, 10, 4]}].forEach(program => {
+		const seasons = program.seasons.sort((a, b) => a - b);
+		for (let i = 0; i < seasons.length; i++) {
+			const when = i < (seasons.length - 1) ? 'past' : 'future';
+			updateTeamsForSeason(when, program, seasons[i]);
+		}
+	});*/
+};
+
+const updateTeamsInGroup = (program, season, teamGroup) => {
+	request.post({url: 'https://www.robotevents.com/api/teams/getTeamsForLatLng', form: {when: 'future', programs: [program], season_id: season, lat: teamGroup.position.lat, lng: teamGroup.position.lng}, json: true}).then(teams => {
+		teams.map(team => formatReTeam(team, program)).forEach(team => {
+			app.db.collection('reTeams').updateOne(
+				{_id: team._id},
+				team,
+				{upsert: true}
+			).then(result => {
+				if (result.upsertedCount) {
+					console.log(`insert to reTeams: ${JSON.stringify(team)}`);
+				} else if (result.modifiedCount) {
+					console.log(`update to reTeams: ${JSON.stringify(team)}`);
+				}
+			}).catch(console.error);
+		});
+	}).catch(error => {
+		console.error(error);
+		updateTeamsInGroup(program, season, teamGroup);
+	});
+};
+
+const updateTeamsForSeason = (program, season) => {
+	request.post({url: 'https://www.robotevents.com/api/teams/latLngGrp', form: {when: 'future', programs: [program], season_id: season}, json: true}).then(teamGroups => {
+		teamGroups.forEach(teamGroup => updateTeamsInGroup(program, season, teamGroup));
+	}).catch(console.error);
+};
+
+const formatReTeam = (team, program) => {
+	const document = {
+		_id: {
+			prog: program,
+			id: team.team
+		},
+		city: team.city
+	};
+	if (team.name) {
+		document.region = team.name;
+	}
+	document.name = team.team_name;
+	if (team.robot_name) {
+		document.robot = team.robot_name;
+	}
+	return document;
 };
 
 const updateMaxSkills = () => {

@@ -22,13 +22,13 @@ module.exports = (message, args) => {
 	if (vex.validTeamId(teamId)) {
 		vex.getTeam(teamId).then(team => {
 			if (team) {
-				db.collection('awards').aggregate([
-					{$match: {'_id.team': team._id}},
-					{$lookup: {from: 'events', localField: '_id.sku', foreignField: '_id', as: 'events'}},
-					{$project: {sku: '$_id.sku', name: '$_id.name', event: {$arrayElemAt: ['$events', 0]}}},
-					{$sort: {'event.season': -1, 'event.end': -1, sku: -1}},
-					{$project: {sku: 1, name: 1, event: '$event.name', season: '$event.season'}}
-				]).toArray().then(awards => {
+				db.collection('awards').aggregate()
+					.match({'_id.team': team._id})
+					.lookup({from: 'events', localField: '_id.sku', foreignField: '_id', as: 'events'})
+					.project({sku: '$_id.sku', name: '$_id.name', event: {$arrayElemAt: ['$events', 0]}})
+					.sort({'event.season': -1, 'event.end': -1, sku: -1})
+					.project({sku: 1, name: 1, event: '$event.name', season: '$event.season'})
+					.toArray().then(awards => {
 					if (awards.length) {
 						const descriptionHeader = `**${awards.length} Award${awards.length == 1 ? '' : 's'}**`;
 						const eventsBySeason = new Array(seasons.length);
