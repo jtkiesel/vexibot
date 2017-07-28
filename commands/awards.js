@@ -23,7 +23,7 @@ module.exports = (message, args) => {
 		vex.getTeam(teamId).then(team => {
 			if (team) {
 				db.collection('awards').aggregate()
-					.match({'_id.team': team._id})
+					.match({'_id.team': teamId})
 					.lookup({from: 'events', localField: '_id.sku', foreignField: '_id', as: 'events'})
 					.project({sku: '$_id.sku', name: '$_id.name', event: {$arrayElemAt: ['$events', 0]}})
 					.sort({'event.season': -1, 'event.end': -1, sku: -1})
@@ -103,8 +103,8 @@ module.exports = (message, args) => {
 						}
 						const embed = new Discord.RichEmbed()
 							.setColor('PURPLE')
-							.setTitle(team._id)
-							.setURL(`https://vexdb.io/teams/view/${team._id}?t=awards`)
+							.setTitle(teamId)
+							.setURL(`https://vexdb.io/teams/view/${teamId}?t=awards`)
 							.setDescription(description);
 						message.channel.send({embed})
 							.then(reply => app.addFooter(message, embed, reply))

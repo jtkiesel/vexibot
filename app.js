@@ -46,7 +46,7 @@ const addFooter = (message, embed, reply) => {
 
 client.on('ready', () => {
 	console.log('Ready!');
-	//vexdata.update();
+	vexdata.update();
 	//vexdata.updateProgramsAndSeasons();
 	//vexdata.updateMaxSkills();
 });

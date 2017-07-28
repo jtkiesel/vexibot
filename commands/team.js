@@ -14,13 +14,12 @@ module.exports = (message, args) => {
 				const name = he.decode(team.name);
 				const robot = he.decode(team.robot);
 
-				let org;
-
 				let location = [team.city];
 				if (team.region && team.region != 'N/A' && team.region != 'Not Applicable or Not Listed') {
 					location.push(team.region);
 				}
 				db.collection('teams').findOne({_id: team._id.id}).then(team2 => {
+					let org;
 					if (team2) {
 						if (team2.org) {
 							org = he.decode(team2.org);

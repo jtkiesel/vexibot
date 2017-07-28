@@ -5,7 +5,7 @@ const app = require('./app');
 const dbinfo = require('./dbinfo');
 
 const update = () => {
-	updateReTeams();
+	//updateReTeams();
 	//updateEvents();
 	//updateTeams();
 	//updateMatches();
