@@ -4,6 +4,8 @@ const request = require('request-promise-native');
 const app = require('./app');
 const dbinfo = require('./dbinfo');
 
+const mapsKey = process.env.MAPS_KEY;
+
 const update = () => {
 	//updateReTeams();
 	//updateEvents();
@@ -28,20 +30,59 @@ const updateReTeams = () => {
 };
 
 const updateTeamsInGroup = (program, season, teamGroup) => {
-	request.post({url: 'https://www.robotevents.com/api/teams/getTeamsForLatLng', form: {when: 'future', programs: [program], season_id: season, lat: teamGroup.position.lat, lng: teamGroup.position.lng}, json: true}).then(teams => {
-		teams.map(team => formatReTeam(team, program)).forEach(team => {
-			app.db.collection('reTeams').updateOne(
-				{_id: team._id},
-				team,
-				{upsert: true}
-			).then(result => {
-				if (result.upsertedCount) {
-					console.log(`insert to reTeams: ${JSON.stringify(team)}`);
-				} else if (result.modifiedCount) {
-					console.log(`update to reTeams: ${JSON.stringify(team)}`);
-				}
-			}).catch(console.error);
-		});
+	const lat = teamGroup.position.lat;
+	const lng = teamGroup.position.lng;
+
+	request.post({url: 'https://www.robotevents.com/api/teams/getTeamsForLatLng', form: {when: 'past', programs: [program], season_id: season, lat: lat, lng: lng}, json: true}).then(teams => {
+		/*const region = teams[0].name ? `|administrative_area:${teams[0].name}` : '';
+		const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&components=locality:${teamGroup.city}${region}&key=${mapsKey}`;
+
+		request.get({url: url, json: true}).then(location => {
+			if (!location.error_message) {
+				let city = '';
+				let region = '';
+				let country = '';
+
+				location.results[0].address_components.forEach(addressComponent => {
+					if (addressComponent.types.includes('locality')) {
+						city = addressComponent.long_name;
+					} else if (addressComponent.types.includes('administrative_area_level_1')) {
+						region = addressComponent.long_name;
+					} else if (addressComponent.types.includes('country')) {
+						country = addressComponent.long_name;
+					}
+				});*/
+				teams.map(team => formatReTeam(team, program, season == 119 || season == 120)).forEach(team => {
+					/*if (city) {
+						team.city = city;
+					}
+					if (region) {
+						team.region = region;
+					}
+					if (country) {
+						team.country = country;
+					}*/
+					app.db.collection('teams').updateOne(
+						{_id: team._id},
+						{$set: team},
+						{upsert: true}
+					).then(result => {
+						if (result.upsertedCount) {
+							console.log(`insert to teams: ${JSON.stringify(team)}`);
+						} else if (result.modifiedCount) {
+							console.log(`update to teams: ${JSON.stringify(team)}`);
+						}
+						console.log('.');
+					}).catch(console.error);
+				});
+			/*} else {
+				console.error(location);
+				updateTeamsInGroup(program, season, teamGroup);
+			}
+		}).catch(error => {
+			console.error(error);
+			updateTeamsInGroup(program, season, teamGroup);
+		});*/
 	}).catch(error => {
 		console.error(error);
 		updateTeamsInGroup(program, season, teamGroup);
@@ -49,12 +90,12 @@ const updateTeamsInGroup = (program, season, teamGroup) => {
 };
 
 const updateTeamsForSeason = (program, season) => {
-	request.post({url: 'https://www.robotevents.com/api/teams/latLngGrp', form: {when: 'future', programs: [program], season_id: season}, json: true}).then(teamGroups => {
+	request.post({url: 'https://www.robotevents.com/api/teams/latLngGrp', form: {when: 'past', programs: [program], season_id: season}, json: true}).then(teamGroups => {
 		teamGroups.forEach(teamGroup => updateTeamsInGroup(program, season, teamGroup));
 	}).catch(console.error);
 };
 
-const formatReTeam = (team, program) => {
+const formatReTeam = (team, program, registered) => {
 	const document = {
 		_id: {
 			prog: program,
@@ -69,6 +110,7 @@ const formatReTeam = (team, program) => {
 	if (team.robot_name) {
 		document.robot = team.robot_name;
 	}
+	document.registered = registered;
 	return document;
 };
 
@@ -83,7 +125,7 @@ const updateMaxSkillsForSeason = season => {
 		maxSkills.map(maxSkill => formatMaxSkill(maxSkill, season)).forEach(maxSkill => {
 			app.db.collection('maxSkills').updateOne(
 				{_id: maxSkill._id},
-				maxSkill,
+				{$set: maxSkill},
 				{upsert: true}
 			).then(result => {
 				if (result.upsertedCount) {
@@ -231,18 +273,31 @@ const formatEvent = event => ({
 	end: encodeDate(event.end),
 	divs: event.divisions
 });
-const formatTeam = team => ({
-	_id: team.number,
-	prog: encodeProgram(team.program),
-	name: team.team_name,
-	robot: team.robot_name,
-	org: team.organisation,
-	city: team.city,
-	region: team.region,
-	country: team.country,
-	grade: encodeGrade(team.grade),
-	registered: team.is_registered
-});
+const formatTeam = team => {
+	const document = {
+		_id: {
+			prog: encodeProgram(team.program),
+			id: team.number
+		},
+		name: team.team_name
+	};
+	if (team.robot_name) {
+		document.robot = team.robot_name
+	}
+	if (team.organisation) {
+		document.org = team.organisation;
+	}
+	document.city = team.city;
+	if (team.region) {
+		document.region = team.region;
+	}
+	if (team.country) {
+		document.country = team.country;
+	}
+	document.grade = encodeGrade(team.grade);
+	document.registered = encodeRegistered(team.is_registered);
+	return document;
+};
 const formatMatch = match => ({
 	_id: {
 		sku: match.sku,
@@ -304,10 +359,19 @@ const formatSkill = skill => ({
 	score: skill.score
 });
 
-const encodeProgram = program => dbinfo.programs.indexOf(program);
+const vexDbProgramToId = {
+	'VRC': 1,
+	'VEXU': 4,
+	'WORKSHOP': 37,
+	'CREATE': 40,
+	'VIQC': 41
+};
+
+const encodeProgram = program => vexDbProgramToId[program];
 const encodeSeason = season => dbinfo.seasons.indexOf(season);
 const encodeGrade = grade => dbinfo.grades.indexOf(grade);
 const encodeDate = date => Date.parse(date);
+const encodeRegistered = registered => Boolean(registered);
 
 const updateCollectionFromResource = (collection, resource, formatFunc) => {
 	updateCollectionFromResourceBatch(collection, resource, formatFunc, 0);
@@ -320,7 +384,7 @@ const updateCollectionFromResourceBatch = (collection, resource, formatFunc, sta
 				body.result.map(formatFunc).forEach(document => {
 					app.db.collection(collection).updateOne(
 						{_id: document._id},
-						document,
+						{$set: document},
 						{upsert: true}
 					).then(result => {
 						if (result.upsertedCount) {
