@@ -20,7 +20,7 @@ module.exports = (message, args) => {
 				const registered = team.registered ? 'Yes' : 'No';
 
 				let location = [team.city];
-				if (team.region && team.region != 'N/A' && team.region != 'Not Applicable or Not Listed') {
+				if (team.region) {
 					location.push(team.region);
 				}
 				if (team.country) {

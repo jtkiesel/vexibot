@@ -5,8 +5,10 @@ const dbinfo = require('../dbinfo');
 const vex = require('../vex');
 
 const db = app.db;
-const seasons = dbinfo.seasons;
-const seasonUrls = dbinfo.seasonUrls;
+const decodeSeason = dbinfo.decodeSeason;
+const idToSeasonUrl = dbinfo.idToSeasonUrl;
+const seasonIds = Object.keys(dbinfo.idToSeason).reverse();
+const numSeasons = seasonIds.length;
 
 const emojiToRegex = {
 	'🥇': /^((?:Excellence Award)|(?:Tournament Champions)|(?:(?:Robot|Programming) Skills Winner))/,
@@ -29,20 +31,20 @@ module.exports = (message, args) => {
 					.sort({'event.season': -1, 'event.end': -1, sku: -1})
 					.project({sku: 1, name: 1, event: '$event.name', season: '$event.season'})
 					.toArray().then(awards => {
-					if (awards.length) {
-						const descriptionHeader = `**${awards.length} Award${awards.length == 1 ? '' : 's'}**`;
-						const eventsBySeason = new Array(seasons.length);
-						for (let i = 0; i < seasons.length; i++) {
-							eventsBySeason[i] = [];
-						}
+					const numAwards = awards.length;
+					if (numAwards) {
+						const descriptionHeader = `**${numAwards} Award${numAwards == 1 ? '' : 's'}**`;
+						const eventsBySeason = new Array(numSeasons);
+						seasonIds.forEach(season => {
+							eventsBySeason[season] = [];
+						});
 						let sku;
 						let event;
 						let seasonHeaders = [];
 						let season = awards[0].season;
 						let awardCount = 0;
 
-						for (let i = 0; i < awards.length; i++) {
-							award = awards[i];
+						awards.forEach(award => {
 							if (award.sku != sku) {
 								if (event) {
 									eventsBySeason[season].push(event);
@@ -64,15 +66,15 @@ module.exports = (message, args) => {
 							event += `\n${awardEmoji}${awardName}`;
 
 							if (award.season != season) {
-								seasonHeaders[season] = `\n***[${seasons[season]}](${seasonUrls[season]})*** (${awardCount})`
+								seasonHeaders[season] = `\n***[${decodeSeason(season)}](${idToSeasonUrl[season]})*** (${awardCount})`
 								season = award.season;
 								awardCount = 1;
 							} else {
 								awardCount++;
 							}
-						}
+						});
 						eventsBySeason[season].push(event);
-						seasonHeaders[season] = `\n***[${seasons[season]}](${seasonUrls[season]})*** (${awardCount})`
+						seasonHeaders[season] = `\n***[${decodeSeason(season)}](${idToSeasonUrl[season]})*** (${awardCount})`
 
 						let description = descriptionHeader;
 						let atLimit = false;
@@ -80,7 +82,7 @@ module.exports = (message, args) => {
 						let charsRemaining = 2048 - (descriptionHeader.length + awardsOmitted);
 						seasonHeaders.forEach(header => charsRemaining -= header.length);
 
-						for (let season = dbinfo.seasons.length - 1; season >= 0; season--) {
+						seasonIds.forEach(season => {
 							if (seasonHeaders[season]) {
 								description += seasonHeaders[season];
 
@@ -100,7 +102,7 @@ module.exports = (message, args) => {
 									}
 								}
 							}
-						}
+						});
 						const embed = new Discord.RichEmbed()
 							.setColor('PURPLE')
 							.setTitle(teamId)

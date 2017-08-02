@@ -1,8 +1,6 @@
 const Discord = require('discord.js');
 const mongodb = require('mongodb');
 
-const vexdata = require('./vexdata');
-
 const client = new Discord.Client();
 const MongoClient = new mongodb.MongoClient();
 const token = process.env.VEXIBOT_TOKEN;
@@ -12,9 +10,10 @@ const prefix = '^';
 const commandInfo = {
 	ping: 'Pong!',
 	uptime: 'Time since bot last restarted.',
-	team: 'General information about a VEX team.',
-	awards: 'Awards earned by a VEX team.',
-	skills: 'Skills scores achieved by a VEX team.'
+	team: 'General information about a team.',
+	awards: 'Awards earned by a team.',
+	//skills: 'Skills scores achieved by a team.',
+	topskills: 'Official Robot Skills rankings.'
 };
 const commands = {};
 
@@ -45,6 +44,8 @@ const addFooter = (message, embed, reply) => {
 }
 
 client.on('ready', () => {
+	const vexdata = require('./vexdata');
+
 	console.log('Ready!');
 	vexdata.update();
 	//vexdata.updateProgramsAndSeasons();

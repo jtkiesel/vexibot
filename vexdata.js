@@ -4,7 +4,9 @@ const request = require('request-promise-native');
 const app = require('./app');
 const dbinfo = require('./dbinfo');
 
-const mapsKey = process.env.MAPS_KEY;
+const db = app.db;
+
+//const mapsKey = process.env.MAPS_KEY;
 
 const update = () => {
 	//updateReTeams();
@@ -62,7 +64,7 @@ const updateTeamsInGroup = (program, season, teamGroup) => {
 					if (country) {
 						team.country = country;
 					}*/
-					app.db.collection('teams').updateOne(
+					db.collection('teams').updateOne(
 						{_id: team._id},
 						{$set: team},
 						{upsert: true}
@@ -115,7 +117,7 @@ const formatReTeam = (team, program, registered) => {
 };
 
 const updateMaxSkills = () => {
-	app.db.collection('programs').find().project({_id: 0, seasons: 1}).forEach(program => {
+	db.collection('programs').find().project({_id: 0, seasons: 1}).forEach(program => {
 		program.seasons.forEach(season => updateMaxSkillsForSeason(season));
 	});
 };
@@ -123,19 +125,26 @@ const updateMaxSkills = () => {
 const updateMaxSkillsForSeason = season => {
 	request.get({url: `https://www.robotevents.com/api/seasons/${season}/skills?untilSkillsDeadline=0`, json: true}).then(maxSkills => {
 		maxSkills.map(maxSkill => formatMaxSkill(maxSkill, season)).forEach(maxSkill => {
-			app.db.collection('maxSkills').updateOne(
+			db.collection('maxSkills').findOneAndUpdate(
 				{_id: maxSkill._id},
 				{$set: maxSkill},
 				{upsert: true}
 			).then(result => {
-				if (result.upsertedCount) {
-					console.log(`insert to maxSkills: ${JSON.stringify(maxSkill)}`);
-				} else if (result.modifiedCount) {
-					console.log(`update to maxSkills: ${JSON.stringify(maxSkill)}`);
+				const old = result.value;
+				if (!old || maxSkill.team.grade != old.team.grade) {
+					db.collection('teams').findOneAndUpdate(
+						{_id: maxSkill.team.id},
+						{$set: {grade: maxSkill.team.grade}}
+					).then(result => {
+						const old = result.value;
+						if (old && maxSkill.team.grade != old.team.grade) {
+							console.log(`Updated ${maxSkills.team.id} from ${old.team.grade} to ${maxSkill.team.grade}.`);
+						}
+					}).catch(console.error);
 				}
 			}).catch(console.error);
 		});
-	}).catch(error => {});
+	}).catch(console.error);
 };
 
 const formatMaxSkill = (maxSkill, season) => {
@@ -154,18 +163,16 @@ const formatMaxSkill = (maxSkill, season) => {
 	if (maxSkill.team.country) {
 		document.team.country = maxSkill.team.country;
 	}
-	document.team.grade = maxSkill.team.gradeLevel;
+	document.team.grade = encodeGrade(maxSkill.team.gradeLevel);
 	document.event = {
 		sku: maxSkill.event.sku,
 		start: encodeDate(maxSkill.event.startDate)
 	};
-	document.scores = {
-		score: maxSkill.scores.score,
-		prog: maxSkill.scores.programming,
-		driver: maxSkill.scores.driver,
-		maxProg: maxSkill.scores.maxProgramming,
-		maxDriver: maxSkill.scores.maxDriver
-	};
+	document.score = maxSkill.scores.score;
+	document.prog = maxSkill.scores.programming;
+	document.driver = maxSkill.scores.driver;
+	document.maxProg = maxSkill.scores.maxProgramming;
+	document.maxDriver = maxSkill.scores.maxDriver;
 	return document;
 };
 
@@ -175,7 +182,7 @@ const updateProgramsAndSeasons = () => {
 			const seasons = JSON.parse(JSON.stringify(program.seasons));
 			const seasonIds = program.seasons.map(season => season._id);
 			delete program.seasons;
-			app.db.collection('programs').updateOne(
+			db.collection('programs').updateOne(
 				{_id: program._id},
 				{$set: program, $addToSet: {seasons: {$each: seasonIds}}},
 				{upsert: true}
@@ -186,7 +193,7 @@ const updateProgramsAndSeasons = () => {
 					console.log(`update to programs: ${JSON.stringify(program)}`);
 				}
 				seasons.forEach(season => {
-					app.db.collection('seasons').updateOne(
+					db.collection('seasons').updateOne(
 						{_id: season._id},
 						season,
 						{upsert: true}
@@ -257,22 +264,33 @@ const updateRankings = () => updateCollectionFromResource('rankings', 'get_ranki
 const updateAwards = () => updateCollectionFromResource('awards', 'get_awards', formatAward);
 const updateSkills = () => updateCollectionFromResource('skills', 'get_skills', formatSkill);
 
-const formatEvent = event => ({
-	_id: event.sku,
-	prog: encodeProgram(event.program),
-	name: event.name,
-	venue: event.loc_venue,
-	addr1: event.loc_address1,
-	addr2: event.loc_address2,
-	city: event.loc_city,
-	region: event.loc_region,
-	postal: event.loc_postalcode,
-	country: event.loc_country,
-	season: encodeSeason(event.season),
-	start: encodeDate(event.start),
-	end: encodeDate(event.end),
-	divs: event.divisions
-});
+const formatEvent = event => {
+	const document = {
+		_id: event.sku,
+		prog: encodeProgram(event.program),
+		name: event.name,
+		venue: event.loc_venue
+	};
+	if (event.loc_address1) {
+		document.addr1 = event.loc_address1;
+	}
+	if (event.loc_address2) {
+		document.addr2 = event.loc_address2;
+	}
+	document.city = event.loc_city;
+	if (event.loc_region && event.loc_region != 'N/A') {
+		document.region = event.loc_region;
+	}
+	if (event.loc_postalcode) {
+		document.postal = event.loc_postalcode;
+	}
+	document.country = event.loc_country;
+	document.season = encodeSeason(event.season);
+	document.start = encodeDate(event.start);
+	document.end = encodeDate(event.end);
+	document.divs = event.divisions;
+	return document;
+};
 const formatTeam = team => {
 	const document = {
 		_id: {
@@ -288,7 +306,7 @@ const formatTeam = team => {
 		document.org = team.organisation;
 	}
 	document.city = team.city;
-	if (team.region) {
+	if (team.region && team.region != 'N/A' && team.region != 'Not Applicable or Not Listed') {
 		document.region = team.region;
 	}
 	if (team.country) {
@@ -339,14 +357,19 @@ const formatRanking = ranking => ({
 	dpr: ranking.dpr,
 	ccwm: ranking.ccwm
 });
-const formatAward = award => ({
-	_id: {
-		sku: award.sku,
-		name: award.name,
-		team: award.team
-	},
-	quals: award.qualifies
-});
+const formatAward = award => {
+	const document = {
+		_id: {
+			sku: award.sku,
+			name: award.name,
+			team: award.team
+		}
+	};
+	if (award.qualifies.length) {
+		document.quals = award.qualifies;
+	}
+	return document;
+};
 const formatSkill = skill => ({
 	_id: {
 		sku: skill.sku,
@@ -367,8 +390,22 @@ const vexDbProgramToId = {
 	'VIQC': 41
 };
 
+const vexDbSeasonToId = {
+	'Bridge Battle': -4,
+	'Elevation': -3,
+	'Clean Sweep': 1,
+	'Round Up': 7,
+	'Gateway': 73,
+	'Sack Attack': 85,
+	'Toss Up': 92,
+	'Skyrise': 102,
+	'Nothing But Net': 110,
+	'Starstruck': 115,
+	'In The Zone': 119
+};
+
 const encodeProgram = program => vexDbProgramToId[program];
-const encodeSeason = season => dbinfo.seasons.indexOf(season);
+const encodeSeason = season => vexDbSeasonToId[season];
 const encodeGrade = grade => dbinfo.grades.indexOf(grade);
 const encodeDate = date => Date.parse(date);
 const encodeRegistered = registered => Boolean(registered);
@@ -382,7 +419,7 @@ const updateCollectionFromResourceBatch = (collection, resource, formatFunc, sta
 		if (body.status) {
 			if (body.size) {
 				body.result.map(formatFunc).forEach(document => {
-					app.db.collection(collection).updateOne(
+					db.collection(collection).updateOne(
 						{_id: document._id},
 						{$set: document},
 						{upsert: true}
