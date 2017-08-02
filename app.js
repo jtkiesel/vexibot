@@ -12,8 +12,8 @@ const commandInfo = {
 	uptime: 'Time since bot last restarted.',
 	team: 'General information about a team.',
 	awards: 'Awards earned by a team.',
-	//skills: 'Skills scores achieved by a team.',
-	topskills: 'Official Robot Skills rankings.'
+	skills: 'Skills scores achieved by a team.',
+	topskills: 'Official Robot Skills rankings for a grade.'
 };
 const commands = {};
 

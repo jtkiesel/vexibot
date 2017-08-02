@@ -10,6 +10,7 @@ const db = app.db;
 
 const update = () => {
 	//updateReTeams();
+	//updateMaxSkills();
 	//updateEvents();
 	//updateTeams();
 	//updateMatches();

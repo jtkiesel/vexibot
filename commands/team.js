@@ -48,10 +48,10 @@ module.exports = (message, args) => {
 					.then(reply => app.addFooter(message, embed, reply))
 					.catch(console.error);
 			} else {
-				message.reply('That team ID has never been registered.').catch(console.error);
+				message.reply('that team ID has never been registered.').catch(console.error);
 			}
 		}).catch(console.error);
 	} else {
-		message.reply('Please provide a valid team ID.').catch(console.error);
+		message.reply('please provide a valid team ID.').catch(console.error);
 	}
 };

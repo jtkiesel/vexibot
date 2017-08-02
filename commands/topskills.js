@@ -10,42 +10,52 @@ const rankEmojis = ['🥇', '🥈', '🥉'];
 const defaultEmoji = '🏅';
 
 module.exports = (message, args) => {
-	if (args) {
-		const teamId = vex.getTeamId(message, args);
-		if (vex.validTeamId(teamId)) {
-			vex.getTeam(teamId).then(team => {
-				if (team) {
-				} else {
-					message.reply('That team ID has never been registered.');
-				}
-			}).catch(console.error);
-		} else {
-			message.reply('Please provide a valid team ID.');
-		}
+	const seasonName = 'In_The_Zone';
+	let grade = args ? args.toUpperCase() : 'HS';
+	let program;
+	let season;
+	let limit;
+	if (grade == 'HS') {
+		program = 'VRC';
+		grade = 'High School';
+		season = 119;
+		limit = 35;
+	} else if (grade == 'MS') {
+		program = 'VRC';
+		grade = 'Middle School';
+		season = 119;
+		limit = 15;
+	} else if (grade == 'C' || grade == 'U') {
+		program = 'VEXU';
+		grade = 'College';
+		season = 120;
+		limit = 5;
 	} else {
-		topSkills(message, 119, /*dbinfo.grades.indexOf(*/'High School'/*)*/, 35);
+		message.reply('please enter a valid grade.');
+		return;
 	}
-};
-
-const topSkills = (message, season, grade, limit) => {
 	db.collection('maxSkills')
 		.find({'_id.season': season, 'team.grade': grade})
 		.sort({score: -1})
 		.limit(limit).toArray().then(teams => {
-		description = '';
-		for (let i = 0; i < teams.length; i++) {
-			const rank = (i < 3) ? `${rankEmojis[i]}\`:` : `\`#${String(i + 1).padEnd(2)} :`;
-			const score = String(teams[i].scores.score).padStart(3);
-			const team = teams[i].team.id;
-			description += `${rank} ${score}\`  [${team}](https://vexdb.io/teams/view/${team}?t=skills)\n`;
+		if (teams.length) {
+			description = '';
+			for (let i = 0; i < teams.length; i++) {
+				const rank = (i < 3) ? `${rankEmojis[i]} \`:` : `\`#${String(i + 1).padEnd(2)} :`;
+				const score = String(teams[i].scores.score).padStart(3);
+				const team = teams[i].team.id;
+				description += `${rank} ${score}\`   [${team}](https://vexdb.io/teams/view/${team}?t=skills)\n`;
+			}
+			const embed = new Discord.RichEmbed()
+				.setColor('AQUA')
+				.setTitle(`${program} ${grade} In the Zone Robot Skills`)
+				.setURL(`https://vexdb.io/skills/${program}/${seasonName}/Robot`)
+				.setDescription(description);
+			message.channel.send({embed})
+				.then(reply => app.addFooter(message, embed, reply))
+				.catch(console.error);
+		} else {
+			message.reply(`no skills scores available for ${program} ${grade} In the Zone.`);
 		}
-		const embed = new Discord.RichEmbed()
-			.setColor('AQUA')
-			.setTitle('In the Zone VRC HS Robot Skills')
-			.setURL(`https://robotevents.com/robot-competitions/vex-robotics-competition/standings/skills`)
-			.setDescription(description);
-		message.channel.send({embed})
-			.then(reply => app.addFooter(message, embed, reply))
-			.catch(console.error);
 	}).catch(console.error);
 };

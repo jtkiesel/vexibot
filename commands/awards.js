@@ -19,6 +19,8 @@ const emojiToRegex = {
 
 const awardsOmitted = '\n**[Older awards omitted.]**';
 
+const formatSeasonHeader = (season, awardCount) => `\n***[${decodeSeason(season)}](${idToSeasonUrl[season]})*** (${awardCount})`;
+
 module.exports = (message, args) => {
 	const teamId = vex.getTeamId(message, args);
 	if (vex.validTeamId(teamId)) {
@@ -66,7 +68,7 @@ module.exports = (message, args) => {
 							event += `\n${awardEmoji}${awardName}`;
 
 							if (award.season != season) {
-								seasonHeaders[season] = `\n***[${decodeSeason(season)}](${idToSeasonUrl[season]})*** (${awardCount})`
+								seasonHeaders[season] = formatSeasonHeader(season, awardCount);
 								season = award.season;
 								awardCount = 1;
 							} else {
@@ -74,7 +76,7 @@ module.exports = (message, args) => {
 							}
 						});
 						eventsBySeason[season].push(event);
-						seasonHeaders[season] = `\n***[${decodeSeason(season)}](${idToSeasonUrl[season]})*** (${awardCount})`
+						seasonHeaders[season] = formatSeasonHeader(season, awardCount);
 
 						let description = descriptionHeader;
 						let atLimit = false;
@@ -112,14 +114,14 @@ module.exports = (message, args) => {
 							.then(reply => app.addFooter(message, embed, reply))
 							.catch(console.error);
 					} else {
-						message.reply('That team has never won an award.');
+						message.reply('that team has never won an award.');
 					}
 				}).catch(console.error);
 			} else {
-				message.reply('That team ID has never been registered.');
+				message.reply('that team ID has never been registered.');
 			}
 		}).catch(console.error);
 	} else {
-		message.reply('Please provide a valid team ID.');
+		message.reply('please provide a valid team ID.');
 	}
 };
