@@ -80,7 +80,7 @@ module.exports = (message, args) => {
 
 						let description = descriptionHeader;
 						let atLimit = false;
-						let linesRemaining = 30 - (3 + seasonHeaders.filter(header => header).length);
+						let linesRemaining = 22 - (3 + seasonHeaders.filter(header => header).length);
 						let charsRemaining = 2048 - (descriptionHeader.length + awardsOmitted);
 						seasonHeaders.forEach(header => charsRemaining -= header.length);
 
