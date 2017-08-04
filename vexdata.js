@@ -1,23 +1,22 @@
 const Discord = require('discord.js');
 const request = require('request-promise-native');
+const cron = require('cron');
 
 const app = require('./app');
 const dbinfo = require('./dbinfo');
 
+const CronJob = cron.CronJob;
 const db = app.db;
 
 //const mapsKey = process.env.MAPS_KEY;
+const timezone = 'America/New_York';
 
-const update = () => {
-	//updateReTeams();
-	//updateMaxSkills();
-	//updateEvents();
-	//updateTeams();
-	//updateMatches();
-	//updateRankings();
-	//updateAwards();
-	//updateSkills();
-};
+const updateEvents = () => updateCollectionFromResource('events', 'get_events', formatEvent);
+const updateTeams = () => updateCollectionFromResource('teams', 'get_teams', formatTeam);
+const updateMatches = () => updateCollectionFromResource('matches', 'get_matches', formatMatch);
+const updateRankings = () => updateCollectionFromResource('rankings', 'get_rankings', formatRanking);
+const updateAwards = () => updateCollectionFromResource('awards', 'get_awards', formatAward);
+const updateSkills = () => updateCollectionFromResource('skills', 'get_skills', formatSkill);
 
 const updateReTeams = () => {
 	updateTeamsForSeason(1, 119);
@@ -30,6 +29,32 @@ const updateReTeams = () => {
 			updateTeamsForSeason(when, program, seasons[i]);
 		}
 	});*/
+};
+
+const updateMaxSkills = () => {
+	updateMaxSkillsForSeason(119);
+	updateMaxSkillsForSeason(120);
+	/*db.collection('programs').find().project({_id: 0, seasons: 1}).forEach(program => {
+		program.seasons.forEach(season => updateMaxSkillsForSeason(season));
+	});*/
+};
+
+const eventsJob = new CronJob('00 00 08 * * *', updateEvents, null, true, timezone);
+const teamsJob = new CronJob('00 10 08 * * *', updateReTeams, null, true, timezone);
+const matchesJob = new CronJob('00 20 08 * * *', updateMatches, null, true, timezone);
+const rankingsJob = new CronJob('00 30 08 * * *', updateRankings, null, true, timezone);
+const awardsJob = new CronJob('00 40 08 * * *', updateAwards, null, true, timezone);
+const skillsJob = new CronJob('00 50 08 * * *', updateMaxSkills, null, true, timezone);
+
+const update = () => {
+	//updateReTeams();
+	//updateMaxSkills();
+	//updateEvents();
+	//updateTeams();
+	//updateMatches();
+	//updateRankings();
+	//updateAwards();
+	//updateSkills();
 };
 
 const updateTeamsInGroup = (program, season, teamGroup) => {
@@ -117,12 +142,6 @@ const formatReTeam = (team, program, registered) => {
 	return document;
 };
 
-const updateMaxSkills = () => {
-	db.collection('programs').find().project({_id: 0, seasons: 1}).forEach(program => {
-		program.seasons.forEach(season => updateMaxSkillsForSeason(season));
-	});
-};
-
 const updateMaxSkillsForSeason = season => {
 	request.get({url: `https://www.robotevents.com/api/seasons/${season}/skills?untilSkillsDeadline=0`, json: true}).then(maxSkills => {
 		maxSkills.map(maxSkill => formatMaxSkill(maxSkill, season)).forEach(maxSkill => {
@@ -133,16 +152,22 @@ const updateMaxSkillsForSeason = season => {
 			).then(result => {
 				const old = result.value;
 				if (!old || maxSkill.team.grade != old.team.grade) {
+					if (!old) {
+						console.log(`Insert ${maxSkill} to maxSkills.`);
+					}
 					db.collection('teams').findOneAndUpdate(
 						{_id: maxSkill.team.id},
 						{$set: {grade: maxSkill.team.grade}}
 					).then(result => {
 						const old = result.value;
-						if (old && maxSkill.team.grade != old.team.grade) {
-							console.log(`Updated ${maxSkills.team.id} from ${old.team.grade} to ${maxSkill.team.grade}.`);
+						if (!old) {
+							console.log(`Insert ${maxSkill.team.id} to teams.`);
+						} else if (old && maxSkill.team.grade != old.team.grade) {
+							console.log(`Update ${maxSkill.team.id} from ${old.team.grade} to ${maxSkill.team.grade}.`);
 						}
 					}).catch(console.error);
 				}
+				console.log('.');
 			}).catch(console.error);
 		});
 	}).catch(console.error);
@@ -257,13 +282,6 @@ const formatSeason = season => {
 };
 
 const encodeSeasonName = name => name.match(/^(?:.+: )?(.+?)(?: [0-9]{4}-[0-9]{4})?$/)[1];
-
-const updateEvents = () => updateCollectionFromResource('events', 'get_events', formatEvent);
-const updateTeams = () => updateCollectionFromResource('teams', 'get_teams', formatTeam);
-const updateMatches = () => updateCollectionFromResource('matches', 'get_matches', formatMatch);
-const updateRankings = () => updateCollectionFromResource('rankings', 'get_rankings', formatRanking);
-const updateAwards = () => updateCollectionFromResource('awards', 'get_awards', formatAward);
-const updateSkills = () => updateCollectionFromResource('skills', 'get_skills', formatSkill);
 
 const formatEvent = event => {
 	const document = {
@@ -430,6 +448,7 @@ const updateCollectionFromResourceBatch = (collection, resource, formatFunc, sta
 						} else if (result.modifiedCount) {
 							console.log(`update to ${collection}: ${JSON.stringify(document)}`);
 						}
+						console.log('.');
 					}).catch(console.error);
 				});
 				updateCollectionFromResourceBatch(collection, resource, formatFunc, startIndex + body.size);
