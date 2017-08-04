@@ -100,7 +100,7 @@ const updateTeamsInGroup = (program, season, teamGroup) => {
 						} else if (result.modifiedCount) {
 							console.log(`update to teams: ${JSON.stringify(team)}`);
 						}
-						console.log('.');
+						//console.log('.');
 					}).catch(console.error);
 				});
 			/*} else {
@@ -167,7 +167,7 @@ const updateMaxSkillsForSeason = season => {
 						}
 					}).catch(console.error);
 				}
-				console.log('.');
+				//console.log('.');
 			}).catch(console.error);
 		});
 	}).catch(console.error);
@@ -448,7 +448,7 @@ const updateCollectionFromResourceBatch = (collection, resource, formatFunc, sta
 						} else if (result.modifiedCount) {
 							console.log(`update to ${collection}: ${JSON.stringify(document)}`);
 						}
-						console.log('.');
+						//console.log('.');
 					}).catch(console.error);
 				});
 				updateCollectionFromResourceBatch(collection, resource, formatFunc, startIndex + body.size);
