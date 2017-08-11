@@ -18,8 +18,8 @@ const updateAwards = () => updateCollectionFromResource('awards', 'get_awards', 
 const updateSkills = () => updateCollectionFromResource('skills', 'get_skills', formatSkill);
 
 const updateReTeams = () => {
-	updateTeamsForSeason(1, 115);
-	updateTeamsForSeason(4, 116);
+	updateTeamsForSeason(1, 1);
+	updateTeamsForSeason(4, 4);
 	/*[{_id: 1, seasons: [119, 115, 110, 102, 92, 85, 73, 7, 1]},
 		{_id: 4, seasons: [120, 116, 111, 103, 93, 88, 76, 10, 4]}].forEach(program => {
 		const seasons = program.seasons.sort((a, b) => a - b);
@@ -169,7 +169,7 @@ const formatReTeam = (team, program, registered) => {
 	if (team.robot_name) {
 		document.robot = team.robot_name;
 	}
-	if (/^([A-Z]+)$/i.test(team.team)) {
+	if (program == encodeProgram('VEXU')) {
 		document.grade = encodeGrade('College');
 	}
 	document.registered = registered;
