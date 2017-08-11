@@ -1,8 +1,9 @@
 const app = require('./app');
 
 const getTeamId = (message, args) => {
-	if (args) {
-		return args.split(' ')[0].toUpperCase();
+	const arg = args.replace(/\s/g, '');
+	if (arg) {
+		return arg.toUpperCase();
 	} else if (message.member) {
 		return message.member.nickname.split(' | ', 2)[1];
 	}

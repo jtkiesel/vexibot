@@ -32,18 +32,18 @@ module.exports = (message, args) => {
 					.setColor('GREEN')
 					.setTitle(teamId)
 					.setURL(`https://vexdb.io/teams/view/${teamId}`)
-					.addField('Team Name', name, true);
+					.addField('**Team Name**', name, true);
 				if (robot) {
-					embed.addField('Robot Name', robot, true);
+					embed.addField('**Robot Name**', robot, true);
 				}
 				if (org) {
-					embed.addField('Organization', org, true);
+					embed.addField('**Organization**', org, true);
 				}
-				embed.addField('Location', location, true);
+				embed.addField('**Location**', location, true);
 				if (grade) {
-					embed.addField('Grade', grade, true);
+					embed.addField('**Grade**', grade, true);
 				}
-				embed.addField('Registered?', registered, true);
+				embed.addField('**Registered?**', registered, true);
 				message.channel.send({embed})
 					.then(reply => app.addFooter(message, embed, reply))
 					.catch(console.error);

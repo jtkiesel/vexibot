@@ -1,4 +1,3 @@
-const Discord = require('discord.js');
 const request = require('request-promise-native');
 const cron = require('cron');
 
@@ -19,17 +18,28 @@ const updateAwards = () => updateCollectionFromResource('awards', 'get_awards', 
 const updateSkills = () => updateCollectionFromResource('skills', 'get_skills', formatSkill);
 
 const updateReTeams = () => {
-	updateTeamsForSeason(1, 119);
-	updateTeamsForSeason(4, 120);
+	updateTeamsForSeason(1, 1);
+	updateTeamsForSeason(4, 4);
 	/*[{_id: 1, seasons: [119, 115, 110, 102, 92, 85, 73, 7, 1]},
 		{_id: 4, seasons: [120, 116, 111, 103, 93, 88, 76, 10, 4]}].forEach(program => {
 		const seasons = program.seasons.sort((a, b) => a - b);
 		for (let i = 0; i < seasons.length; i++) {
-			const when = i < (seasons.length - 1) ? 'past' : 'future';
-			updateTeamsForSeason(when, program, seasons[i]);
+			updateTeamsForSeason(program, seasons[i]);
 		}
 	});*/
 };
+
+const updateReEvents = () => {
+	updateEventsForSeason(119);
+	updateEventsForSeason(120);
+	/*[{_id: 1, seasons: [119, 115, 110, 102, 92, 85, 73, 7, 1]},
+		{_id: 4, seasons: [120, 116, 111, 103, 93, 88, 76, 10, 4]}].forEach(program => {
+		const seasons = program.seasons.sort((a, b) => a - b);
+		for (let i = 0; i < seasons.length; i++) {
+			updateEventsForSeason(seasons[i]);
+		}
+	});*/
+}
 
 const updateMaxSkills = () => {
 	updateMaxSkillsForSeason(119);
@@ -40,6 +50,7 @@ const updateMaxSkills = () => {
 };
 
 const eventsJob = new CronJob('00 00 08 * * *', updateEvents, null, true, timezone);
+const reEventsJob = new CronJob('00 05 08 * * *', updateReEvents, null, true, timezone);
 const teamsJob = new CronJob('00 10 08 * * *', updateReTeams, null, true, timezone);
 const matchesJob = new CronJob('00 20 08 * * *', updateMatches, null, true, timezone);
 const rankingsJob = new CronJob('00 30 08 * * *', updateRankings, null, true, timezone);
@@ -47,7 +58,8 @@ const awardsJob = new CronJob('00 40 08 * * *', updateAwards, null, true, timezo
 const skillsJob = new CronJob('00 50 08 * * *', updateMaxSkills, null, true, timezone);
 
 const update = () => {
-	//updateReTeams();
+	updateReTeams();
+	//updateReEvents();
 	//updateMaxSkills();
 	//updateEvents();
 	//updateTeams();
@@ -117,6 +129,25 @@ const updateTeamsInGroup = (program, season, teamGroup) => {
 	});
 };
 
+const updateEventsForSeason = season => {
+	request.post({url: 'https://www.robotevents.com/api/events', form: {when: 'past', season_id: season}, json: true}).then(events => {
+		events.map(formatReEvent).forEach(event => {
+			db.collection('events').updateOne(
+				{_id: event._id},
+				{$set: event},
+				{upsert: true}
+			).then(result => {
+				if (result.upsertedCount) {
+					console.log(`insert to events: ${JSON.stringify(event)}`);
+				} else if (result.modifiedCount) {
+					console.log(`update to events: ${JSON.stringify(event)}`);
+				}
+				//console.log('.');
+			}).catch(console.error);
+		});
+	}).catch(console.error);
+}
+
 const updateTeamsForSeason = (program, season) => {
 	request.post({url: 'https://www.robotevents.com/api/teams/latLngGrp', form: {when: 'past', programs: [program], season_id: season}, json: true}).then(teamGroups => {
 		teamGroups.forEach(teamGroup => updateTeamsInGroup(program, season, teamGroup));
@@ -138,7 +169,33 @@ const formatReTeam = (team, program, registered) => {
 	if (team.robot_name) {
 		document.robot = team.robot_name;
 	}
+	if (/^([A-Z]+)$/i.test(team.team)) {
+		document.grade = 'College';
+	}
 	document.registered = registered;
+	return document;
+};
+
+const formatReEvent = event => {
+	const dates = event.date.match(/^(.+?)(?: - (.+))?$/);
+	const document = {
+		_id: event.sku,
+		prog: event.program_id,
+		name: event.name,
+		season: event.season_id,
+		start: encodeDate(dates[1]),
+		end: dates[2] ? encodeDate(dates[2]) : encodeDate(dates[1])
+	};
+	if (event.email) {
+		document.email = event.email;
+	}
+	document.id = event.id;
+	if (event.phone) {
+		document.phone = event.phone;
+	}
+	if (event.webcast_link) {
+		document.webcast = event.webcast_link;
+	}
 	return document;
 };
 
@@ -332,31 +389,53 @@ const formatTeam = team => {
 		document.country = team.country;
 	}
 	document.grade = encodeGrade(team.grade);
-	document.registered = encodeRegistered(team.is_registered);
+	document.registered = encodeBoolean(team.is_registered);
 	return document;
 };
-const formatMatch = match => ({
-	_id: {
-		sku: match.sku,
-		div: match.division,
-		round: match.round,
-		instance: match.instance,
-		num: match.matchnum
-	},
-	field: match.field,
-	red1: match.red1,
-	red2: match.red2,
-	red3: match.red3,
-	redSit: match.redsit,
-	blue1: match.blue1,
-	blue2: match.blue2,
-	blue3: match.blue3,
-	blueSit: match.bluesit,
-	redScore: match.redscore,
-	blueScore: match.bluescore,
-	scored: match.scored,
-	start: encodeDate(match.scheduled)
-});
+const formatMatch = match => {
+	const document = {
+		_id: {
+			sku: match.sku,
+			div: match.division,
+			round: match.round,
+			instance: match.instance,
+			num: match.matchnum
+		}
+	};
+	if (match.field) {
+		document.field = match.field;
+	}
+	document.red1 = match.red1;
+	if (match.red2) {
+		document.red2 = match.red2;
+	}
+	if (match.red3) {
+		document.red3 = match.red3;
+	}
+	if (match.redsit) {
+		document.redSit = match.redsit;
+	}
+	document.blue1 = match.blue1;
+	if (match.blue2) {
+		document.blue2 = match.blue2;
+	}
+	if (match.blue3) {
+		document.blue3 = match.blue3;
+	}
+	if (match.bluesit) {
+		document.blueSit = match.bluesit;
+	}
+	if (match.scored) {
+		document.redScore = match.redscore;
+		document.blueScore = match.bluescore;
+	}
+	document.scored = encodeBoolean(match.scored);
+	const start = encodeDate(match.scheduled);
+	if (start) {
+		document.start = start;
+	}
+	return document;
+};
 const formatRanking = ranking => ({
 	_id: {
 		sku: ranking.sku,
@@ -427,7 +506,7 @@ const encodeProgram = program => vexDbProgramToId[program];
 const encodeSeason = season => vexDbSeasonToId[season];
 const encodeGrade = grade => dbinfo.grades.indexOf(grade);
 const encodeDate = date => Date.parse(date);
-const encodeRegistered = registered => Boolean(registered);
+const encodeBoolean = number => Boolean(number);
 
 const updateCollectionFromResource = (collection, resource, formatFunc) => {
 	updateCollectionFromResourceBatch(collection, resource, formatFunc, 0);
