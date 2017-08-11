@@ -18,8 +18,8 @@ const updateAwards = () => updateCollectionFromResource('awards', 'get_awards', 
 const updateSkills = () => updateCollectionFromResource('skills', 'get_skills', formatSkill);
 
 const updateReTeams = () => {
-	updateTeamsForSeason(1, 102);
-	updateTeamsForSeason(4, 103);
+	updateTeamsForSeason(1, 110);
+	updateTeamsForSeason(4, 111);
 	/*[{_id: 1, seasons: [119, 115, 110, 102, 92, 85, 73, 7, 1]},
 		{_id: 4, seasons: [120, 116, 111, 103, 93, 88, 76, 10, 4]}].forEach(program => {
 		const seasons = program.seasons.sort((a, b) => a - b);
