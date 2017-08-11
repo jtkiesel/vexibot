@@ -58,7 +58,7 @@ const awardsJob = new CronJob('00 40 08 * * *', updateAwards, null, true, timezo
 const skillsJob = new CronJob('00 50 08 * * *', updateMaxSkills, null, true, timezone);
 
 const update = () => {
-	updateReTeams();
+	//updateReTeams();
 	//updateReEvents();
 	//updateMaxSkills();
 	//updateEvents();
