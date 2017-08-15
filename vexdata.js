@@ -162,12 +162,17 @@ const formatReTeam = (team, program, registered) => {
 		},
 		city: team.city
 	};
-	if (team.name) {
-		document.region = team.name;
+	const region = encodeText(team.name);
+	if (region) {
+		document.region = region;
 	}
-	document.name = team.team_name;
-	if (team.robot_name) {
-		document.robot = team.robot_name;
+	const name = encodeText(team.team_name);
+	if (name) {
+		document.name = name;
+	}
+	const robot = encodeText(team.robot_name);
+	if (robot) {
+		document.robot = robot;
 	}
 	if (program == encodeProgram('VEXU')) {
 		document.grade = encodeGrade('College');
@@ -378,15 +383,21 @@ const formatTeam = team => {
 	if (team.robot_name) {
 		document.robot = team.robot_name
 	}
-	if (team.organisation) {
-		document.org = team.organisation;
+	const org = encodeText(team.organisation);
+	if (org) {
+		document.org = org;
 	}
-	document.city = team.city;
-	if (team.region && team.region != 'N/A' && team.region != 'Not Applicable or Not Listed') {
-		document.region = team.region;
+	const city = encodeText(team.city);
+	if (city) {
+		document.city = city;
 	}
-	if (team.country) {
-		document.country = team.country;
+	const region = encodeText(team.region);
+	if (region && region != 'N/A' && region != 'Not Applicable or Not Listed') {
+		document.region = region;
+	}
+	const country = encodeText(team.country);
+	if (country) {
+		document.country = country;
 	}
 	document.grade = encodeGrade(team.grade);
 	document.registered = encodeBoolean(team.is_registered);
@@ -507,6 +518,7 @@ const encodeSeason = season => vexDbSeasonToId[season];
 const encodeGrade = grade => dbinfo.grades.indexOf(grade);
 const encodeDate = date => Date.parse(date);
 const encodeBoolean = number => Boolean(number);
+const encodeText = text => text ? text.trim() : text;
 
 const updateCollectionFromResource = (collection, resource, formatFunc) => {
 	updateCollectionFromResourceBatch(collection, resource, formatFunc, 0);
