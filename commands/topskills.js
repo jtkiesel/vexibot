@@ -66,7 +66,7 @@ module.exports = (message, args) => {
 				const rank = (i < 3) ? `${rankEmojis[i]}` : `**\`#${String(i + 1).padEnd(2)}\​\`**`;
 				const score = String(teams[i].score).padStart(3);
 				const team = teams[i].team.id;
-				description += `${rank}   \`\​${score}\`   [${team}](https://vexdb.io/teams/view/${team}?t=skills)\n`;
+				description += `${rank}   \`\​${score}\`   ${team}\n`;
 			}
 			const embed = new Discord.RichEmbed()
 				.setColor('AQUA')
@@ -82,9 +82,9 @@ module.exports = (message, args) => {
 	}).catch(console.error);
 };
 
-const getName = (pos, score) => {
+/*const getName = (pos, score) => {
 	const rank = (pos < 3) ? `${rankEmojis[pos]}` : `**\`#${String(pos + 1).padEnd(2)}\​\`**`;
 	return `${rank} - \`${String(score).padStart(3, '\​ ')}\``;
 };
 
-const getValue = team => `[${team.padEnd(6)}](https://vexdb.io/teams/view/${team}?t=skills)`;
+const getValue = team => `[${team.padEnd(6)}](https://vexdb.io/teams/view/${team}?t=skills)`;*/

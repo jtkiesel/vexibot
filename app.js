@@ -4,8 +4,7 @@ const mongodb = require('mongodb');
 const client = new Discord.Client();
 const MongoClient = new mongodb.MongoClient();
 const token = process.env.VEXIBOT_TOKEN;
-const [mongodbUri, username, password, host, port, database] = process.env.VEXIBOT_DB.match(/^(?:mongodb:\/\/)(.+):(.+)@(.+):(.+)\/(.+)$/);
-const db = new mongodb.Db(database, new mongodb.Server(host, Number(port)));
+const mongodbUri = process.env.VEXIBOT_DB;
 const prefix = '^';
 const commandInfo = {
 	ping: 'Pong!',
@@ -63,16 +62,15 @@ client.on('message', message => {
 	}
 });
 
-db.open()
-	.then(db2 => db.authenticate(username, password))
-	.then(db3 => {
-		Object.keys(commandInfo).forEach(name => commands[name] = require('./commands/' + name));
-		Object.entries(commandInfo).forEach(([name, desc]) => {
-			helpDescription += `\n\`${prefix}${name}\`: ${desc}`;
-		});
-		client.login(token).catch(console.error);
-	}).catch(console.error);
+MongoClient.connect(mongodbUri).then(db => {
+	module.exports.db = db;
+
+	Object.keys(commandInfo).forEach(name => commands[name] = require('./commands/' + name));
+	Object.entries(commandInfo).forEach(([name, desc]) => {
+		helpDescription += `\n\`${prefix}${name}\`: ${desc}`;
+	});
+	client.login(token).catch(console.error);
+}).catch(console.error);
 
 module.exports.client = client;
-module.exports.db = db;
 module.exports.addFooter = addFooter;

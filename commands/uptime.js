@@ -7,18 +7,20 @@ const clockEmojis = ['🕛', '🕧', '🕐', '🕜', '🕑', '🕝', '🕒', '�
 
 const formatTime = (time, unit) => `${time} ${unit}${(time == 1) ? '' : 's'}`;
 
+const getUptime = () => {
+		let seconds = Math.floor(new Date(app.client.uptime) / 1000);
+		let minutes = Math.floor(seconds / 60);
+		seconds %= 60;
+		let hours = Math.floor(minutes / 60);
+		minutes %= 60;
+		let days = Math.floor(hours / 24);
+		hours %= 24;
+
+		return [days, hours, minutes, seconds];
+};
+
 module.exports = (message, args) => {
-	const milliseconds = new Date(app.client.uptime);
-
-	let seconds = Math.floor(milliseconds / 1000);
-	let minutes = Math.floor(seconds / 60);
-	let hours = Math.floor(minutes / 60);
-	let days = Math.floor(hours / 24);
-
-	seconds %= 60;
-	minutes %= 60;
-	hours %= 24;
-
+	const [days, hours, minutes, seconds] = getUptime();
 	const uptime = [];
 	if (days) {
 		uptime.push(formatTime(days, 'day'));
