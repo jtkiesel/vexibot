@@ -22,6 +22,7 @@ const getUptime = () => {
 module.exports = (message, args) => {
 	const [days, hours, minutes, seconds] = getUptime();
 	const uptime = [];
+
 	if (days) {
 		uptime.push(formatTime(days, 'day'));
 	}

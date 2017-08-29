@@ -58,6 +58,8 @@ const idToSeasonUrl = {
 	'119': 'https://vexrobotics.com/vexedr/competition/vrc-current-game'
 };
 
+const decodeSeasonUrl = id => idToSeasonUrl[id];
+
 const grades = [
 	'Elementary',
 	'Middle School',
@@ -73,5 +75,6 @@ module.exports = {
 	idToSeason: idToSeason,
 	decodeSeason: decodeSeason,
 	idToSeasonUrl: idToSeasonUrl,
+	decodeSeasonUrl: decodeSeasonUrl,
 	grades: grades
 };

@@ -1,13 +1,17 @@
+const Discord = require('discord.js');
 const request = require('request-promise-native');
 const cron = require('cron');
 
 const app = require('./app');
+const vex = require('./vex');
 const dbinfo = require('./dbinfo');
 
 const CronJob = cron.CronJob;
+const client = app.client;
 const db = app.db;
+const decodeSeason = dbinfo.decodeSeason;
+const idToSeasonUrl = dbinfo.idToSeasonUrl;
 
-//const mapsKey = process.env.MAPS_KEY;
 const timezone = 'America/New_York';
 
 const updateEvents = () => updateCollectionFromResource('events', 'get_events', formatEvent);
@@ -69,60 +73,61 @@ const update = () => {
 	//updateSkills();
 };
 
+const subscribedChannels = [
+	'263383291611185162',
+	'329477820076130306'  // Dev server.
+];
+
+const sendToSubscribedChannels = (content, options) => {
+	subscribedChannels.forEach(id => {
+		const channel = client.channels.get(id);
+		if (channel) {
+			channel.send(content, options);
+		}
+	});
+};
+
+const escapeMarkdown = string => string.replace(/([\^\*_`~])/g, '\\$1');
+
+const createTeamChangeEmbed = (teamId, field, oldValue, newValue) => {
+	return new Discord.RichEmbed()
+		.setColor('GREEN')
+		.setDescription(`[${teamId}](https://vexdb.io/teams/view/${teamId}) changed its ${field} from **${escapeMarkdown(oldValue)}** to **${escapeMarkdown(newValue)}**.`);
+}
+
 const updateTeamsInGroup = (program, season, teamGroup) => {
+	const url = 'https://www.robotevents.com/api/teams/getTeamsForLatLng';
 	const lat = teamGroup.position.lat;
 	const lng = teamGroup.position.lng;
 
-	request.post({url: 'https://www.robotevents.com/api/teams/getTeamsForLatLng', form: {when: 'past', programs: [program], season_id: season, lat: lat, lng: lng}, json: true}).then(teams => {
-		/*const region = teams[0].name ? `|administrative_area:${teams[0].name}` : '';
-		const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&components=locality:${teamGroup.city}${region}&key=${mapsKey}`;
-
-		request.get({url: url, json: true}).then(location => {
-			if (!location.error_message) {
-				let city = '';
-				let region = '';
-				let country = '';
-
-				location.results[0].address_components.forEach(addressComponent => {
-					if (addressComponent.types.includes('locality')) {
-						city = addressComponent.long_name;
-					} else if (addressComponent.types.includes('administrative_area_level_1')) {
-						region = addressComponent.long_name;
-					} else if (addressComponent.types.includes('country')) {
-						country = addressComponent.long_name;
+	request.post({url: url, form: {when: 'past', programs: [program], season_id: season, lat: lat, lng: lng}, json: true}).then(teams => {
+		teams.map(team => formatReTeam(team, program, season == 119 || season == 120)).forEach(team => {
+			db.collection('teams').findOneAndUpdate(
+				{_id: team._id},
+				{$set: team},
+				{upsert: true}
+			).then(result => {
+				const old = result.value;
+				if (!old) {
+					sendToSubscribedChannels('New team registered:', {embed: vex.createTeamEmbed(team)});
+				} else {
+					if (!old.registered) {
+						old.registered = team.registered;
+						sendToSubscribedChannels('Existing team registered:', {embed: vex.createTeamEmbed(old)});
 					}
-				});*/
-				teams.map(team => formatReTeam(team, program, season == 119 || season == 120)).forEach(team => {
-					/*if (city) {
-						team.city = city;
+					if (team.city != old.city || team.region != old.region) {
+						team.country = old.country;
+						sendToSubscribedChannels(undefined, {embed: createTeamChangeEmbed(team._id.id, 'location', vex.getTeamLocation(old), vex.getTeamLocation(team))});
 					}
-					if (region) {
-						team.region = region;
+					if (team.name != old.name) {
+						sendToSubscribedChannels(undefined, {embed: createTeamChangeEmbed(team._id.id, 'team name', old.name, team.name)});
 					}
-					if (country) {
-						team.country = country;
-					}*/
-					db.collection('teams').updateOne(
-						{_id: team._id},
-						{$set: team},
-						{upsert: true}
-					).then(result => {
-						if (result.upsertedCount) {
-							console.log(`insert to teams: ${JSON.stringify(team)}`);
-						} else if (result.modifiedCount) {
-							console.log(`update to teams: ${JSON.stringify(team)}`);
-						}
-						//console.log('.');
-					}).catch(console.error);
-				});
-			/*} else {
-				console.error(location);
-				updateTeamsInGroup(program, season, teamGroup);
-			}
-		}).catch(error => {
-			console.error(error);
-			updateTeamsInGroup(program, season, teamGroup);
-		});*/
+					if (team.robot != old.robot) {
+						sendToSubscribedChannels(undefined, {embed: createTeamChangeEmbed(team._id.id, 'robot name', old.robot, team.robot)});
+					}
+				}
+			}).catch(console.error);
+		});
 	}).catch(error => {
 		console.error(error);
 		updateTeamsInGroup(program, season, teamGroup);
@@ -130,7 +135,9 @@ const updateTeamsInGroup = (program, season, teamGroup) => {
 };
 
 const updateEventsForSeason = season => {
-	request.post({url: 'https://www.robotevents.com/api/events', form: {when: 'past', season_id: season}, json: true}).then(events => {
+	const url = 'https://www.robotevents.com/api/events';
+
+	request.post({url: url, form: {when: 'past', season_id: season}, json: true}).then(events => {
 		events.map(formatReEvent).forEach(event => {
 			db.collection('events').updateOne(
 				{_id: event._id},
@@ -142,14 +149,15 @@ const updateEventsForSeason = season => {
 				} else if (result.modifiedCount) {
 					console.log(`update to events: ${JSON.stringify(event)}`);
 				}
-				//console.log('.');
 			}).catch(console.error);
 		});
 	}).catch(console.error);
 }
 
 const updateTeamsForSeason = (program, season) => {
-	request.post({url: 'https://www.robotevents.com/api/teams/latLngGrp', form: {when: 'past', programs: [program], season_id: season}, json: true}).then(teamGroups => {
+	const url = 'https://www.robotevents.com/api/teams/latLngGrp';
+
+	request.post({url: url, form: {when: 'past', programs: [program], season_id: season}, json: true}).then(teamGroups => {
 		teamGroups.forEach(teamGroup => updateTeamsInGroup(program, season, teamGroup));
 	}).catch(console.error);
 };
@@ -205,7 +213,9 @@ const formatReEvent = event => {
 };
 
 const updateMaxSkillsForSeason = season => {
-	request.get({url: `https://www.robotevents.com/api/seasons/${season}/skills?untilSkillsDeadline=0`, json: true}).then(maxSkills => {
+	const url = `https://www.robotevents.com/api/seasons/${season}/skills?untilSkillsDeadline=0`;
+
+	request.get({url: url, json: true}).then(maxSkills => {
 		maxSkills.map(maxSkill => formatMaxSkill(maxSkill, season)).forEach(maxSkill => {
 			db.collection('maxSkills').findOneAndUpdate(
 				{_id: maxSkill._id},
@@ -229,7 +239,6 @@ const updateMaxSkillsForSeason = season => {
 						}
 					}).catch(console.error);
 				}
-				//console.log('.');
 			}).catch(console.error);
 		});
 	}).catch(console.error);

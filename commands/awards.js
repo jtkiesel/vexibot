@@ -6,7 +6,7 @@ const vex = require('../vex');
 
 const db = app.db;
 const decodeSeason = dbinfo.decodeSeason;
-const idToSeasonUrl = dbinfo.idToSeasonUrl;
+const decodeSeasonUrl = dbinfo.decodeSeasonUrl;
 const seasonIds = Object.keys(dbinfo.idToSeason).reverse();
 const numSeasons = seasonIds.length;
 
@@ -19,7 +19,7 @@ const emojiToRegex = {
 
 const awardsOmitted = '\n**[Older awards omitted.]**';
 
-const formatSeasonHeader = (season, awardCount) => `\n***[${decodeSeason(season)}](${idToSeasonUrl[season]})*** (${awardCount})`;
+const formatSeasonHeader = (season, awardCount) => `\n***[${decodeSeason(season)}](${decodeSeasonUrl(season)})*** (${awardCount})`;
 
 module.exports = (message, args) => {
 	const teamId = vex.getTeamId(message, args);
