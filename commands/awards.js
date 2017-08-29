@@ -122,6 +122,6 @@ module.exports = (message, args) => {
 			}
 		}).catch(console.error);
 	} else {
-		message.reply('please provide a valid team ID.');
+		message.reply('please provide a valid team ID, such as **24B** or **BNS**.');
 	}
 };

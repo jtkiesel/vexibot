@@ -5,46 +5,47 @@ const dbinfo = require('../dbinfo');
 const vex = require('../vex');
 
 const db = app.db;
-const grades = dbinfo.grades;
+const encodeGrade = dbinfo.encodeGrade;
+const decodeGrade = dbinfo.decodeGrade;
 
 const rankEmojis = ['🥇', '🥈', '🥉'];
 const defaultEmoji = '🏅';
 
 module.exports = (message, args) => {
 	const seasonName = 'In_The_Zone';
-	const arg = args.replace(/\s+/g, '');
+	const arg = args ? args.replace(/\s+/g, '') : '';
 
 	let grade = arg ? arg.toLowerCase() : 'h';
 	let program;
 	let season;
 	let limit;
-	if (grade == 'h' || grade == 'hs') {
+	if (['h', 'hs', 'high', 'highschool'].includes(grade)) {
 		program = 'VRC';
-		grade = grades.indexOf('High School');
+		grade = 'High School';
 		season = 119;
 		limit = 35;
-	} else if (grade == 'm' || grade == 'ms') {
+	} else if (['m', 'ms', 'middle', 'middleschool'].includes(grade)) {
 		program = 'VRC';
-		grade = grades.indexOf('Middle School');
+		grade = 'Middle School';
 		season = 119;
 		limit = 15;
-	} else if (grade == 'c' || grade == 'u') {
+	} else if (['c', 'u', 'college', 'uni', 'university', 'vexu'].includes(grade)) {
 		program = 'VEXU';
-		grade = grades.indexOf('College');
+		grade = 'College';
 		season = 120;
 		limit = 5;
 	} else {
-		message.reply('please enter a valid grade.');
+		message.reply('please enter a valid grade, such as **h**, **m**, or **c**.');
 		return;
 	}
 	db.collection('maxSkills')
-		.find({'_id.season': season, 'team.grade': grade})
+		.find({'_id.season': season, 'team.grade': encodeGrade(grade)})
 		.sort({score: -1})
 		.limit(limit).toArray().then(teams => {
 		if (teams.length) {
 			/*const embed = new Discord.RichEmbed()
 				.setColor('AQUA')
-				.setTitle(`${program} ${grades[grade]} In the Zone Robot Skills`)
+				.setTitle(`${program} ${grade} In the Zone Robot Skills`)
 				.setURL(`https://vexdb.io/skills/${program}/${seasonName}/Robot`);
 
 			let i;
@@ -70,14 +71,14 @@ module.exports = (message, args) => {
 			}
 			const embed = new Discord.RichEmbed()
 				.setColor('AQUA')
-				.setTitle(`${program} ${grades[grade]} In the Zone Robot Skills`)
+				.setTitle(`${program} ${grade} In the Zone Robot Skills`)
 				.setURL(`https://vexdb.io/skills/${program}/${seasonName}/Robot`)
 				.setDescription(description);
 			message.channel.send({embed})
 				.then(reply => app.addFooter(message, embed, reply))
 				.catch(console.error);
 		} else {
-			message.reply(`no skills scores available for ${program} ${grades[grade]} In the Zone.`);
+			message.reply(`no skills scores available for ${program} ${grade} In the Zone.`);
 		}
 	}).catch(console.error);
 };

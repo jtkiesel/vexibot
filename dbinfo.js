@@ -68,6 +68,8 @@ const grades = [
 	'All'
 ];
 
+const encodeGrade = grade => grades.indexOf(grade);
+
 const decodeGrade = grade => grades[grade];
 
 module.exports = {
@@ -79,5 +81,6 @@ module.exports = {
 	idToSeasonUrl: idToSeasonUrl,
 	decodeSeasonUrl: decodeSeasonUrl,
 	grades: grades,
+	encodeGrade: encodeGrade,
 	decodeGrade: decodeGrade
 };

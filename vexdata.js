@@ -87,7 +87,7 @@ const sendToSubscribedChannels = (content, options) => {
 	});
 };
 
-const escapeMarkdown = string => string.replace(/([\^\*_`~])/g, '\\$1');
+const escapeMarkdown = string => string ? string.replace(/([*^_`~])/g, '\\$1') : '';
 
 const createTeamChangeEmbed = (teamId, field, oldValue, newValue) => {
 	return new Discord.RichEmbed()
