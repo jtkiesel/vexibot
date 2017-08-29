@@ -68,6 +68,8 @@ const grades = [
 	'All'
 ];
 
+const decodeGrade = grade => grades[grade];
+
 module.exports = {
 	programToId: programToId,
 	idToProgram: idToProgram,
@@ -76,5 +78,6 @@ module.exports = {
 	decodeSeason: decodeSeason,
 	idToSeasonUrl: idToSeasonUrl,
 	decodeSeasonUrl: decodeSeasonUrl,
-	grades: grades
+	grades: grades,
+	decodeGrade: decodeGrade
 };

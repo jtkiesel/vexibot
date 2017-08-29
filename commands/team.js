@@ -12,7 +12,8 @@ module.exports = (message, args) => {
 	if (vex.validTeamId(teamId)) {
 		vex.getTeam(teamId).then(team => {
 			if (team) {
-				message.channel.send({embed: vex.createTeamEmbed(team)})
+				const embed = vex.createTeamEmbed(team);
+				message.channel.send({embed: embed})
 					.then(reply => app.addFooter(message, embed, reply))
 					.catch(console.error);
 			} else {

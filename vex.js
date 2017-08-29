@@ -2,6 +2,9 @@ const Discord = require('discord.js');
 const he = require('he');
 
 const app = require('./app');
+const dbinfo = require('./dbinfo');
+
+const decodeGrade = dbinfo.decodeGrade;
 
 const getTeamId = (message, args) => {
 	const arg = args.replace(/\s/g, '');
@@ -32,7 +35,7 @@ const createTeamEmbed = team => {
 	const name = he.decode(team.name);
 	const robot = team.robot ? he.decode(team.robot) : '';
 	const org = team.org ? he.decode(team.org) : '';
-	const grade = team.grade ? grades[team.grade] : '';
+	const grade = team.grade ? decodeGrade(team.grade) : '';
 	const registered = team.registered ? 'Yes' : 'No';
 	const location = getTeamLocation(team);
 
