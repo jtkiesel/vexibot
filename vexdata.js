@@ -74,7 +74,7 @@ const update = () => {
 };
 
 const subscribedChannels = [
-	'263383291611185162',
+	'352003193666011138',
 	'329477820076130306'  // Dev server.
 ];
 
