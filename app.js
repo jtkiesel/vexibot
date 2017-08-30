@@ -17,6 +17,8 @@ const commandInfo = {
 };
 const commands = {};
 
+let vexdata;
+
 let helpDescription = `\`${prefix}help\`: Provides information about all commands.`;
 
 const clean = text => {
@@ -67,7 +69,7 @@ const addFooter = (message, embed, reply) => {
 }
 
 client.on('ready', () => {
-	const vexdata = require('./vexdata');
+	vexdata = require('./vexdata');
 	//const events = require('./events');
 
 	console.log('Ready!');
