@@ -1,5 +1,6 @@
 const Discord = require('discord.js');
 const mongodb = require('mongodb');
+const util = require('util');
 
 const client = new Discord.Client();
 const MongoClient = new mongodb.MongoClient();
@@ -18,6 +19,13 @@ const commands = {};
 
 let helpDescription = `\`${prefix}help\`: Provides information about all commands.`;
 
+const clean = text => {
+	if (typeof(text) === 'string') {
+		return text.replace(/`/g, '`' + String.fromCharCode(8203)).replace(/@/g, '@' + String.fromCharCode(8203));
+	}
+	return text;
+}
+
 const handleCommand = message => {
 	const slice = message.content.indexOf(' ');
 	const cmd = message.content.slice(prefix.length, (slice < 0) ? message.content.length : slice);
@@ -33,6 +41,20 @@ const handleCommand = message => {
 		message.channel.send({embed})
 			.then(reply => addFooter(message, embed, reply))
 			.catch(console.error);
+	} else if (cmd == 'eval') {
+		if (message.author.id == '197781934116569088') {
+			try {
+				let evaled = eval(args);
+				if (typeof evaled !== 'string') {
+					evaled = util.inspect(evaled);
+				}
+				message.channel.send(clean(evaled), {code: 'xl'});
+			} catch (error) {
+				message.channel.send(`\`ERROR\` \`\`\`xl${clean(error)}\`\`\``);
+			}
+		} else {
+			message.reply('you don\'t have permission to run that command.');
+		}
 	}
 }
 

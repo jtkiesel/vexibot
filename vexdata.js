@@ -95,6 +95,12 @@ const createTeamChangeEmbed = (teamId, field, oldValue, newValue) => {
 		.setDescription(`[${teamId}](https://vexdb.io/teams/view/${teamId}) changed its ${field} from **${escapeMarkdown(oldValue)}** to **${escapeMarkdown(newValue)}**.`);
 }
 
+const createTeamRemoveEmbed = (teamId, field, oldValue) => {
+	return new Discord.RichEmbed()
+		.setColor('GREEN')
+		.setDescription(`[${teamId}](https://vexdb.io/teams/view/${teamId}) removed its ${field} **${escapeMarkdown(oldValue)}**.`);
+}
+
 const updateTeamsInGroup = (program, season, teamGroup) => {
 	const url = 'https://www.robotevents.com/api/teams/getTeamsForLatLng';
 	const lat = teamGroup.position.lat;
@@ -109,21 +115,40 @@ const updateTeamsInGroup = (program, season, teamGroup) => {
 			).then(result => {
 				const old = result.value;
 				if (!old) {
+					delete team.registered;
 					sendToSubscribedChannels('New team registered:', {embed: vex.createTeamEmbed(team)});
 				} else {
 					if (!old.registered) {
-						old.registered = team.registered;
+						delete old.registered;
 						sendToSubscribedChannels('Existing team registered:', {embed: vex.createTeamEmbed(old)});
 					}
+					const teamId = team._id.id;
 					if (team.city != old.city || team.region != old.region) {
-						team.country = old.country;
-						sendToSubscribedChannels(undefined, {embed: createTeamChangeEmbed(team._id.id, 'location', vex.getTeamLocation(old), vex.getTeamLocation(team))});
+						const unset = {country: ''};
+						if (!team.region) {
+							unset.region = '';
+						}
+						db.collection('teams').findOneAndUpdate(
+							{_id: team._id},
+							{$unset: unset}
+						).then(result => {
+							sendToSubscribedChannels(undefined, {embed: createTeamChangeEmbed(teamId, 'location', vex.getTeamLocation(old), vex.getTeamLocation(team))});
+						}).catch(console.error);
 					}
 					if (team.name != old.name) {
-						sendToSubscribedChannels(undefined, {embed: createTeamChangeEmbed(team._id.id, 'team name', old.name, team.name)});
+						sendToSubscribedChannels(undefined, {embed: createTeamChangeEmbed(teamId, 'team name', old.name, team.name)});
 					}
 					if (team.robot != old.robot) {
-						sendToSubscribedChannels(undefined, {embed: createTeamChangeEmbed(team._id.id, 'robot name', old.robot, team.robot)});
+						if (!team.robot) {
+							db.collection('teams').findOneAndUpdate(
+								{_id: team._id},
+								{$unset: {robot: ''}}
+							).then(result => {
+								sendToSubscribedChannels(undefined, {embed: createTeamRemoveEmbed(teamId, 'robot name', old.robot)});
+							}).catch(console.error);
+						} else {
+							sendToSubscribedChannels(undefined, {embed: createTeamChangeEmbed(teamId, 'robot name', old.robot, team.robot)});
+						}
 					}
 				}
 			}).catch(console.error);
@@ -562,5 +587,6 @@ const updateCollectionFromResourceBatch = (collection, resource, formatFunc, sta
 module.exports = {
 	update: update,
 	updateProgramsAndSeasons: updateProgramsAndSeasons,
-	updateMaxSkills: updateMaxSkills
+	updateMaxSkills: updateMaxSkills,
+	updateReTeams: updateReTeams
 };

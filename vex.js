@@ -54,8 +54,9 @@ const createTeamEmbed = team => {
 	if (grade) {
 		embed.addField('Grade', grade, true);
 	}
-	embed.addField('Registered?', registered, true);
-
+	if (team.hasOwnProperty('registered')) {
+		embed.addField('Registered?', registered, true);
+	}
 	return embed;
 };
 
