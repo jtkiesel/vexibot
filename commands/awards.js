@@ -28,21 +28,19 @@ module.exports = (message, args) => {
 			if (team) {
 				db.collection('awards').aggregate()
 					.match({'_id.team': teamId})
-					.lookup({from: 'events', localField: '_id.sku', foreignField: '_id', as: 'events'})
-					.project({sku: '$_id.sku', name: '$_id.name', event: {$arrayElemAt: ['$events', 0]}})
+					.lookup({from: 'events', localField: '_id.event', foreignField: '_id', as: 'events'})
+					.project({sku: '$_id.event', name: '$_id.name', event: {$arrayElemAt: ['$events', 0]}})
 					.sort({'event.season': -1, 'event.end': -1, sku: -1})
 					.project({sku: 1, name: 1, event: '$event.name', season: '$event.season'})
 					.toArray().then(awards => {
+					console.log(awards);
 					const numAwards = awards.length;
 					if (numAwards) {
 						const descriptionHeader = `**${numAwards} Award${numAwards == 1 ? '' : 's'}**`;
-						const eventsBySeason = new Array(numSeasons);
-						seasonIds.forEach(season => {
-							eventsBySeason[season] = [];
-						});
+						const seasonHeaders = {};
+						const eventsBySeason = {};
 						let sku;
 						let event;
-						let seasonHeaders = [];
 						let season = awards[0].season;
 						let awardCount = 0;
 

@@ -70,7 +70,6 @@ const addFooter = (message, embed, reply) => {
 
 client.on('ready', () => {
 	vexdata = require('./vexdata');
-	//const events = require('./events');
 
 	console.log('Ready!');
 	vexdata.update();

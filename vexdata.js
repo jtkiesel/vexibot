@@ -1,10 +1,10 @@
-const Discord = require('discord.js');
 const request = require('request-promise-native');
 const cron = require('cron');
 
 const app = require('./app');
 const vex = require('./vex');
 const dbinfo = require('./dbinfo');
+const events = require('./events');
 
 const CronJob = cron.CronJob;
 const client = app.client;
@@ -36,12 +36,10 @@ const updateReTeams = () => {
 const updateReEvents = () => {
 	updateEventsForSeason(119);
 	updateEventsForSeason(120);
-	/*[{_id: 1, seasons: [119, 115, 110, 102, 92, 85, 73, 7, 1]},
+/*
+	[{_id: 1, seasons: [119, 115, 110, 102, 92, 85, 73, 7, 1]},
 		{_id: 4, seasons: [120, 116, 111, 103, 93, 88, 76, 10, 4]}].forEach(program => {
-		const seasons = program.seasons.sort((a, b) => a - b);
-		for (let i = 0; i < seasons.length; i++) {
-			updateEventsForSeason(seasons[i]);
-		}
+		program.seasons.forEach(updateEventsForSeason);
 	});*/
 }
 
@@ -53,8 +51,7 @@ const updateMaxSkills = () => {
 	});*/
 };
 
-const eventsJob = new CronJob('00 00 08 * * *', updateEvents, null, true, timezone);
-const reEventsJob = new CronJob('00 05 08 * * *', updateReEvents, null, true, timezone);
+const eventsJob = new CronJob('00 00 08 * * *', updateReEvents, null, true, timezone);
 const teamsJob = new CronJob('00 10 08 * * *', updateReTeams, null, true, timezone);
 const matchesJob = new CronJob('00 20 08 * * *', updateMatches, null, true, timezone);
 const rankingsJob = new CronJob('00 30 08 * * *', updateRankings, null, true, timezone);
@@ -73,41 +70,14 @@ const update = () => {
 	//updateSkills();
 };
 
-const subscribedChannels = [
-	'352003193666011138',
-	'329477820076130306'  // Dev server.
-];
-
-const sendToSubscribedChannels = (content, options) => {
-	subscribedChannels.forEach(id => {
-		const channel = client.channels.get(id);
-		if (channel) {
-			channel.send(content, options);
-		}
-	});
-};
-
-const escapeMarkdown = string => string ? string.replace(/([*^_`~])/g, '\\$1') : '';
-
-const createTeamChangeEmbed = (teamId, field, oldValue, newValue) => {
-	return new Discord.RichEmbed()
-		.setColor('GREEN')
-		.setDescription(`[${teamId}](https://vexdb.io/teams/view/${teamId}) changed its ${field} from **${escapeMarkdown(oldValue)}** to **${escapeMarkdown(newValue)}**.`);
-}
-
-const createTeamRemoveEmbed = (teamId, field, oldValue) => {
-	return new Discord.RichEmbed()
-		.setColor('GREEN')
-		.setDescription(`[${teamId}](https://vexdb.io/teams/view/${teamId}) removed its ${field} **${escapeMarkdown(oldValue)}**.`);
-}
-
 const updateTeamsInGroup = (program, season, teamGroup) => {
 	const url = 'https://www.robotevents.com/api/teams/getTeamsForLatLng';
 	const lat = teamGroup.position.lat;
 	const lng = teamGroup.position.lng;
 
 	request.post({url: url, form: {when: 'past', programs: [program], season_id: season, lat: lat, lng: lng}, json: true}).then(teams => {
-		teams.map(team => formatReTeam(team, program, season == 119 || season == 120)).forEach(team => {
+		const registered = season == 119 || season == 120;
+		teams.map(team => formatReTeam(team, program, registered)).forEach(team => {
 			db.collection('teams').findOneAndUpdate(
 				{_id: team._id},
 				{$set: team},
@@ -116,11 +86,11 @@ const updateTeamsInGroup = (program, season, teamGroup) => {
 				const old = result.value;
 				if (!old) {
 					delete team.registered;
-					sendToSubscribedChannels('New team registered:', {embed: vex.createTeamEmbed(team)});
+					vex.sendToSubscribedChannels('New team registered:', {embed: vex.createTeamEmbed(team)});
 				} else {
-					if (!old.registered) {
+					if (!old.registered && team.registered) {
 						delete old.registered;
-						sendToSubscribedChannels('Existing team registered:', {embed: vex.createTeamEmbed(old)});
+						vex.sendToSubscribedChannels('Existing team registered:', {embed: vex.createTeamEmbed(old)});
 					}
 					const teamId = team._id.id;
 					if (team.city != old.city || team.region != old.region) {
@@ -132,11 +102,11 @@ const updateTeamsInGroup = (program, season, teamGroup) => {
 							{_id: team._id},
 							{$unset: unset}
 						).then(result => {
-							sendToSubscribedChannels(undefined, {embed: createTeamChangeEmbed(teamId, 'location', vex.getTeamLocation(old), vex.getTeamLocation(team))});
+							vex.sendToSubscribedChannels(undefined, {embed: vex.createTeamChangeEmbed(teamId, 'location', vex.getTeamLocation(old), vex.getTeamLocation(team))});
 						}).catch(console.error);
 					}
 					if (team.name != old.name) {
-						sendToSubscribedChannels(undefined, {embed: createTeamChangeEmbed(teamId, 'team name', old.name, team.name)});
+						vex.sendToSubscribedChannels(undefined, {embed: vex.createTeamChangeEmbed(teamId, 'team name', old.name, team.name)});
 					}
 					if (team.robot != old.robot) {
 						if (!team.robot) {
@@ -144,10 +114,10 @@ const updateTeamsInGroup = (program, season, teamGroup) => {
 								{_id: team._id},
 								{$unset: {robot: ''}}
 							).then(result => {
-								sendToSubscribedChannels(undefined, {embed: createTeamRemoveEmbed(teamId, 'robot name', old.robot)});
+								vex.sendToSubscribedChannels(undefined, {embed: vex.createTeamChangeEmbed(teamId, 'robot name', old.robot, team.name)});
 							}).catch(console.error);
 						} else {
-							sendToSubscribedChannels(undefined, {embed: createTeamChangeEmbed(teamId, 'robot name', old.robot, team.robot)});
+							vex.sendToSubscribedChannels(undefined, {embed: vex.createTeamChangeEmbed(teamId, 'robot name', old.robot, team.robot)});
 						}
 					}
 				}
@@ -162,18 +132,19 @@ const updateTeamsInGroup = (program, season, teamGroup) => {
 const updateEventsForSeason = season => {
 	const url = 'https://www.robotevents.com/api/events';
 
-	request.post({url: url, form: {when: 'past', season_id: season}, json: true}).then(events => {
-		events.map(formatReEvent).forEach(event => {
+	request.post({url: url, form: {when: 'past', season_id: season}, json: true}).then(eventsData => {
+		eventsData.map(formatReEvent).forEach(event => {
 			db.collection('events').updateOne(
 				{_id: event._id},
 				{$set: event},
 				{upsert: true}
 			).then(result => {
 				if (result.upsertedCount) {
-					console.log(`insert to events: ${JSON.stringify(event)}`);
+					console.log(`Insert to events: ${JSON.stringify(event)}`);
 				} else if (result.modifiedCount) {
-					console.log(`update to events: ${JSON.stringify(event)}`);
+					console.log(`Update to events: ${JSON.stringify(event)}`);
 				}
+				events.updateEvent(event._id);
 			}).catch(console.error);
 		});
 	}).catch(console.error);
@@ -187,10 +158,10 @@ const updateTeamsForSeason = (program, season) => {
 	}).catch(console.error);
 };
 
-const formatReTeam = (team, program, registered) => {
+const formatReTeam = (team, prog, registered) => {
 	const document = {
 		_id: {
-			prog: program,
+			prog: prog,
 			id: team.team
 		},
 		city: team.city
@@ -207,7 +178,7 @@ const formatReTeam = (team, program, registered) => {
 	if (robot) {
 		document.robot = robot;
 	}
-	if (program == encodeProgram('VEXU')) {
+	if (prog === encodeProgram('VEXU')) {
 		document.grade = encodeGrade('College');
 	}
 	document.registered = registered;
@@ -227,7 +198,6 @@ const formatReEvent = event => {
 	if (event.email) {
 		document.email = event.email;
 	}
-	document.id = event.id;
 	if (event.phone) {
 		document.phone = event.phone;
 	}
@@ -310,9 +280,9 @@ const updateProgramsAndSeasons = () => {
 				{upsert: true}
 			).then(result => {
 				if (result.upsertedCount) {
-					console.log(`insert to programs: ${JSON.stringify(program)}`);
+					console.log(`Insert to programs: ${JSON.stringify(program)}`);
 				} else if (result.modifiedCount) {
-					console.log(`update to programs: ${JSON.stringify(program)}`);
+					console.log(`Update to programs: ${JSON.stringify(program)}`);
 				}
 				seasons.forEach(season => {
 					db.collection('seasons').updateOne(
@@ -321,9 +291,9 @@ const updateProgramsAndSeasons = () => {
 						{upsert: true}
 					).then(result => {
 						if (result.upsertedCount) {
-							console.log(`insert to seasons: ${JSON.stringify(season)}`);
+							console.log(`Insert to seasons: ${JSON.stringify(season)}`);
 						} else if (result.modifiedCount) {
-							console.log(`update to seasons: ${JSON.stringify(season)}`);
+							console.log(`Update to seasons: ${JSON.stringify(season)}`);
 						}
 					}).catch(console.error);
 				});
@@ -569,9 +539,9 @@ const updateCollectionFromResourceBatch = (collection, resource, formatFunc, sta
 						{upsert: true}
 					).then(result => {
 						if (result.upsertedCount) {
-							console.log(`insert to ${collection}: ${JSON.stringify(document)}`);
+							console.log(`Insert to ${collection}: ${JSON.stringify(document)}`);
 						} else if (result.modifiedCount) {
-							console.log(`update to ${collection}: ${JSON.stringify(document)}`);
+							console.log(`Update to ${collection}: ${JSON.stringify(document)}`);
 						}
 						//console.log('.');
 					}).catch(console.error);
@@ -588,5 +558,7 @@ module.exports = {
 	update: update,
 	updateProgramsAndSeasons: updateProgramsAndSeasons,
 	updateMaxSkills: updateMaxSkills,
-	updateReTeams: updateReTeams
+	updateReTeams: updateReTeams,
+	updateTeamsForSeason: updateTeamsForSeason,
+	updateEventsForSeason: updateEventsForSeason
 };
