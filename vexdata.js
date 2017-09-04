@@ -10,6 +10,8 @@ const CronJob = cron.CronJob;
 const client = app.client;
 const db = app.db;
 const decodeSeason = dbinfo.decodeSeason;
+const encodeProgram = dbinfo.encodeProgram;
+const encodeGrade = dbinfo.encodeGrade;
 const idToSeasonUrl = dbinfo.idToSeasonUrl;
 
 const timezone = 'America/New_York';
@@ -519,11 +521,11 @@ const vexDbSeasonToId = {
 
 const encodeProgram = program => vexDbProgramToId[program];
 const encodeSeason = season => vexDbSeasonToId[season];
-const encodeGrade = grade => dbinfo.grades.indexOf(grade);
+const encodeGrade = grade => dbinfo.grades.indexOf(grade);*/
 const encodeDate = date => Date.parse(date);
 const encodeBoolean = number => Boolean(number);
 const encodeText = text => text ? text.trim() : text;
-
+/*
 const updateCollectionFromResource = (collection, resource, formatFunc) => {
 	updateCollectionFromResourceBatch(collection, resource, formatFunc, 0);
 };
