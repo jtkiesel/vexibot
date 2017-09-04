@@ -213,8 +213,7 @@ const updateMaxSkillsForSeason = (program, season) => {
 	const url = `https://www.robotevents.com/api/seasons/${season}/skills?untilSkillsDeadline=0`;
 
 	request.get({url: url, json: true}).then(maxSkills => {
-		maxSkills.forEach(maxSkill => {
-			maxSkill = formatMaxSkill(maxSkill, season);
+		maxSkills.map(maxSkill => formatMaxSkill(maxSkill, season)).forEach(maxSkill => {
 			db.collection('maxSkills').findOneAndUpdate(
 				{_id: {prog: program, id: maxSkill.team.team},
 				{$set: maxSkill},
