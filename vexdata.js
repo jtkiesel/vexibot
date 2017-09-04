@@ -348,7 +348,7 @@ const formatSeason = season => {
 };
 
 const encodeSeasonName = name => name.match(/^(?:.+: )?(.+?)(?: [0-9]{4}-[0-9]{4})?$/)[1];
-
+/*
 const formatEvent = event => {
 	const document = {
 		_id: event.sku,
@@ -553,12 +553,13 @@ const updateCollectionFromResourceBatch = (collection, resource, formatFunc, sta
 		}
 	}).catch(console.error);
 };
-
+*/
 module.exports = {
 	update: update,
 	updateProgramsAndSeasons: updateProgramsAndSeasons,
 	updateMaxSkills: updateMaxSkills,
 	updateReTeams: updateReTeams,
 	updateTeamsForSeason: updateTeamsForSeason,
-	updateEventsForSeason: updateEventsForSeason
+	updateEventsForSeason: updateEventsForSeason,
+	updateMaxSkillsForSeason: updateMaxSkillsForSeason
 };
