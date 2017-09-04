@@ -209,13 +209,14 @@ const formatReEvent = event => {
 	return document;
 };
 
-const updateMaxSkillsForSeason = season => {
+const updateMaxSkillsForSeason = (program, season) => {
 	const url = `https://www.robotevents.com/api/seasons/${season}/skills?untilSkillsDeadline=0`;
 
 	request.get({url: url, json: true}).then(maxSkills => {
-		maxSkills.map(maxSkill => formatMaxSkill(maxSkill, season)).forEach(maxSkill => {
+		maxSkills.forEach(maxSkill => {
+			const maxSkill = formatMaxSkill(maxSkill, season);
 			db.collection('maxSkills').findOneAndUpdate(
-				{_id: maxSkill._id},
+				{_id: {prog: program, id: maxSkill.team.team},
 				{$set: maxSkill},
 				{upsert: true}
 			).then(result => {
