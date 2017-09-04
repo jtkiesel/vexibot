@@ -61,11 +61,11 @@ const idToSeasonUrl = {
 const decodeSeasonUrl = id => idToSeasonUrl[id];
 
 const grades = [
+	'All',
 	'Elementary',
 	'Middle School',
 	'High School',
-	'College',
-	'All'
+	'College'
 ];
 
 const encodeGrade = grade => grades.indexOf(grade);

@@ -14,12 +14,12 @@ const idToSeasonUrl = dbinfo.idToSeasonUrl;
 
 const timezone = 'America/New_York';
 
-const updateEvents = () => updateCollectionFromResource('events', 'get_events', formatEvent);
-const updateTeams = () => updateCollectionFromResource('teams', 'get_teams', formatTeam);
-const updateMatches = () => updateCollectionFromResource('matches', 'get_matches', formatMatch);
-const updateRankings = () => updateCollectionFromResource('rankings', 'get_rankings', formatRanking);
-const updateAwards = () => updateCollectionFromResource('awards', 'get_awards', formatAward);
-const updateSkills = () => updateCollectionFromResource('skills', 'get_skills', formatSkill);
+//const updateEvents = () => updateCollectionFromResource('events', 'get_events', formatEvent);
+//const updateTeams = () => updateCollectionFromResource('teams', 'get_teams', formatTeam);
+//const updateMatches = () => updateCollectionFromResource('matches', 'get_matches', formatMatch);
+//const updateRankings = () => updateCollectionFromResource('rankings', 'get_rankings', formatRanking);
+//const updateAwards = () => updateCollectionFromResource('awards', 'get_awards', formatAward);
+//const updateSkills = () => updateCollectionFromResource('skills', 'get_skills', formatSkill);
 
 const updateReTeams = () => {
 	updateTeamsForSeason(1, 119);
@@ -53,10 +53,10 @@ const updateMaxSkills = () => {
 
 const eventsJob = new CronJob('00 00 08 * * *', updateReEvents, null, true, timezone);
 const teamsJob = new CronJob('00 10 08 * * *', updateReTeams, null, true, timezone);
-const matchesJob = new CronJob('00 20 08 * * *', updateMatches, null, true, timezone);
-const rankingsJob = new CronJob('00 30 08 * * *', updateRankings, null, true, timezone);
-const awardsJob = new CronJob('00 40 08 * * *', updateAwards, null, true, timezone);
-const skillsJob = new CronJob('00 50 08 * * *', updateMaxSkills, null, true, timezone);
+//const matchesJob = new CronJob('00 20 08 * * *', updateMatches, null, true, timezone);
+//const rankingsJob = new CronJob('00 30 08 * * *', updateRankings, null, true, timezone);
+//const awardsJob = new CronJob('00 40 08 * * *', updateAwards, null, true, timezone);
+const skillsJob = new CronJob('00 20 08 * * *', updateMaxSkills, null, true, timezone);
 
 const update = () => {
 	//updateReTeams();
@@ -166,15 +166,15 @@ const formatReTeam = (team, prog, registered) => {
 		},
 		city: team.city
 	};
-	const region = encodeText(team.name);
+	const region = team.name;
 	if (region) {
 		document.region = region;
 	}
-	const name = encodeText(team.team_name);
+	const name = team.team_name;
 	if (name) {
 		document.name = name;
 	}
-	const robot = encodeText(team.robot_name);
+	const robot = team.robot_name;
 	if (robot) {
 		document.robot = robot;
 	}
@@ -218,7 +218,7 @@ const updateMaxSkillsForSeason = season => {
 				{upsert: true}
 			).then(result => {
 				const old = result.value;
-				if (!old || maxSkill.team.grade != old.team.grade) {
+				if (!old || maxSkill.team.grade !== old.team.grade) {
 					if (!old) {
 						console.log(`Insert ${maxSkill} to maxSkills.`);
 					}

@@ -305,10 +305,10 @@ const updateEvent = sku => {
 							vex.sendToSubscribedChannels(undefined, {embed: vex.createTeamChangeEmbed(teamId, 'location', vex.getTeamLocation(old), vex.getTeamLocation(team))});
 						}
 					}
-					if (team.name != old.name) {
+					if (team.name !== old.name) {
 						vex.sendToSubscribedChannels(undefined, {embed: vex.createTeamChangeEmbed(teamId, 'team name', old.name, team.name)});
 					}
-					if (team.robot != old.robot) {
+					if (team.robot !== old.robot) {
 						if (!team.robot) {
 							db.collection('teams').findOneAndUpdate(
 								{_id: team._id},
