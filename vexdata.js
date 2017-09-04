@@ -215,7 +215,7 @@ const updateMaxSkillsForSeason = (program, season) => {
 	request.get({url: url, json: true}).then(maxSkills => {
 		maxSkills.map(maxSkill => formatMaxSkill(maxSkill, season)).forEach(maxSkill => {
 			db.collection('maxSkills').findOneAndUpdate(
-				{_id: {prog: program, id: maxSkill.team.team},
+				{_id: {prog: program, id: maxSkill.team.team}},
 				{$set: maxSkill},
 				{upsert: true}
 			).then(result => {
