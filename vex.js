@@ -6,10 +6,11 @@ const dbinfo = require('./dbinfo');
 
 const client = app.client;
 
+const decodeProgram = dbinfo.decodeProgram;
 const decodeGrade = dbinfo.decodeGrade;
 
 const getTeamId = (message, args) => {
-	const arg = args.replace(/\s/g, '');
+	const arg = args.replace(/\s+/g, '');
 	if (arg) {
 		return arg.toUpperCase();
 	} else if (message.member) {
@@ -18,9 +19,9 @@ const getTeamId = (message, args) => {
 	return '';
 };
 
-const validTeamId = teamId => /^([0-9]{1,5}[A-Z]?|[A-Z]{2,6}[0-9]{0,2})$/.test(teamId);
+const validTeamId = teamId => /^([0-9]{1,5}[A-Z]?|[A-Z]{2,6}[0-9]{0,2})$/i.test(teamId);
 
-const getTeam = teamId => app.db.collection('teams').findOne({'_id.id': teamId});
+const getTeam = teamId => app.db.collection('teams').find({'_id.id': teamId}).sort({'_id.prog': 1}).next();
 
 const getTeamLocation = team => {
 	let location = [team.city];
@@ -43,7 +44,7 @@ const createTeamEmbed = team => {
 
 	const embed = new Discord.RichEmbed()
 		.setColor('GREEN')
-		.setTitle(team._id.id)
+		.setTitle(`${decodeProgram(team._id.prog)} ${team._id.id}`)
 		.setURL(`https://vexdb.io/teams/view/${team._id.id}`);
 	if (name) {
 		embed.addField('Team Name', name, true);

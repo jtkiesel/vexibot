@@ -16,13 +16,6 @@ const idToSeasonUrl = dbinfo.idToSeasonUrl;
 
 const timezone = 'America/New_York';
 
-//const updateEvents = () => updateCollectionFromResource('events', 'get_events', formatEvent);
-//const updateTeams = () => updateCollectionFromResource('teams', 'get_teams', formatTeam);
-//const updateMatches = () => updateCollectionFromResource('matches', 'get_matches', formatMatch);
-//const updateRankings = () => updateCollectionFromResource('rankings', 'get_rankings', formatRanking);
-//const updateAwards = () => updateCollectionFromResource('awards', 'get_awards', formatAward);
-//const updateSkills = () => updateCollectionFromResource('skills', 'get_skills', formatSkill);
-
 const updateReTeams = () => {
 	updateTeamsForSeason(1, 119);
 	updateTeamsForSeason(4, 120);
@@ -46,8 +39,8 @@ const updateReEvents = () => {
 }
 
 const updateMaxSkills = () => {
-	updateMaxSkillsForSeason(119);
-	updateMaxSkillsForSeason(120);
+	updateMaxSkillsForSeason(1, 119);
+	updateMaxSkillsForSeason(4, 120);
 	/*db.collection('programs').find().project({_id: 0, seasons: 1}).forEach(program => {
 		program.seasons.forEach(season => updateMaxSkillsForSeason(season));
 	});*/
@@ -55,21 +48,12 @@ const updateMaxSkills = () => {
 
 const eventsJob = new CronJob('00 00 08 * * *', updateReEvents, null, true, timezone);
 const teamsJob = new CronJob('00 10 08 * * *', updateReTeams, null, true, timezone);
-//const matchesJob = new CronJob('00 20 08 * * *', updateMatches, null, true, timezone);
-//const rankingsJob = new CronJob('00 30 08 * * *', updateRankings, null, true, timezone);
-//const awardsJob = new CronJob('00 40 08 * * *', updateAwards, null, true, timezone);
 const skillsJob = new CronJob('00 20 08 * * *', updateMaxSkills, null, true, timezone);
 
 const update = () => {
 	//updateReTeams();
 	//updateReEvents();
 	//updateMaxSkills();
-	//updateEvents();
-	//updateTeams();
-	//updateMatches();
-	//updateRankings();
-	//updateAwards();
-	//updateSkills();
 };
 
 const updateTeamsInGroup = (program, season, teamGroup) => {
@@ -78,7 +62,8 @@ const updateTeamsInGroup = (program, season, teamGroup) => {
 	const lng = teamGroup.position.lng;
 
 	request.post({url: url, form: {when: 'past', programs: [program], season_id: season, lat: lat, lng: lng}, json: true}).then(teams => {
-		const registered = season == 119 || season == 120;
+		const registered = season === 119 || season === 120;
+		console.log(registered);
 		teams.map(team => formatReTeam(team, program, registered)).forEach(team => {
 			db.collection('teams').findOneAndUpdate(
 				{_id: team._id},
@@ -89,10 +74,12 @@ const updateTeamsInGroup = (program, season, teamGroup) => {
 				if (!old) {
 					delete team.registered;
 					vex.sendToSubscribedChannels('New team registered:', {embed: vex.createTeamEmbed(team)});
+					console.log(vex.createTeamEmbed(team).fields);
 				} else {
 					if (!old.registered && team.registered) {
 						delete old.registered;
 						vex.sendToSubscribedChannels('Existing team registered:', {embed: vex.createTeamEmbed(old)});
+						console.log(vex.createTeamEmbed(old).fields);
 					}
 					const teamId = team._id.id;
 					if (team.city != old.city || team.region != old.region) {
@@ -105,10 +92,12 @@ const updateTeamsInGroup = (program, season, teamGroup) => {
 							{$unset: unset}
 						).then(result => {
 							vex.sendToSubscribedChannels(undefined, {embed: vex.createTeamChangeEmbed(teamId, 'location', vex.getTeamLocation(old), vex.getTeamLocation(team))});
+							console.log(vex.createTeamChangeEmbed(teamId, 'location', vex.getTeamLocation(old), vex.getTeamLocation(team)).description);
 						}).catch(console.error);
 					}
 					if (team.name != old.name) {
 						vex.sendToSubscribedChannels(undefined, {embed: vex.createTeamChangeEmbed(teamId, 'team name', old.name, team.name)});
+						console.log(vex.createTeamChangeEmbed(teamId, 'team name', old.name, team.name).description);
 					}
 					if (team.robot != old.robot) {
 						if (!team.robot) {
@@ -117,9 +106,11 @@ const updateTeamsInGroup = (program, season, teamGroup) => {
 								{$unset: {robot: ''}}
 							).then(result => {
 								vex.sendToSubscribedChannels(undefined, {embed: vex.createTeamChangeEmbed(teamId, 'robot name', old.robot, team.name)});
+								console.log(vex.createTeamChangeEmbed(teamId, 'robot name', old.robot, team.name).description);
 							}).catch(console.error);
 						} else {
 							vex.sendToSubscribedChannels(undefined, {embed: vex.createTeamChangeEmbed(teamId, 'robot name', old.robot, team.robot)});
+							console.log(vex.createTeamChangeEmbed(teamId, 'robot name', old.robot, team.robot).description);
 						}
 					}
 				}
@@ -131,7 +122,7 @@ const updateTeamsInGroup = (program, season, teamGroup) => {
 	});
 };
 
-const updateEventsForSeason = season => {
+const updateEventsForSeason = (program, season) => {
 	const url = 'https://www.robotevents.com/api/events';
 
 	request.post({url: url, form: {when: 'past', season_id: season}, json: true}).then(eventsData => {
@@ -215,24 +206,24 @@ const updateMaxSkillsForSeason = (program, season) => {
 	request.get({url: url, json: true}).then(maxSkills => {
 		maxSkills.map(maxSkill => formatMaxSkill(maxSkill, season)).forEach(maxSkill => {
 			db.collection('maxSkills').findOneAndUpdate(
-				{_id: {prog: program, id: maxSkill.team.team}},
+				{_id: maxSkill._id},
 				{$set: maxSkill},
 				{upsert: true}
 			).then(result => {
 				const old = result.value;
 				if (!old || maxSkill.team.grade !== old.team.grade) {
 					if (!old) {
-						console.log(`Insert ${maxSkill} to maxSkills.`);
+						console.log(`Insert ${JSON.stringify(maxSkill)} to maxSkills.`);
 					}
 					db.collection('teams').findOneAndUpdate(
-						{_id: maxSkill.team.id},
+						{_id: {prog: program, id: maxSkill.team.id}},
 						{$set: {grade: maxSkill.team.grade}}
 					).then(result => {
 						const old = result.value;
 						if (!old) {
 							console.log(`Insert ${maxSkill.team.id} to teams.`);
-						} else if (old && maxSkill.team.grade != old.team.grade) {
-							console.log(`Update ${maxSkill.team.id} from ${old.team.grade} to ${maxSkill.team.grade}.`);
+						} else if (old && maxSkill.team.grade !== old.grade) {
+							console.log(`Update ${maxSkill.team.id} from ${old.grade} to ${maxSkill.team.grade}.`);
 						}
 					}).catch(console.error);
 				}
@@ -350,212 +341,10 @@ const formatSeason = season => {
 };
 
 const encodeSeasonName = name => name.match(/^(?:.+: )?(.+?)(?: [0-9]{4}-[0-9]{4})?$/)[1];
-/*
-const formatEvent = event => {
-	const document = {
-		_id: event.sku,
-		prog: encodeProgram(event.program),
-		name: event.name,
-		venue: event.loc_venue
-	};
-	if (event.loc_address1) {
-		document.addr1 = event.loc_address1;
-	}
-	if (event.loc_address2) {
-		document.addr2 = event.loc_address2;
-	}
-	document.city = event.loc_city;
-	if (event.loc_region && event.loc_region != 'N/A') {
-		document.region = event.loc_region;
-	}
-	if (event.loc_postalcode) {
-		document.postal = event.loc_postalcode;
-	}
-	document.country = event.loc_country;
-	document.season = encodeSeason(event.season);
-	document.start = encodeDate(event.start);
-	document.end = encodeDate(event.end);
-	document.divs = event.divisions;
-	return document;
-};
-const formatTeam = team => {
-	const document = {
-		_id: {
-			prog: encodeProgram(team.program),
-			id: team.number
-		},
-		name: team.team_name
-	};
-	if (team.robot_name) {
-		document.robot = team.robot_name
-	}
-	const org = encodeText(team.organisation);
-	if (org) {
-		document.org = org;
-	}
-	const city = encodeText(team.city);
-	if (city) {
-		document.city = city;
-	}
-	const region = encodeText(team.region);
-	if (region && region != 'N/A' && region != 'Not Applicable or Not Listed') {
-		document.region = region;
-	}
-	const country = encodeText(team.country);
-	if (country) {
-		document.country = country;
-	}
-	document.grade = encodeGrade(team.grade);
-	document.registered = encodeBoolean(team.is_registered);
-	return document;
-};
-const formatMatch = match => {
-	const document = {
-		_id: {
-			sku: match.sku,
-			div: match.division,
-			round: match.round,
-			instance: match.instance,
-			num: match.matchnum
-		}
-	};
-	if (match.field) {
-		document.field = match.field;
-	}
-	document.red1 = match.red1;
-	if (match.red2) {
-		document.red2 = match.red2;
-	}
-	if (match.red3) {
-		document.red3 = match.red3;
-	}
-	if (match.redsit) {
-		document.redSit = match.redsit;
-	}
-	document.blue1 = match.blue1;
-	if (match.blue2) {
-		document.blue2 = match.blue2;
-	}
-	if (match.blue3) {
-		document.blue3 = match.blue3;
-	}
-	if (match.bluesit) {
-		document.blueSit = match.bluesit;
-	}
-	if (match.scored) {
-		document.redScore = match.redscore;
-		document.blueScore = match.bluescore;
-	}
-	document.scored = encodeBoolean(match.scored);
-	const start = encodeDate(match.scheduled);
-	if (start) {
-		document.start = start;
-	}
-	return document;
-};
-const formatRanking = ranking => ({
-	_id: {
-		sku: ranking.sku,
-		div: ranking.division,
-		team: ranking.team
-	},
-	rank: ranking.rank,
-	wins: ranking.wins,
-	losses: ranking.losses,
-	ties: ranking.ties,
-	wp: ranking.wp,
-	ap: ranking.ap,
-	sp: ranking.sp,
-	trsp: ranking.trsp,
-	maxScore: ranking.max_score,
-	opr: ranking.opr,
-	dpr: ranking.dpr,
-	ccwm: ranking.ccwm
-});
-const formatAward = award => {
-	const document = {
-		_id: {
-			sku: award.sku,
-			name: award.name,
-			team: award.team
-		}
-	};
-	if (award.qualifies.length) {
-		document.quals = award.qualifies;
-	}
-	return document;
-};
-const formatSkill = skill => ({
-	_id: {
-		sku: skill.sku,
-		type: skill.type,
-		team: skill.team
-	},
-	rank: skill.rank,
-	prog: encodeProgram(skill.program),
-	attempts: skill.attempts,
-	score: skill.score
-});
-
-const vexDbProgramToId = {
-	'VRC': 1,
-	'VEXU': 4,
-	'WORKSHOP': 37,
-	'CREATE': 40,
-	'VIQC': 41
-};
-
-const vexDbSeasonToId = {
-	'Bridge Battle': -4,
-	'Elevation': -3,
-	'Clean Sweep': 1,
-	'Round Up': 7,
-	'Gateway': 73,
-	'Sack Attack': 85,
-	'Toss Up': 92,
-	'Skyrise': 102,
-	'Nothing But Net': 110,
-	'Starstruck': 115,
-	'In The Zone': 119
-};
-
-const encodeProgram = program => vexDbProgramToId[program];
-const encodeSeason = season => vexDbSeasonToId[season];
-const encodeGrade = grade => dbinfo.grades.indexOf(grade);*/
 const encodeDate = date => Date.parse(date);
 const encodeBoolean = number => Boolean(number);
 const encodeText = text => text ? text.trim() : text;
-/*
-const updateCollectionFromResource = (collection, resource, formatFunc) => {
-	updateCollectionFromResourceBatch(collection, resource, formatFunc, 0);
-};
 
-const updateCollectionFromResourceBatch = (collection, resource, formatFunc, startIndex) => {
-	request.get({url: `https://api.vexdb.io/v1/${resource}?limit_start=${startIndex}`, json: true}).then(body => {
-		if (body.status) {
-			if (body.size) {
-				body.result.map(formatFunc).forEach(document => {
-					db.collection(collection).updateOne(
-						{_id: document._id},
-						{$set: document},
-						{upsert: true}
-					).then(result => {
-						if (result.upsertedCount) {
-							console.log(`Insert to ${collection}: ${JSON.stringify(document)}`);
-						} else if (result.modifiedCount) {
-							console.log(`Update to ${collection}: ${JSON.stringify(document)}`);
-						}
-						//console.log('.');
-					}).catch(console.error);
-				});
-				updateCollectionFromResourceBatch(collection, resource, formatFunc, startIndex + body.size);
-			}
-		} else {
-			console.error(`Error: VEXDB_ERROR: ${body.error_text} errno: ${body.error_code}`);
-		}
-	}).catch(console.error);
-};
-*/
 module.exports = {
 	update: update,
 	updateProgramsAndSeasons: updateProgramsAndSeasons,

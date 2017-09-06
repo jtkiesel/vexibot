@@ -2,19 +2,21 @@ const Discord = require('discord.js');
 
 const app = require('../app');
 const vex = require('../vex');
-const dbinfo = require('../dbinfo');
 
-const db = app.db;
-const grades = dbinfo.grades;
+const addFooter = app.addFooter;
+const getTeamId = vex.getTeamId;
+const validTeamId = vex.validTeamId;
+const getTeam = vex.getTeam;
+const createTeamEmbed = vex.createTeamEmbed;
 
 module.exports = (message, args) => {
-	const teamId = vex.getTeamId(message, args);
-	if (vex.validTeamId(teamId)) {
-		vex.getTeam(teamId).then(team => {
+	const teamId = getTeamId(message, args);
+	if (validTeamId(teamId)) {
+		getTeam(teamId).then(team => {
 			if (team) {
-				const embed = vex.createTeamEmbed(team);
+				const embed = createTeamEmbed(team);
 				message.channel.send({embed: embed})
-					.then(reply => app.addFooter(message, embed, reply))
+					.then(reply => addFooter(message, embed, reply))
 					.catch(console.error);
 			} else {
 				message.reply('that team ID has never been registered.').catch(console.error);

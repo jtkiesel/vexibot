@@ -52,10 +52,10 @@ const getEvent = (result, sku) => {
 		type: type[1],
 		size: Number.parseInt(capacity[1]),
 		capacity: Number.parseInt(capacity[2]),
-		deadline: Date.parse(deadline[1]),
 		cost: (!cost || cost[1] === 'FREE') ? 0 : Math.round(Number.parseFloat(cost[1]) * 100),
 	},
-		orgLimit && {orgLimit: Number.parseInt(orgLimit[1])});
+		orgLimit && {orgLimit: Number.parseInt(orgLimit[1])},
+		deadline && {deadline: Date.parse(deadline[1])});
 };
 
 const formatMatch = (match, event, division) => {
@@ -103,15 +103,18 @@ const formatRanking = (ranking, event, division) => {
 		ranking.high_score !== null && {highScore: ranking.high_score});
 };
 
-const updateEvent = sku => {
+const updateEvent = (prog, sku) => {
 	request.get({url: `https://www.robotevents.com/${sku}.html`}).then(result => {
 		const event = getEvent(result, sku);
 
-		const prog = programToId[sku.match(/RE-([A-Z]+)-/)[1]];
-		const teamsRegex = /<tr>\s*<td>\s*((?:[0-9]{1,5}[A-Z]?)|(?:[A-Z]{2,6}[0-9]{0,2}))\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*(?:(.+?),?)?[\t ]*[\n\r][\t ]*(?:(.+?),?)?[\t ]*[\n\r][\t ]*(.+?)?\s*<\/td>\s*<\/tr>/g;
+		let teamList = result.match(/<div\s+class="tab-pane"\s+id="teamList">(\s|.)+?<\/div>/);
+		if (teamList) {
+			teamList = teamList[1];
+		}
+		const teamsRegex = /<tr>\s*<td>\s*((?:[0-9]{1,5}[A-Z]?)|(?:[A-Z]{2,6}[0-9]{0,2}))\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*(?:(.+?),?)?[\t ]*[\n\r][\t ]*(?:(.+?),?)?[\t ]*[\n\r][\t ]*(.+?)?\s*<\/td>\s*<\/tr>/gi;
 		const teams = [];
 		let regex, id, name, org, city, region, country;
-		while (regex = teamsRegex.exec(result)) {
+		while (regex = teamsRegex.exec(teamList)) {
 			[regex, id, name, org, city, region, country] = regex;
 
 			teams.push(Object.assign({_id: {prog: prog, id: id}},
@@ -121,7 +124,7 @@ const updateEvent = sku => {
 				region && {region: region},
 				country && {country: country}));
 		}
-		const awardsRegex = /<tr>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*((?:[0-9]{1,5}[A-Z]?)|(?:[A-Z]{2,6}[0-9]{0,2}))\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<\/tr>/g;
+		const awardsRegex = /<tr>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*((?:[0-9]{1,5}[A-Z]?)|(?:[A-Z]{2,6}[0-9]{0,2}))\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<\/tr>/gi;
 		const awards = [];
 		while (regex = awardsRegex.exec(result)) {
 			awards.push({
@@ -281,6 +284,7 @@ const updateEvent = sku => {
 				const old = result.value;
 				if (!old) {
 					vex.sendToSubscribedChannels('New team registered:', {embed: vex.createTeamEmbed(team)});
+					console.log(vex.createTeamEmbed(team).fields);
 				} else {
 					const teamId = team._id.id;
 					if (team.city !== old.city || team.region !== old.region || team.country !== old.country) {
@@ -300,13 +304,16 @@ const updateEvent = sku => {
 								{$unset: unset}
 							).then(result => {
 								vex.sendToSubscribedChannels(undefined, {embed: vex.createTeamChangeEmbed(teamId, 'location', vex.getTeamLocation(old), vex.getTeamLocation(team))});
+								console.log(vex.createTeamChangeEmbed(teamId, 'location', vex.getTeamLocation(old), vex.getTeamLocation(team)).description);
 							}).catch(console.error);
 						} else {
 							vex.sendToSubscribedChannels(undefined, {embed: vex.createTeamChangeEmbed(teamId, 'location', vex.getTeamLocation(old), vex.getTeamLocation(team))});
+							console.log(vex.createTeamChangeEmbed(teamId, 'location', vex.getTeamLocation(old), vex.getTeamLocation(team)).description);
 						}
 					}
 					if (team.name !== old.name) {
 						vex.sendToSubscribedChannels(undefined, {embed: vex.createTeamChangeEmbed(teamId, 'team name', old.name, team.name)});
+						console.log(vex.createTeamChangeEmbed(teamId, 'team name', old.name, team.name).description);
 					}
 					if (team.robot !== old.robot) {
 						if (!team.robot) {
@@ -315,9 +322,11 @@ const updateEvent = sku => {
 								{$unset: {robot: ''}}
 							).then(result => {
 								vex.sendToSubscribedChannels(undefined, {embed: vex.createTeamChangeEmbed(teamId, 'robot name', old.robot, team.robot)});
+								console.log(vex.createTeamChangeEmbed(teamId, 'robot name', old.robot, team.robot).description);
 							}).catch(console.error);
 						} else {
 							vex.sendToSubscribedChannels(undefined, {embed: vex.createTeamChangeEmbed(teamId, 'robot name', old.robot, team.robot)});
+							console.log(vex.createTeamChangeEmbed(teamId, 'robot name', old.robot, team.robot).description);
 						}
 					}
 				}
@@ -351,7 +360,7 @@ const updateEvent = sku => {
 		});
 	}).catch(error => {
 		console.error(error);
-		updateEvent(sku);
+		updateEvent(prog, sku);
 	});
 };
 

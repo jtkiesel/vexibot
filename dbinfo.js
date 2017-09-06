@@ -31,15 +31,25 @@ const seasonToId = {
 const idToSeason = {
 	'-4': 'Bridge Battle',
 	'-3': 'Elevation',
+	'-2': 'Elevation',
 	'1': 'Clean Sweep',
+	'4': 'Clean Sweep',
 	'7': 'Round Up',
+	'10': 'Round Up',
 	'73': 'Gateway',
+	'76': 'Gateway',
 	'85': 'Sack Attack',
+	'88': 'Sack Attack',
 	'92': 'Toss Up',
+	'93': 'Toss Up',
 	'102': 'Skyrise',
+	'103': 'Skyrise',
 	'110': 'Nothing But Net',
+	'111': 'Nothing But Net',
 	'115': 'Starstruck',
-	'119': 'In the Zone'
+	'116': 'Starstruck',
+	'119': 'In the Zone',
+	'120': 'In the Zone'
 };
 
 const decodeSeason = id => idToSeason[id];
@@ -47,15 +57,25 @@ const decodeSeason = id => idToSeason[id];
 const idToSeasonUrl = {
 	'-4': 'http://roboticseducation.org/vrc-bridge-battle',
 	'-3': 'http://roboticseducation.org/vrc-elevation',
+	'-2': 'http://roboticseducation.org/vrc-elevation',
 	'1': 'http://roboticseducation.org/vrc-clean-sweep',
+	'4': 'http://roboticseducation.org/vrc-clean-sweep',
 	'7': 'http://roboticseducation.org/vrc-round-up',
+	'10': 'http://roboticseducation.org/vrc-round-up',
 	'73': 'http://roboticseducation.org/vrc-gateway',
+	'76': 'http://roboticseducation.org/vrc-gateway',
 	'85': 'http://roboticseducation.org/vrc-sack-attack',
+	'88': 'http://roboticseducation.org/vrc-sack-attack',
 	'92': 'http://roboticseducation.org/vrc-toss-up',
+	'93': 'http://roboticseducation.org/vrc-toss-up',
 	'102': 'http://roboticseducation.org/vrc-skyrise',
+	'103': 'http://roboticseducation.org/vrc-skyrise',
 	'110': 'http://roboticseducation.org/vrc-nothing-but-net',
+	'111': 'http://roboticseducation.org/vrc-nothing-but-net',
 	'115': 'http://roboticseducation.org/vrc-history-2016-2017-starstruck',
-	'119': 'https://vexrobotics.com/vexedr/competition/vrc-current-game'
+	'116': 'http://roboticseducation.org/vrc-history-2016-2017-starstruck',
+	'119': 'https://vexrobotics.com/vexedr/competition/vrc-current-game',
+	'120': 'https://vexrobotics.com/vexedr/competition/vrc-current-game'
 };
 
 const decodeSeasonUrl = id => idToSeasonUrl[id];
