@@ -1,26 +1,28 @@
 const Discord = require('discord.js');
 
 const app = require('../app');
-const dbinfo = require('../dbinfo');
 const vex = require('../vex');
+const dbinfo = require('../dbinfo');
 
 const db = app.db;
 const addFooter = app.addFooter;
-const decodeProgram = dbinfo.decodeProgram;
 const getTeamId = vex.getTeamId;
 const validTeamId = vex.validTeamId;
 const getTeam = vex.getTeam;
+const decodeProgram = dbinfo.decodeProgram;
 
 const rankEmojis = ['🥇', '🥈', '🥉'];
 
-module.exports = (message, args) => {
+module.exports = async (message, args) => {
 	let teamId = getTeamId(message, args);
 	if (validTeamId(teamId)) {
-		getTeam(teamId).then(team => {
+		try {
+			const team = await getTeam(teamId);
 			if (team) {
 				const season = isNaN(teamId.charAt(0)) ? 120 : 119;
 				teamId = team._id.id;
-				db.collection('maxSkills').findOne({'_id.season': season, 'team.id': teamId}).then(maxSkill => {
+				try {
+					const maxSkill = await db.collection('maxSkills').findOne({'_id.season': season, 'team.id': teamId});
 					if (maxSkill) {
 						let rank = maxSkill._id.rank;
 						rank = (rank <= 3) ? rankEmojis[rank - 1] : rank;
@@ -35,17 +37,24 @@ module.exports = (message, args) => {
 							.addField('Driver', maxSkill.driver, true)
 							.addField('Max Programming', maxSkill.maxProg, true)
 							.addField('Max Driver', maxSkill.maxDriver, true);
-						message.channel.send({embed})
-							.then(reply => addFooter(message, embed, reply))
-							.catch(console.error);
+						try {
+							const reply = await message.channel.send({embed});
+							addFooter(message, embed, reply);
+						} catch (err) {
+							console.error(err);
+						}
 					} else {
-						message.reply('that team hasn\'t competed in skills for In the Zone.')
+						message.reply('that team hasn\'t competed in either skills challenge for In the Zone.')
 					}
-				}).catch(console.error);
+				} catch (err) {
+					console.error(err);
+				}
 			} else {
 				message.reply('that team ID has never been registered.');
 			}
-		}).catch(console.error);
+		} catch (err) {
+			console.error(err);
+		}
 	} else {
 		message.reply('please provide a valid team ID, such as **24B** or **BNS**.');
 	}

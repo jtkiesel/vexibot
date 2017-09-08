@@ -9,19 +9,25 @@ const validTeamId = vex.validTeamId;
 const getTeam = vex.getTeam;
 const createTeamEmbed = vex.createTeamEmbed;
 
-module.exports = (message, args) => {
+module.exports = async (message, args) => {
 	const teamId = getTeamId(message, args);
 	if (validTeamId(teamId)) {
-		getTeam(teamId).then(team => {
+		try {
+			const team = await getTeam(teamId);
 			if (team) {
 				const embed = createTeamEmbed(team);
-				message.channel.send({embed: embed})
-					.then(reply => addFooter(message, embed, reply))
-					.catch(console.error);
+				try {
+					const reply = await message.channel.send({embed: embed});
+					addFooter(message, embed, reply);
+				} catch (err) {
+					console.error(err);
+				}
 			} else {
 				message.reply('that team ID has never been registered.').catch(console.error);
 			}
-		}).catch(console.error);
+		} catch (err) {
+			console.error(err);
+		}
 	} else {
 		message.reply('please provide a valid team ID, such as **24B** or **BNS**.').catch(console.error);
 	}

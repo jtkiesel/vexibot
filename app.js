@@ -10,6 +10,7 @@ const prefix = '^';
 const commandInfo = {
 	ping: 'Pong!',
 	uptime: 'Time since bot last restarted.',
+	sub: 'Subscribe to updates for a team.',
 	team: 'General information about a team.',
 	awards: 'Awards earned by a team.',
 	skills: 'Skills scores achieved by a team.',
@@ -35,7 +36,7 @@ const handleCommand = message => {
 
 	if (commands.hasOwnProperty(cmd)) {
 		commands[cmd](message, args);
-	} else if (cmd == 'help') {
+	} else if (cmd === 'help') {
 		const embed = new Discord.RichEmbed()
 			.setColor('RANDOM')
 			.setTitle('Commands')
@@ -43,8 +44,8 @@ const handleCommand = message => {
 		message.channel.send({embed})
 			.then(reply => addFooter(message, embed, reply))
 			.catch(console.error);
-	} else if (cmd == 'eval') {
-		if (message.author.id == '197781934116569088') {
+	} else if (cmd === 'eval') {
+		if (message.author.id === '197781934116569088') {
 			try {
 				let evaled = eval(args);
 				if (typeof evaled !== 'string') {
@@ -52,7 +53,7 @@ const handleCommand = message => {
 				}
 				message.channel.send(clean(evaled), {code: 'xl'});
 			} catch (error) {
-				message.channel.send(`\`ERROR\` \`\`\`xl${clean(error)}\`\`\``);
+				message.channel.send(`\`ERROR\` \`\`\`xl\n${clean(error)}\`\`\``);
 			}
 		} else {
 			message.reply('you don\'t have permission to run that command.');
@@ -73,8 +74,6 @@ client.on('ready', () => {
 
 	console.log('Ready!');
 	vexdata.update();
-	//vexdata.updateProgramsAndSeasons();
-	//vexdata.updateMaxSkills();
 });
 
 client.on('error', console.error);

@@ -4,8 +4,8 @@ const he = require('he');
 const app = require('./app');
 const dbinfo = require('./dbinfo');
 
+const db = app.db;
 const client = app.client;
-
 const decodeProgram = dbinfo.decodeProgram;
 const decodeGrade = dbinfo.decodeGrade;
 
@@ -21,7 +21,7 @@ const getTeamId = (message, args) => {
 
 const validTeamId = teamId => /^([0-9]{1,5}[A-Z]?|[A-Z]{2,6}[0-9]{0,2})$/i.test(teamId);
 
-const getTeam = teamId => app.db.collection('teams').find({'_id.id': teamId}).sort({'_id.prog': 1}).next();
+const getTeam = teamId => db.collection('teams').findOne({_id: {prog: (isNaN(teamId.charAt(0)) ? 4 : 1), id: teamId}});
 
 const getTeamLocation = team => {
 	let location = [team.city];
@@ -35,6 +35,7 @@ const getTeamLocation = team => {
 };
 
 const createTeamEmbed = team => {
+	const teamId = team._id.id;
 	const name = team.name ? he.decode(team.name) : '';
 	const robot = team.robot ? he.decode(team.robot) : '';
 	const org = team.org ? he.decode(team.org) : '';
@@ -44,8 +45,8 @@ const createTeamEmbed = team => {
 
 	const embed = new Discord.RichEmbed()
 		.setColor('GREEN')
-		.setTitle(`${decodeProgram(team._id.prog)} ${team._id.id}`)
-		.setURL(`https://vexdb.io/teams/view/${team._id.id}`);
+		.setTitle(`${decodeProgram(team._id.prog)} ${teamId}`)
+		.setURL(`https://vexdb.io/teams/view/${teamId}`);
 	if (name) {
 		embed.addField('Team Name', name, true);
 	}
@@ -72,11 +73,23 @@ const subscribedChannels = [
 	'329477820076130306'  // Dev server.
 ];
 
-const sendToSubscribedChannels = (content, options) => {
-	subscribedChannels.forEach(id => {
+const sendToSubscribedChannels = async (content, options, program, teamId) => {
+	subscribedChannels.forEach(async id => {
 		const channel = client.channels.get(id);
 		if (channel) {
-			channel.send(content, options);
+			try {
+				const teamSub = await db.collection('teamSubs').findOne({_id: {guild: channel.guild.id, team: {prog: program, id: teamId}}});
+				let text = undefined;
+				if (teamSub) {
+					text = teamSub.users.map(subscriber => `<@${subscriber}>`).join('');
+				}
+				if (content) {
+					text = text ? `${text}\n${content}` : content;
+				}
+				channel.send(text, options);
+			} catch (err) {
+				console.error(err);
+			}
 		}
 	});
 };
@@ -95,7 +108,7 @@ const createTeamChangeEmbed = (teamId, field, oldValue, newValue) => {
 	return new Discord.RichEmbed()
 		.setColor('GREEN')
 		.setDescription(`[${teamId}](https://vexdb.io/teams/view/${teamId}) ${change}.`);
-}
+};
 
 module.exports = {
 	getTeamId: getTeamId,

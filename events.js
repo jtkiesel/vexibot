@@ -6,8 +6,12 @@ const vex = require('./vex');
 const dbinfo = require('./dbinfo');
 
 const db = app.db;
-
-const programToId = dbinfo.programToId;
+const getTeamLocation = vex.getTeamLocation;
+const createTeamEmbed = vex.createTeamEmbed;
+const createTeamChangeEmbed = vex.createTeamChangeEmbed;
+const sendToSubscribedChannels = vex.sendToSubscribedChannels;
+const encodeProgram = dbinfo.encodeProgram;
+const encodeGrade = dbinfo.encodeGrade;
 
 const genders = [
 	'both',
@@ -35,19 +39,20 @@ const getEvent = (result, sku) => {
 		[regex, start, end, venue, address, city, region, postcode, country] = regex;
 		dates.push(Object.assign({
 			start: Date.parse(start),
-			end: Date.parse(end ? end : start)
+			end: Date.parse(end ? end : start) + 86399999
 		},
-			venue && {venue: venue},
-			address && {address: address},
-			city && {city: city},
-			region && {region: region},
-			postcode && {country: country}));
+			venue && {venue: he.decode(venue)},
+			address && {address: he.decode(address)},
+			city && {city: he.decode(city)},
+			region && {region: he.decode(region)},
+			postcode && {postcode: he.decode(postcode)},
+			country && {country: he.decode(country)}));
 	}
 	return Object.assign({
 		_id: sku,
-		name: name[1],
+		name: he.decode(name[1]),
 		start: Date.parse(totalDates[1]),
-		end: Date.parse(totalDates[2] ? totalDates[2] : totalDates[1]),
+		end: Date.parse(totalDates[2] ? totalDates[2] : totalDates[1]) + 86399999,
 		dates: dates,
 		type: type[1],
 		size: Number.parseInt(capacity[1]),
@@ -103,35 +108,43 @@ const formatRanking = (ranking, event, division) => {
 		ranking.high_score !== null && {highScore: ranking.high_score});
 };
 
-const updateEvent = (prog, sku) => {
-	request.get({url: `https://www.robotevents.com/${sku}.html`}).then(result => {
+const updateEvent = async (prog, sku, retried = false) => {
+	try {
+		const result = await request.get({url: `https://www.robotevents.com/${sku}.html`});
 		const event = getEvent(result, sku);
 
 		let teamList = result.match(/<div\s+class="tab-pane"\s+id="teamList">(\s|.)+?<\/div>/);
 		if (teamList) {
-			teamList = teamList[1];
+			teamList = teamList[0];
 		}
 		const teamsRegex = /<tr>\s*<td>\s*((?:[0-9]{1,5}[A-Z]?)|(?:[A-Z]{2,6}[0-9]{0,2}))\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*(?:(.+?),?)?[\t ]*[\n\r][\t ]*(?:(.+?),?)?[\t ]*[\n\r][\t ]*(.+?)?\s*<\/td>\s*<\/tr>/gi;
 		const teams = [];
 		let regex, id, name, org, city, region, country;
 		while (regex = teamsRegex.exec(teamList)) {
 			[regex, id, name, org, city, region, country] = regex;
+			const program = (prog == 1 || prog == 4) ? (isNaN(id.charAt(0)) ? 4 : 1) : prog;
 
-			teams.push(Object.assign({_id: {prog: prog, id: id}},
-				name && {name: name},
-				org && {org: org},
-				city && {city: city},
-				region && {region: region},
-				country && {country: country}));
+			teams.push(Object.assign({_id: {prog: program, id: id}},
+				name && {name: he.decode(name)},
+				org && {org: he.decode(org)},
+				city && {city: he.decode(city)},
+				region && {region: he.decode(region)},
+				country && {country: he.decode(country)},
+				program === encodeProgram('VEXU') && {grade: encodeGrade('College')}));
 		}
 		const awardsRegex = /<tr>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*((?:[0-9]{1,5}[A-Z]?)|(?:[A-Z]{2,6}[0-9]{0,2}))\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<\/tr>/gi;
 		const awards = [];
 		while (regex = awardsRegex.exec(result)) {
+			const program = (prog == 1 || prog == 4) ? (isNaN(id.charAt(0)) ? 4 : 1) : prog;
+
 			awards.push({
 				_id: {
 					event: sku,
 					name: regex[1],
-					team: regex[2]
+					team: {
+						prog: program,
+						id: regex[2]
+					}
 				}
 			});
 		}
@@ -209,13 +222,13 @@ const updateEvent = (prog, sku) => {
 							teamReg.genders && {genders: encodeGenders(teamReg.genders)});
 						break;
 					}
-				};
+				}
 			});
 		}
 		const divisionsRegex = /<a\s+href="#(.+?)"\s+role="tab"\s+data-toggle="tab">\s*(.+?)\s*</g;
 		const divisionIdToName = {};
 		while (regex = divisionsRegex.exec(result)) {
-			divisionIdToName[regex[1]] = regex[2];
+			divisionIdToName[regex[1]] = he.decode(regex[2]);
 		}
 		const resultsRegex = /id="(.+?)">\s*<div\s+class="row">\s*<div\s+class="col-md-8">\s*<h4>Match Results<\/h4>\s*<results\s+program=".+?"\s+division="([0-9]+)"\s+event=".+?"\s+data="(.+?)"\s*>(?:\s|.)+?data="(.+?)"\s*>/g;
 		const divisionNumberToName = {};
@@ -225,68 +238,64 @@ const updateEvent = (prog, sku) => {
 
 			divisionNumberToName[divisionNumber] = divisionName;
 
-			JSON.parse(he.decode(regex[3])).forEach(match => {
+			JSON.parse(he.decode(regex[3])).forEach(async match => {
 				if (match.division === divisionNumber) {
 					const document = formatMatch(match, sku, divisionName);
 
-					db.collection('matches').updateOne(
-						{_id: document._id},
-						{$set: document},
-						{upsert: true}
-					).then(result => {
-						if (result.upsertedCount) {
+					try {
+						const res = await db.collection('matches').updateOne({_id: document._id}, {$set: document}, {upsert: true});
+						if (res.upsertedCount) {
 							console.log(`Insert to matches: ${JSON.stringify(document)}`);
-						} else if (result.modifiedCount) {
+						} else if (res.modifiedCount) {
 							console.log(`Update to matches: ${JSON.stringify(document)}`);
 						}
-					}).catch(console.error);
+					} catch (err) {
+						console.error(err);
+					}
 				}
 			});
-			JSON.parse(he.decode(regex[4])).forEach(ranking => {
+			JSON.parse(he.decode(regex[4])).forEach(async ranking => {
 				if (ranking.division === divisionNumber) {
 					const document = formatRanking(ranking, sku, divisionName);
 
-					db.collection('rankings').updateOne(
-						{_id: document._id},
-						{$set: document},
-						{upsert: true}
-					).then(result => {
-						if (result.upsertedCount) {
+					try {
+						const res = await db.collection('rankings').updateOne({_id: document._id}, {$set: document}, {upsert: true});
+						if (res.upsertedCount) {
 							console.log(`Insert to rankings: ${JSON.stringify(document)}`);
-						} else if (result.modifiedCount) {
+						} else if (res.modifiedCount) {
 							console.log(`Update to rankings: ${JSON.stringify(document)}`);
 						}
-					}).catch(console.error);
+					} catch (err) {
+						console.error(err);
+					}
 				}
 			});
 		}
 		event.divisions = Object.keys(divisionNumberToName).sort((a, b) => a - b).map(divisionNumber => divisionNumberToName[divisionNumber]);
+
 		if (teams.length) {
 			event.teams = teams.map(team => team._id.id);
 		}
-		db.collection('events').updateOne(
-			{_id: event._id},
-			{$set: event},
-			{upsert: true}
-		).then(result => {
-			if (result.upsertedCount) {
+		try {
+			const res = await db.collection('events').updateOne({_id: event._id}, {$set: event}, {upsert: true});
+			if (res.upsertedCount) {
 				console.log(`Insert to events: ${JSON.stringify(event)}`);
-			} else if (result.modifiedCount) {
+			} else if (res.modifiedCount) {
 				console.log(`Update to events: ${JSON.stringify(event)}`);
 			}
-		}).catch(console.error);
-		teams.forEach(team => {
-			db.collection('teams').findOneAndUpdate(
-				{_id: team._id},
-				{$set: team},
-				{upsert: true}
-			).then(result => {
-				const old = result.value;
+		} catch (err) {
+			console.error(err);
+		}
+		teams.forEach(async team => {
+			try {
+				const program = team._id.prog;
+				const teamId = team._id.id;
+				const res = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$set: team}, {upsert: true});
+				const old = res.value;
 				if (!old) {
-					vex.sendToSubscribedChannels('New team registered:', {embed: vex.createTeamEmbed(team)});
-					console.log(vex.createTeamEmbed(team).fields);
+					sendToSubscribedChannels('New team registered:', {embed: createTeamEmbed(team)}, program, teamId);
+					console.log(createTeamEmbed(team).fields);
 				} else {
-					const teamId = team._id.id;
 					if (team.city !== old.city || team.region !== old.region || team.country !== old.country) {
 						const unset = {};
 						if (!team.city) {
@@ -299,69 +308,78 @@ const updateEvent = (prog, sku) => {
 							unset.country = '';
 						}
 						if (Object.keys(unset).length) {
-							db.collection('teams').findOneAndUpdate(
-								{_id: team._id},
-								{$unset: unset}
-							).then(result => {
-								vex.sendToSubscribedChannels(undefined, {embed: vex.createTeamChangeEmbed(teamId, 'location', vex.getTeamLocation(old), vex.getTeamLocation(team))});
-								console.log(vex.createTeamChangeEmbed(teamId, 'location', vex.getTeamLocation(old), vex.getTeamLocation(team)).description);
-							}).catch(console.error);
+							try {
+								const res2 = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$unset: unset});
+								sendToSubscribedChannels(undefined, {embed: createTeamChangeEmbed(teamId, 'location', getTeamLocation(old), getTeamLocation(team))}, program, teamId);
+								console.log(createTeamChangeEmbed(teamId, 'location', getTeamLocation(old), getTeamLocation(team)).description);
+							} catch (err) {
+								console.error(err);
+							}
 						} else {
-							vex.sendToSubscribedChannels(undefined, {embed: vex.createTeamChangeEmbed(teamId, 'location', vex.getTeamLocation(old), vex.getTeamLocation(team))});
-							console.log(vex.createTeamChangeEmbed(teamId, 'location', vex.getTeamLocation(old), vex.getTeamLocation(team)).description);
+							sendToSubscribedChannels(undefined, {embed: createTeamChangeEmbed(teamId, 'location', getTeamLocation(old), getTeamLocation(team))}, program, teamId);
+							console.log(createTeamChangeEmbed(teamId, 'location', getTeamLocation(old), getTeamLocation(team)).description);
 						}
 					}
 					if (team.name !== old.name) {
-						vex.sendToSubscribedChannels(undefined, {embed: vex.createTeamChangeEmbed(teamId, 'team name', old.name, team.name)});
-						console.log(vex.createTeamChangeEmbed(teamId, 'team name', old.name, team.name).description);
+						sendToSubscribedChannels(undefined, {embed: createTeamChangeEmbed(teamId, 'team name', old.name, team.name)}, program, teamId);
+						console.log(createTeamChangeEmbed(teamId, 'team name', old.name, team.name).description);
 					}
 					if (team.robot !== old.robot) {
 						if (!team.robot) {
-							db.collection('teams').findOneAndUpdate(
-								{_id: team._id},
-								{$unset: {robot: ''}}
-							).then(result => {
-								vex.sendToSubscribedChannels(undefined, {embed: vex.createTeamChangeEmbed(teamId, 'robot name', old.robot, team.robot)});
-								console.log(vex.createTeamChangeEmbed(teamId, 'robot name', old.robot, team.robot).description);
-							}).catch(console.error);
+							try {
+								const res2 = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$unset: {robot: ''}});
+								sendToSubscribedChannels(undefined, {embed: createTeamChangeEmbed(teamId, 'robot name', old.robot, team.robot)}, program, teamId);
+								console.log(createTeamChangeEmbed(teamId, 'robot name', old.robot, team.robot).description);
+							} catch (err) {
+								console.error(err);
+							}
 						} else {
-							vex.sendToSubscribedChannels(undefined, {embed: vex.createTeamChangeEmbed(teamId, 'robot name', old.robot, team.robot)});
-							console.log(vex.createTeamChangeEmbed(teamId, 'robot name', old.robot, team.robot).description);
+							sendToSubscribedChannels(undefined, {embed: createTeamChangeEmbed(teamId, 'robot name', old.robot, team.robot)}, program, teamId);
+							console.log(createTeamChangeEmbed(teamId, 'robot name', old.robot, team.robot).description);
 						}
 					}
 				}
-			}).catch(console.error);
+			} catch (err) {
+				console.error(err);
+			}
 		});
-		awards.forEach(award => {
-			db.collection('awards').updateOne(
-				{_id: award._id},
-				{$set: award},
-				{upsert: true}
-			).then(result => {
-				if (result.upsertedCount) {
+		awards.forEach(async award => {
+			try {
+				const res = await db.collection('awards').updateOne({_id: award._id}, {$set: award}, {upsert: true});
+				if (res.upsertedCount) {
 					console.log(`Insert to awards: ${JSON.stringify(award)}`);
-				} else if (result.modifiedCount) {
+				} else if (res.modifiedCount) {
 					console.log(`Update to awards: ${JSON.stringify(award)}`);
 				}
-			}).catch(console.error);
+			} catch (err) {
+				console.error(err);
+			}
 		});
-		skills.forEach(skill => {
-			db.collection('skills').updateOne(
-				{_id: skill._id},
-				{$set: skill},
-				{upsert: true}
-			).then(result => {
-				if (result.upsertedCount) {
+		skills.forEach(async skill => {
+			try {
+				const res = await db.collection('skills').updateOne({_id: skill._id}, {$set: skill}, {upsert: true});
+				if (res.upsertedCount) {
 					console.log(`Insert to skills: ${JSON.stringify(skill)}`);
-				} else if (result.modifiedCount) {
+				} else if (res.modifiedCount) {
 					console.log(`Update to skills: ${JSON.stringify(skill)}`);
 				}
-			}).catch(console.error);
+			} catch (err) {
+				console.error(err);
+			}
 		});
-	}).catch(error => {
-		console.error(error);
-		updateEvent(prog, sku);
-	});
+	} catch (err) {
+		console.error(err);
+		if (!retried) {
+			console.log(`Retrying ${sku}`);
+			try {
+				await updateEvent(prog, sku, true);
+			} catch (err) {
+				console.error(err);
+			}
+		} else {
+			console.log (`*** WARNING: ALREADY RETRIED ${sku}, GIVING UP ***`);
+		}
+	}
 };
 
 module.exports = {

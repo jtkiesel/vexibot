@@ -2,7 +2,6 @@ const Discord = require('discord.js');
 
 const app = require('../app');
 const dbinfo = require('../dbinfo');
-const vex = require('../vex');
 
 const db = app.db;
 const addFooter = app.addFooter;
@@ -11,7 +10,7 @@ const encodeGrade = dbinfo.encodeGrade;
 const rankEmojis = ['🥇', '🥈', '🥉'];
 const defaultEmoji = '🏅';
 
-module.exports = (message, args) => {
+module.exports = async (message, args) => {
 	const seasonName = 'In_The_Zone';
 	const arg = args ? args.replace(/\s+/g, '') : '';
 
@@ -38,10 +37,11 @@ module.exports = (message, args) => {
 		message.reply('please enter a valid grade, such as **h**, **m**, or **c**.');
 		return;
 	}
-	db.collection('maxSkills')
-		.find({'_id.season': season, 'team.grade': encodeGrade(grade)})
-		.sort({'_id.rank': 1})
-		.limit(limit).toArray().then(teams => {
+	try {
+		const teams = await db.collection('maxSkills')
+			.find({'_id.season': season, 'team.grade': encodeGrade(grade)})
+			.sort({'_id.rank': 1})
+			.limit(limit).toArray();
 		if (teams.length) {
 			description = '';
 			teams.forEach((maxSkill, i) => {
@@ -57,11 +57,16 @@ module.exports = (message, args) => {
 				.setTitle(`${program} ${grade} In the Zone Robot Skills`)
 				.setURL(`https://vexdb.io/skills/${program}/${seasonName}/Robot`)
 				.setDescription(description);
-			message.channel.send({embed})
-				.then(reply => addFooter(message, embed, reply))
-				.catch(console.error);
+			try {
+				const reply = await message.channel.send({embed});
+				addFooter(message, embed, reply);
+			} catch (err) {
+				console.error(err);
+			}
 		} else {
 			message.reply(`no skills scores available for ${program} ${grade} In the Zone.`);
 		}
-	}).catch(console.error);
+	} catch (err) {
+		console.error(err);
+	}
 };
