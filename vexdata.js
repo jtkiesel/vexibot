@@ -58,7 +58,7 @@ const update = () => {
 	//updateMaxSkills();
 };
 
-const updateTeamsInGroup = async (program, season, teamGroup) => {
+const updateTeamsInGroup = async (program, season, teamGroup, retried = false) => {
 	const url = 'https://www.robotevents.com/api/teams/getTeamsForLatLng';
 	const lat = teamGroup.position.lat;
 	const lng = teamGroup.position.lng;
@@ -68,19 +68,19 @@ const updateTeamsInGroup = async (program, season, teamGroup) => {
 		const teams = await request.post({url: url, form: {when: 'past', programs: [program], season_id: season, lat: lat, lng: lng}, json: true});
 		teams.map(team => formatReTeam(team, program, registered)).forEach(async team => {
 			try {
+				const teamId = team._id.id;
 				let result = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$set: team}, {upsert: true});
 				const old = result.value;
 				if (!old) {
 					delete team.registered;
-					sendToSubscribedChannels('New team registered:', {embed: createTeamEmbed(team)}, program, teamId);
+					sendToSubscribedChannels('New team registered', {embed: createTeamEmbed(team)}, program, teamId);
 					console.log(vex.createTeamEmbed(team).fields);
 				} else {
 					if (!old.registered && team.registered) {
 						delete old.registered;
-						sendToSubscribedChannels('Existing team registered:', {embed: createTeamEmbed(old)}, program, teamId);
+						sendToSubscribedChannels('Existing team registered', {embed: createTeamEmbed(old)}, program, teamId);
 						console.log(createTeamEmbed(old).fields);
 					}
-					const teamId = team._id.id;
 					if (team.city != old.city || team.region != old.region) {
 						const unset = {country: ''};
 						if (!team.region) {
@@ -88,28 +88,28 @@ const updateTeamsInGroup = async (program, season, teamGroup) => {
 						}
 						try {
 							result = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$unset: unset});
-							sendToSubscribedChannels(undefined, {embed: createTeamChangeEmbed(teamId, 'location', getTeamLocation(old), getTeamLocation(team))}, program, teamId);
-							console.log(vex.createTeamChangeEmbed(teamId, 'location', getTeamLocation(old), getTeamLocation(team)).description);
+							sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team))}, program, teamId);
+							console.log(vex.createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team)).description);
 						} catch (err) {
 							console.error(err);
 						}
 					}
 					if (team.name != old.name) {
-						sendToSubscribedChannels(undefined, {embed: createTeamChangeEmbed(teamId, 'team name', old.name, team.name)}, program, teamId);
-						console.log(createTeamChangeEmbed(teamId, 'team name', old.name, team.name).description);
+						sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'team name', old.name, team.name)}, program, teamId);
+						console.log(createTeamChangeEmbed(program, teamId, 'team name', old.name, team.name).description);
 					}
 					if (team.robot != old.robot) {
 						if (!team.robot) {
 							try {
 								result = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$unset: {robot: ''}});
-								sendToSubscribedChannels(undefined, {embed: createTeamChangeEmbed(teamId, 'robot name', old.robot, team.name)}, program, teamId);
-								console.log(createTeamChangeEmbed(teamId, 'robot name', old.robot, team.name).description);
+								sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.name)}, program, teamId);
+								console.log(createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.name).description);
 							} catch (err) {
 								console.error(err);
 							}
 						} else {
-							sendToSubscribedChannels(undefined, {embed: createTeamChangeEmbed(teamId, 'robot name', old.robot, team.robot)}, program, teamId);
-							console.log(createTeamChangeEmbed(teamId, 'robot name', old.robot, team.robot).description);
+							sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot)}, program, teamId);
+							console.log(createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot).description);
 						}
 					}
 				}
@@ -119,6 +119,16 @@ const updateTeamsInGroup = async (program, season, teamGroup) => {
 		});
 	} catch (err) {
 		console.error(err);
+		if (!retried) {
+			console.log(`Retrying ${lat},${lng}`);
+			try {
+				await updateTeamsInGroup(program, season, teamGroup, true);
+			} catch (err) {
+				console.error(err);
+			}
+		} else {
+			console.log (`*** WARNING: ALREADY RETRIED ${lat},${lng}, GIVING UP ***`);
+		}
 	}
 };
 

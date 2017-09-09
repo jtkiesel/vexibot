@@ -79,14 +79,14 @@ const sendToSubscribedChannels = async (content, options, program, teamId) => {
 		if (channel) {
 			try {
 				const teamSub = await db.collection('teamSubs').findOne({_id: {guild: channel.guild.id, team: {prog: program, id: teamId}}});
-				let text = undefined;
+				let text;
 				if (teamSub) {
 					text = teamSub.users.map(subscriber => `<@${subscriber}>`).join('');
 				}
 				if (content) {
 					text = text ? `${text}\n${content}` : content;
 				}
-				channel.send(text, options);
+				channel.send(text ? (text + ':') : undefined, options);
 			} catch (err) {
 				console.error(err);
 			}
@@ -96,18 +96,18 @@ const sendToSubscribedChannels = async (content, options, program, teamId) => {
 
 const escapeMarkdown = string => string ? string.replace(/([*^_`~])/g, '\\$1') : '';
 
-const createTeamChangeEmbed = (teamId, field, oldValue, newValue) => {
+const createTeamChangeEmbed = (program, teamId, field, oldValue, newValue) => {
 	let change;
 	if (!oldValue) {
-		change = `added their ${field} **${escapeMarkdown(he.decode(newValue))}**`;
+		change = `added their ${field} **"**${escapeMarkdown(he.decode(newValue))}**"**`;
 	} else if (!newValue) {
-		change = `removed their ${field} **${escapeMarkdown(he.decode(oldValue))}**`;
+		change = `removed their ${field} **"**${escapeMarkdown(he.decode(oldValue))}**"**`;
 	} else {
-		change = `changed their ${field} from **${escapeMarkdown(he.decode(oldValue))}** to **${escapeMarkdown(he.decode(newValue))}**`;
+		change = `changed their ${field} from **"**${escapeMarkdown(he.decode(oldValue))}**"** to **"**${escapeMarkdown(he.decode(newValue))}**"**`;
 	}
 	return new Discord.RichEmbed()
 		.setColor('GREEN')
-		.setDescription(`[${teamId}](https://vexdb.io/teams/view/${teamId}) ${change}.`);
+		.setDescription(`[${decodeProgram(program)} ${teamId}](https://vexdb.io/teams/view/${teamId}) ${change}.`);
 };
 
 module.exports = {

@@ -293,7 +293,7 @@ const updateEvent = async (prog, sku, retried = false) => {
 				const res = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$set: team}, {upsert: true});
 				const old = res.value;
 				if (!old) {
-					sendToSubscribedChannels('New team registered:', {embed: createTeamEmbed(team)}, program, teamId);
+					sendToSubscribedChannels('New team registered', {embed: createTeamEmbed(team)}, program, teamId);
 					console.log(createTeamEmbed(team).fields);
 				} else {
 					if (team.city !== old.city || team.region !== old.region || team.country !== old.country) {
@@ -310,32 +310,32 @@ const updateEvent = async (prog, sku, retried = false) => {
 						if (Object.keys(unset).length) {
 							try {
 								const res2 = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$unset: unset});
-								sendToSubscribedChannels(undefined, {embed: createTeamChangeEmbed(teamId, 'location', getTeamLocation(old), getTeamLocation(team))}, program, teamId);
-								console.log(createTeamChangeEmbed(teamId, 'location', getTeamLocation(old), getTeamLocation(team)).description);
+								sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team))}, program, teamId);
+								console.log(createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team)).description);
 							} catch (err) {
 								console.error(err);
 							}
 						} else {
-							sendToSubscribedChannels(undefined, {embed: createTeamChangeEmbed(teamId, 'location', getTeamLocation(old), getTeamLocation(team))}, program, teamId);
-							console.log(createTeamChangeEmbed(teamId, 'location', getTeamLocation(old), getTeamLocation(team)).description);
+							sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team))}, program, teamId);
+							console.log(createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team)).description);
 						}
 					}
 					if (team.name !== old.name) {
-						sendToSubscribedChannels(undefined, {embed: createTeamChangeEmbed(teamId, 'team name', old.name, team.name)}, program, teamId);
-						console.log(createTeamChangeEmbed(teamId, 'team name', old.name, team.name).description);
+						sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'team name', old.name, team.name)}, program, teamId);
+						console.log(createTeamChangeEmbed(program, teamId, 'team name', old.name, team.name).description);
 					}
 					if (team.robot !== old.robot) {
 						if (!team.robot) {
 							try {
 								const res2 = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$unset: {robot: ''}});
-								sendToSubscribedChannels(undefined, {embed: createTeamChangeEmbed(teamId, 'robot name', old.robot, team.robot)}, program, teamId);
-								console.log(createTeamChangeEmbed(teamId, 'robot name', old.robot, team.robot).description);
+								sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot)}, program, teamId);
+								console.log(createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot).description);
 							} catch (err) {
 								console.error(err);
 							}
 						} else {
-							sendToSubscribedChannels(undefined, {embed: createTeamChangeEmbed(teamId, 'robot name', old.robot, team.robot)}, program, teamId);
-							console.log(createTeamChangeEmbed(teamId, 'robot name', old.robot, team.robot).description);
+							sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot)}, program, teamId);
+							console.log(createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot).description);
 						}
 					}
 				}
