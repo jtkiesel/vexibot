@@ -134,19 +134,16 @@ const updateEvent = async (prog, sku, retried = false) => {
 		}
 		const awardsRegex = /<tr>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*((?:[0-9]{1,5}[A-Z]?)|(?:[A-Z]{2,6}[0-9]{0,2}))\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<\/tr>/gi;
 		const awards = [];
+		const awardInstances = [];
 		while (regex = awardsRegex.exec(result)) {
-			const program = (prog == 1 || prog == 4) ? (isNaN(id.charAt(0)) ? 4 : 1) : prog;
+			const program = (prog === 1 || prog === 4) ? (isNaN(id.charAt(0)) ? 4 : 1) : prog;
+			const name = regex[1];
+			const instance = (awardInstances[name] || 0) + 1;
 
-			awards.push({
-				_id: {
-					event: sku,
-					name: regex[1],
-					team: {
-						prog: program,
-						id: regex[2]
-					}
-				}
-			});
+			awardInstances[name] = instance;
+			awards.push(Object.assign({_id: {event: sku, name: name, instance: instance}},
+				validTeamId(regex[2]) && {team: {prog: program, id: regex[2]}}
+			));
 		}
 		const skills = [];
 		const skillsData = result.match(/<skills\s+event=".+?"\s+data="(.+?)"\s*>/);
@@ -345,11 +342,27 @@ const updateEvent = async (prog, sku, retried = false) => {
 		});
 		awards.forEach(async award => {
 			try {
-				const res = await db.collection('awards').updateOne({_id: award._id}, {$set: award}, {upsert: true});
-				if (res.upsertedCount) {
-					console.log(`Insert to awards: ${JSON.stringify(award)}`);
-				} else if (res.modifiedCount) {
-					console.log(`Update to awards: ${JSON.stringify(award)}`);
+				const res = await db.collection('awards').findOneAndUpdate({_id: award._id}, {$set: award}, {upsert: true});
+				const old = res.value;
+				if (old) {
+					if (award.team && !old.team) {
+						sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'team name', old.name, team.name)}, program, teamId);
+						console.log(createTeamChangeEmbed(program, teamId, 'team name', old.name, team.name).description);
+					}
+					if (team.robot !== old.robot) {
+						if (!team.robot) {
+							try {
+								const res2 = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$unset: {robot: ''}});
+								sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot)}, program, teamId);
+								console.log(createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot).description);
+							} catch (err) {
+								console.error(err);
+							}
+						} else {
+							sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot)}, program, teamId);
+							console.log(createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot).description);
+						}
+					}
 				}
 			} catch (err) {
 				console.error(err);

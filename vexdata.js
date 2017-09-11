@@ -81,7 +81,7 @@ const updateTeamsInGroup = async (program, season, teamGroup, retried = false) =
 						sendToSubscribedChannels('Existing team registered', {embed: createTeamEmbed(old)}, program, teamId);
 						console.log(createTeamEmbed(old).fields);
 					}
-					if (team.city != old.city || team.region != old.region) {
+					if (team.city !== old.city || team.region !== old.region) {
 						const unset = {country: ''};
 						if (!team.region) {
 							unset.region = '';
@@ -94,11 +94,11 @@ const updateTeamsInGroup = async (program, season, teamGroup, retried = false) =
 							console.error(err);
 						}
 					}
-					if (team.name != old.name) {
+					if (team.name !== old.name) {
 						sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'team name', old.name, team.name)}, program, teamId);
 						console.log(createTeamChangeEmbed(program, teamId, 'team name', old.name, team.name).description);
 					}
-					if (team.robot != old.robot) {
+					if (team.robot !== old.robot) {
 						if (!team.robot) {
 							try {
 								result = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$unset: {robot: ''}});

@@ -13,10 +13,8 @@ const getTeamId = (message, args) => {
 	const arg = args.replace(/\s+/g, '');
 	if (arg) {
 		return arg.toUpperCase();
-	} else if (message.member) {
-		return message.member.nickname.split(' | ', 2)[1];
 	}
-	return '';
+	return (message.member ? message.member.displayName : message.author.username).split(' | ', 2)[1];
 };
 
 const validTeamId = teamId => /^([0-9]{1,5}[A-Z]?|[A-Z]{2,6}[0-9]{0,2})$/i.test(teamId);
