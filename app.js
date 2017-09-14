@@ -10,7 +10,7 @@ const prefix = '^';
 const commandInfo = {
 	ping: 'Pong!',
 	uptime: 'Time since bot last restarted.',
-	sub: 'Subscribe to updates for a team.',
+	sub: 'Manage team update subscriptions.',
 	team: 'General information about a team.',
 	awards: 'Awards earned by a team.',
 	skills: 'Skills scores achieved by a team.',
@@ -67,11 +67,9 @@ const addFooter = (message, embed, reply) => {
 	embed.setFooter(`Triggered by ${author}`, message.author.displayAvatarURL)
 		.setTimestamp(message.createdAt);
 	reply.edit({embed});
-}
+};
 
 client.on('ready', () => {
-	vexdata = require('./vexdata');
-
 	console.log('Ready!');
 	vexdata.update();
 });
@@ -88,9 +86,9 @@ MongoClient.connect(mongodbUri).then(db => {
 	module.exports.db = db;
 
 	Object.keys(commandInfo).forEach(name => commands[name] = require('./commands/' + name));
-	Object.entries(commandInfo).forEach(([name, desc]) => {
-		helpDescription += `\n\`${prefix}${name}\`: ${desc}`;
-	});
+	Object.entries(commandInfo).forEach(([name, desc]) => helpDescription += `\n\`${prefix}${name}\`: ${desc}`);
+
+	vexdata = require('./vexdata');
 	client.login(token).catch(console.error);
 }).catch(console.error);
 

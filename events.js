@@ -6,10 +6,13 @@ const vex = require('./vex');
 const dbinfo = require('./dbinfo');
 
 const db = app.db;
+const validTeamId = vex.validTeamId;
 const getTeamLocation = vex.getTeamLocation;
 const createTeamEmbed = vex.createTeamEmbed;
 const createTeamChangeEmbed = vex.createTeamChangeEmbed;
+const createMatchEmbed = vex.createMatchEmbed;
 const sendToSubscribedChannels = vex.sendToSubscribedChannels;
+const sendMatchEmbed = vex.sendMatchEmbed;
 const encodeProgram = dbinfo.encodeProgram;
 const encodeGrade = dbinfo.encodeGrade;
 
@@ -82,8 +85,8 @@ const formatMatch = (match, event, division) => {
 		match.blue3 && {blue3: match.blue3},
 		match.hasOwnProperty('redscore') && {redScore: match.redscore},
 		match.hasOwnProperty('bluescore') && {blueScore: match.bluescore},
-		match.redsit && {redSit: match.redsit},
-		match.bluesit && {blueSit: match.bluesit});
+		match.redsit && match.red2 && {redSit: match.redsit},
+		match.bluesit && match.blue2 && {blueSit: match.bluesit});
 };
 
 const formatRanking = (ranking, event, division) => {
@@ -136,13 +139,14 @@ const updateEvent = async (prog, sku, retried = false) => {
 		const awards = [];
 		const awardInstances = [];
 		while (regex = awardsRegex.exec(result)) {
-			const program = (prog === 1 || prog === 4) ? (isNaN(id.charAt(0)) ? 4 : 1) : prog;
 			const name = regex[1];
+			const id = regex[2];
 			const instance = (awardInstances[name] || 0) + 1;
+			const program = (prog === 1 || prog === 4) ? (isNaN(id.charAt(0)) ? 4 : 1) : prog;
 
 			awardInstances[name] = instance;
 			awards.push(Object.assign({_id: {event: sku, name: name, instance: instance}},
-				validTeamId(regex[2]) && {team: {prog: program, id: regex[2]}}
+				validTeamId(id) && {team: {prog: program, id: id}}
 			));
 		}
 		const skills = [];
@@ -235,36 +239,70 @@ const updateEvent = async (prog, sku, retried = false) => {
 
 			divisionNumberToName[divisionNumber] = divisionName;
 
-			JSON.parse(he.decode(regex[3])).forEach(async match => {
-				if (match.division === divisionNumber) {
-					const document = formatMatch(match, sku, divisionName);
-
-					try {
-						const res = await db.collection('matches').updateOne({_id: document._id}, {$set: document}, {upsert: true});
-						if (res.upsertedCount) {
-							console.log(`Insert to matches: ${JSON.stringify(document)}`);
-						} else if (res.modifiedCount) {
-							console.log(`Update to matches: ${JSON.stringify(document)}`);
-						}
-					} catch (err) {
-						console.error(err);
-					}
+			const played = {};
+			JSON.parse(he.decode(regex[4])).filter(ranking => ranking.division === divisionNumber).map(ranking => formatRanking(ranking, sku, divisionName)).forEach(async ranking => {
+				played[ranking._id.team] = ranking.wins + ranking.losses + ranking.ties;
+				try {
+					const res = await db.collection('rankings').updateOne({_id: ranking._id}, {$set: ranking}, {upsert: true});
+				} catch (err) {
+					console.error(err);
 				}
 			});
-			JSON.parse(he.decode(regex[4])).forEach(async ranking => {
-				if (ranking.division === divisionNumber) {
-					const document = formatRanking(ranking, sku, divisionName);
-
-					try {
-						const res = await db.collection('rankings').updateOne({_id: document._id}, {$set: document}, {upsert: true});
-						if (res.upsertedCount) {
-							console.log(`Insert to rankings: ${JSON.stringify(document)}`);
-						} else if (res.modifiedCount) {
-							console.log(`Update to rankings: ${JSON.stringify(document)}`);
+			const matches = JSON.parse(he.decode(regex[3])).filter(match => match.division === divisionNumber).map(match => formatMatch(match, sku, divisionName));
+			matches.forEach(match => {
+				if (match.redScore || match.blueScore) {
+					[match.red, match.red2, match.red3, match.blue, match.blue2, match.blue3].forEach(team => {
+						if (team) {
+							played[team]--;
 						}
-					} catch (err) {
-						console.error(err);
+					});
+				}
+			});
+			matches.forEach(async match => {
+				const unset = {};
+				let scored = true;
+				if (!match.redScore && !match.blueScore && [match.red, match.red2, match.red3, match.blue, match.blue2, match.blue3].filter(team => team).some(team => --played[team] < 0)) {
+					scored = false;
+					delete match.redScore;
+					delete match.blueScore;
+					unset.redScore = '';
+					unset.blueScore = '';
+				}
+				try {
+					let res;
+					if (!Object.keys(unset).length) {
+					 	res = await db.collection('matches').findOneAndUpdate({_id: match._id}, {$set: match}, {upsert: true});
+					} else {
+						res = await db.collection('matches').findOneAndUpdate({_id: match._id}, {$set: match, $unset: unset}, {upsert: true});
 					}
+					const old = res.value;
+					if (!old) {
+						let change, reactions;
+						if (scored) {
+							change = 'scored';
+							reactions = vex.matchScoredEmojis;
+						} else {
+							change = 'scheduled';
+							reactions = vex.matchScheduledEmojis;
+						}
+						sendMatchEmbed(`New match ${change}`, match, reactions);
+						console.log(createMatchEmbed(match).fields);
+					} else {
+						const oldScored = old.hasOwnProperty('redScore');
+						let reactions = vex.matchScoredEmojis;
+						if (!oldScored && scored) {
+							sendMatchEmbed('Match scored', match, reactions);
+							console.log(createMatchEmbed(match).fields);
+						} else if (oldScored && !scored) {
+							sendMatchEmbed('Match score removed', match, reactions);
+							console.log(createMatchEmbed(match).fields);
+						} else if (match.redScore !== old.redScore || match.blueScore !== old.blueScore) {
+							sendMatchEmbed('Match score changed', match, reactions);
+							console.log(createMatchEmbed(match).fields);
+						}
+					}
+				} catch (err) {
+					console.error(err);
 				}
 			});
 		}
@@ -290,7 +328,7 @@ const updateEvent = async (prog, sku, retried = false) => {
 				const res = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$set: team}, {upsert: true});
 				const old = res.value;
 				if (!old) {
-					sendToSubscribedChannels('New team registered', {embed: createTeamEmbed(team)}, program, teamId);
+					sendToSubscribedChannels('New team registered', {embed: createTeamEmbed(team)}, [team._id]);
 					console.log(createTeamEmbed(team).fields);
 				} else {
 					if (team.city !== old.city || team.region !== old.region || team.country !== old.country) {
@@ -307,33 +345,30 @@ const updateEvent = async (prog, sku, retried = false) => {
 						if (Object.keys(unset).length) {
 							try {
 								const res2 = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$unset: unset});
-								sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team))}, program, teamId);
+								sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team))}, [team._id]);
 								console.log(createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team)).description);
 							} catch (err) {
 								console.error(err);
 							}
 						} else {
-							sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team))}, program, teamId);
+							sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team))}, [team._id]);
 							console.log(createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team)).description);
 						}
 					}
 					if (team.name !== old.name) {
-						sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'team name', old.name, team.name)}, program, teamId);
+						sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'team name', old.name, team.name)}, [team._id]);
 						console.log(createTeamChangeEmbed(program, teamId, 'team name', old.name, team.name).description);
 					}
-					if (team.robot !== old.robot) {
+					if (team.hasOwnProperty('robot') && team.robot !== old.robot) {
 						if (!team.robot) {
 							try {
 								const res2 = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$unset: {robot: ''}});
-								sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot)}, program, teamId);
-								console.log(createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot).description);
 							} catch (err) {
 								console.error(err);
 							}
-						} else {
-							sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot)}, program, teamId);
-							console.log(createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot).description);
 						}
+						sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot)}, [team._id]);
+						console.log(createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot).description);
 					}
 				}
 			} catch (err) {
@@ -343,27 +378,27 @@ const updateEvent = async (prog, sku, retried = false) => {
 		awards.forEach(async award => {
 			try {
 				const res = await db.collection('awards').findOneAndUpdate({_id: award._id}, {$set: award}, {upsert: true});
-				const old = res.value;
+				/*const old = res.value;
 				if (old) {
 					if (award.team && !old.team) {
-						sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'team name', old.name, team.name)}, program, teamId);
+						sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'team name', old.name, team.name)}, [team._id]);
 						console.log(createTeamChangeEmbed(program, teamId, 'team name', old.name, team.name).description);
 					}
 					if (team.robot !== old.robot) {
 						if (!team.robot) {
 							try {
 								const res2 = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$unset: {robot: ''}});
-								sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot)}, program, teamId);
+								sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot)}, [team._id]);
 								console.log(createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot).description);
 							} catch (err) {
 								console.error(err);
 							}
 						} else {
-							sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot)}, program, teamId);
+							sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot)}, [team._id]);
 							console.log(createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot).description);
 						}
 					}
-				}
+				}*/
 			} catch (err) {
 				console.error(err);
 			}

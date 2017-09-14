@@ -8,6 +8,7 @@ const db = app.db;
 const client = app.client;
 const decodeProgram = dbinfo.decodeProgram;
 const decodeGrade = dbinfo.decodeGrade;
+const decodeRound = dbinfo.decodeRound;
 
 const getTeamId = (message, args) => {
 	const arg = args.replace(/\s+/g, '');
@@ -19,7 +20,7 @@ const getTeamId = (message, args) => {
 
 const validTeamId = teamId => /^([0-9]{1,5}[A-Z]?|[A-Z]{2,6}[0-9]{0,2})$/i.test(teamId);
 
-const getTeam = teamId => db.collection('teams').findOne({_id: {prog: (isNaN(teamId.charAt(0)) ? 4 : 1), id: teamId}});
+const getTeam = teamId => db.collection('teams').findOne({'_id.prog': (isNaN(teamId.charAt(0)) ? 4 : 1), '_id.id': new RegExp(`^${teamId}$`, 'i')});
 
 const getTeamLocation = team => {
 	let location = [team.city];
@@ -66,25 +67,83 @@ const createTeamEmbed = team => {
 	return embed;
 };
 
+const maskedTeamUrl = teamId => `[${teamId}](https://vexdb.io/teams/view/${teamId})`;
+
+const createMatchString = (round, instance, number) => `${decodeRound(round)}${round < 3 ? '' : ` ${instance}-`}${number}`;
+
+const createTeamsString = (teams, teamSit) => {
+	teams = teams.filter(team => team);
+	return teams.map(team => (teams.length > 2 && team === teamSit) ? `*${maskedTeamUrl(team)}*` : `**${maskedTeamUrl(team)}**`).join(' ');
+};
+
+const matchScheduledEmojis = ['👍', '👎'];
+
+const matchScoredEmojis = ['🔴', '🔵'];
+
+const createMatchEmbed = match => {
+	let color;
+	if (!match.hasOwnProperty('redScore')) {
+		color = 0xffffff;
+	} else if (match.redScore === match.blueScore) {
+		color = 'GREY';
+	} else {
+		color = (match.redScore > match.blueScore) ? 'RED' : 'BLUE';
+	}
+	let red = `${matchScoredEmojis[0]} Red`;
+	let blue = `${matchScoredEmojis[1]} Blue`;
+	if (match.hasOwnProperty('redScore')) {
+		red += `: ${match.redScore}`;
+		blue += `: ${match.blueScore}`;
+	}
+	const embed = new Discord.RichEmbed()
+		.setColor(color)
+		.setAuthor(match._id.event.name, null, `https://vexdb.io/events/view/${match._id.event._id}`)
+		.setTitle(match._id.division)
+		.setURL(`https://vexdb.io/events/view/${match._id.event._id}?t=results&d=${match._id.division.replace(/ /g, '+')}`)
+		.setDescription(createMatchString(match._id.round, match._id.instance, match._id.number))
+		.addField(red, createTeamsString([match.red, match.red2, match.red3], match.redSit), true)
+		.addField(blue, createTeamsString([match.blue, match.blue2, match.blue3], match.blueSit), true);
+	if (match.hasOwnProperty('start')) {
+		embed.setTimestamp(new Date(match.start));
+	}
+	return embed;
+};
+
+const getMatchTeams = match => [match.red, match.red2, match.red3, match.blue, match.blue2, match.red3].filter(team => team).map(team => {
+	return {prog: (isNaN(team.charAt(0)) ? 4 : match._id.event.prog), id: team};
+});
+
+const sendMatchEmbed = async (content, match, reactions) => {
+	try {
+		match._id.event = await db.collection('events').findOne({_id: match._id.event});
+		sendToSubscribedChannels(content, {embed: createMatchEmbed(match)}, getMatchTeams(match), reactions);
+	} catch (err) {
+		console.error(err);
+	}
+};
+
 const subscribedChannels = [
 	'352003193666011138',
 	'329477820076130306'  // Dev server.
 ];
 
-const sendToSubscribedChannels = async (content, options, program, teamId) => {
+const sendToSubscribedChannels = async (content, options, teams, reactions = []) => {
 	subscribedChannels.forEach(async id => {
 		const channel = client.channels.get(id);
 		if (channel) {
 			try {
-				const teamSub = await db.collection('teamSubs').findOne({_id: {guild: channel.guild.id, team: {prog: program, id: teamId}}});
+				const teamSubs = await db.collection('teamSubs').find({_id: {guild: channel.guild.id, team: {$in: teams}}}).toArray();
 				let text;
-				if (teamSub) {
-					text = teamSub.users.map(subscriber => `<@${subscriber}>`).join('');
+				if (teamSubs) {
+					text = teamSubs.map(teamSub => teamSub.users.map(subscriber => `<@${subscriber}>`).join('')).join('');
 				}
 				if (content) {
 					text = text ? `${text}\n${content}` : content;
 				}
-				channel.send(text ? (text + ':') : undefined, options);
+				const message = await channel.send(text ? `${text}:` : undefined, options).catch(console.error);
+				for (let reaction of reactions) {
+					await message.react(reaction);
+				}
 			} catch (err) {
 				console.error(err);
 			}
@@ -114,6 +173,10 @@ module.exports = {
 	getTeam: getTeam,
 	getTeamLocation: getTeamLocation,
 	createTeamEmbed: createTeamEmbed,
+	createMatchEmbed: createMatchEmbed,
 	createTeamChangeEmbed: createTeamChangeEmbed,
-	sendToSubscribedChannels: sendToSubscribedChannels
+	sendToSubscribedChannels: sendToSubscribedChannels,
+	sendMatchEmbed: sendMatchEmbed,
+	matchScheduledEmojis: matchScheduledEmojis,
+	matchScoredEmojis: matchScoredEmojis
 };

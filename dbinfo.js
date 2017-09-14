@@ -88,6 +88,19 @@ const grades = [
 	'College'
 ];
 
+const rounds = [
+	'',
+	'P',
+	'Q',
+	'QF',
+	'SF',
+	'F',
+	'R16',
+	'R32',
+	'R64',
+	'R128'
+];
+
 const encodeProgram = program => programToId[program];
 
 const decodeProgram = program => idToProgram[program];
@@ -95,6 +108,8 @@ const decodeProgram = program => idToProgram[program];
 const encodeGrade = grade => grades.indexOf(grade);
 
 const decodeGrade = grade => grades[grade];
+
+const decodeRound = round => rounds[round];
 
 module.exports = {
 	programToId: programToId,
@@ -108,5 +123,6 @@ module.exports = {
 	encodeProgram: encodeProgram,
 	decodeProgram: decodeProgram,
 	encodeGrade: encodeGrade,
-	decodeGrade: decodeGrade
+	decodeGrade: decodeGrade,
+	decodeRound: decodeRound
 };

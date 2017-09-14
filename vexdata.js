@@ -11,8 +11,10 @@ const CronJob = cron.CronJob;
 const db = app.db;
 const getTeamLocation = vex.getTeamLocation;
 const createTeamEmbed = vex.createTeamEmbed;
+const createMatchEmbed = vex.createMatchEmbed;
 const createTeamChangeEmbed = vex.createTeamChangeEmbed;
 const sendToSubscribedChannels = vex.sendToSubscribedChannels;
+const sendMatchEmbed = vex.sendMatchEmbed;
 const encodeProgram = dbinfo.encodeProgram;
 const encodeGrade = dbinfo.encodeGrade;
 
@@ -33,8 +35,7 @@ const updateReTeams = async () => {
 const updateReEvents = async () => {
 	await updateEventsForSeason(1, 119);
 	await updateEventsForSeason(4, 120);
-/*
-	[{_id: 1, seasons: [119, 115, 110, 102, 92, 85, 73, 7, 1]},
+	/*[{_id: 1, seasons: [119, 115, 110, 102, 92, 85, 73, 7, 1]},
 		{_id: 4, seasons: [120, 116, 111, 103, 93, 88, 76, 10, 4]}].forEach(program => {
 		program.seasons.forEach(updateEventsForSeason);
 	});*/
@@ -48,11 +49,29 @@ const updateMaxSkills = async () => {
 	});*/
 };
 
+const updateCurrentEvents = async () => {
+	const now = Date.now();
+	try {
+		const documents = await db.collection('events').find({dates: {$elemMatch: {end: {$gt: now}, start: {$lt: now}}}}).project({_id: 1, prog: 1}).toArray();
+		for (let event of documents) {
+			try {
+				await events.updateEvent(event.prog, event._id);
+			} catch (err) {
+				console.error(err);
+			}
+		}
+	} catch (err) {
+		console.error(err);
+	}
+};
+
 const eventsJob = new CronJob('00 00 08 * * *', updateReEvents, null, true, timezone);
 const teamsJob = new CronJob('00 10 08 * * *', updateReTeams, null, true, timezone);
 const skillsJob = new CronJob('00 20 08 * * *', updateMaxSkills, null, true, timezone);
+const currentEventsJob = new CronJob('00 */2 * * * *', updateCurrentEvents, null, true, timezone);
 
 const update = () => {
+	updateCurrentEvents();
 	//updateReTeams();
 	//updateReEvents();
 	//updateMaxSkills();
@@ -73,12 +92,12 @@ const updateTeamsInGroup = async (program, season, teamGroup, retried = false) =
 				const old = result.value;
 				if (!old) {
 					delete team.registered;
-					sendToSubscribedChannels('New team registered', {embed: createTeamEmbed(team)}, program, teamId);
+					sendToSubscribedChannels('New team registered', {embed: createTeamEmbed(team)}, [team._id]);
 					console.log(vex.createTeamEmbed(team).fields);
 				} else {
 					if (!old.registered && team.registered) {
 						delete old.registered;
-						sendToSubscribedChannels('Existing team registered', {embed: createTeamEmbed(old)}, program, teamId);
+						sendToSubscribedChannels('Existing team registered', {embed: createTeamEmbed(old)}, [team._id]);
 						console.log(createTeamEmbed(old).fields);
 					}
 					if (team.city !== old.city || team.region !== old.region) {
@@ -88,29 +107,26 @@ const updateTeamsInGroup = async (program, season, teamGroup, retried = false) =
 						}
 						try {
 							result = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$unset: unset});
-							sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team))}, program, teamId);
+							sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team))}, [team._id]);
 							console.log(vex.createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team)).description);
 						} catch (err) {
 							console.error(err);
 						}
 					}
 					if (team.name !== old.name) {
-						sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'team name', old.name, team.name)}, program, teamId);
+						sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'team name', old.name, team.name)}, [team._id]);
 						console.log(createTeamChangeEmbed(program, teamId, 'team name', old.name, team.name).description);
 					}
 					if (team.robot !== old.robot) {
 						if (!team.robot) {
 							try {
 								result = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$unset: {robot: ''}});
-								sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.name)}, program, teamId);
-								console.log(createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.name).description);
 							} catch (err) {
 								console.error(err);
 							}
-						} else {
-							sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot)}, program, teamId);
-							console.log(createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot).description);
 						}
+						sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot)}, [team._id]);
+						console.log(createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot).description);
 					}
 				}
 			} catch (err) {
@@ -172,52 +188,33 @@ const updateTeamsForSeason = async (program, season) => {
 };
 
 const formatReTeam = (team, prog, registered) => {
-	const document = {
-		_id: {
-			prog: prog,
-			id: team.team
+	return Object.assign({
+			_id: {
+				prog: prog,
+				id: team.team
+			},
+			city: he.decode(team.city),
+			registered: registered
 		},
-		city: he.decode(team.city)
-	};
-	const region = team.name;
-	if (region) {
-		document.region = he.decode(region);
-	}
-	const name = team.team_name;
-	if (name) {
-		document.name = he.decode(name);
-	}
-	const robot = team.robot_name;
-	if (robot) {
-		document.robot = he.decode(robot);
-	}
-	if (prog === encodeProgram('VEXU')) {
-		document.grade = encodeGrade('College');
-	}
-	document.registered = registered;
-	return document;
+		team.name && {region: he.decode(team.name)},
+		team.team_name && {name: he.decode(team.team_name)},
+		team.robot_name && {robot: he.decode(team.robot_name)},
+		prog === encodeProgram('VEXU') && {grade: encodeGrade('College')});
 };
 
 const formatReEvent = event => {
 	const dates = event.date.match(/^(.+?)(?: - (.+))?$/);
-	const document = {
-		_id: event.sku,
-		prog: event.program_id,
-		season: event.season_id,
-		name: he.decode(event.name),
-		start: encodeDate(dates[1]),
-		end: dates[2] ? encodeDate(dates[2]) : encodeDate(dates[1])
-	};
-	if (event.email) {
-		document.email = event.email;
-	}
-	if (event.phone) {
-		document.phone = event.phone;
-	}
-	if (event.webcast_link) {
-		document.webcast = event.webcast_link;
-	}
-	return document;
+	return Object.assign({
+			_id: event.sku,
+			prog: event.program_id,
+			season: event.season_id,
+			name: he.decode(event.name),
+			start: encodeDate(dates[1]),
+			end: encodeDate(dates[2] ? dates[2] : dates[1])
+		},
+		event.email && {email: event.email},
+		event.phone && {phone: event.phone},
+		event.webcast_link && {webcast: event.webcast_link});
 };
 
 const updateMaxSkillsForSeason = async (program, season) => {
@@ -375,6 +372,20 @@ const formatSeason = season => {
 const encodeSeasonName = name => name.match(/^(?:.+: )?(.+?)(?: [0-9]{4}-[0-9]{4})?$/)[1];
 const encodeDate = date => Date.parse(date);
 
+const getMatch = async () => {
+	const count = await db.collection('matches').count({});
+	const match = await db.collection('matches').find({}).skip(Math.floor(Math.random() * count)).next();
+	let reactions, change;
+	if (match.hasOwnProperty('redScore')) {
+		reactions = vex.matchScoredEmojis;
+		change = 'scored';
+	} else {
+		reactions = vex.matchScheduledEmojis;
+		change = 'scheduled';
+	}
+	sendMatchEmbed(`Match ${change}`, match, reactions);
+};
+
 module.exports = {
 	update: update,
 	updateProgramsAndSeasons: updateProgramsAndSeasons,
@@ -382,5 +393,6 @@ module.exports = {
 	updateReTeams: updateReTeams,
 	updateTeamsForSeason: updateTeamsForSeason,
 	updateEventsForSeason: updateEventsForSeason,
-	updateMaxSkillsForSeason: updateMaxSkillsForSeason
+	updateMaxSkillsForSeason: updateMaxSkillsForSeason,
+	getMatch: getMatch
 };
