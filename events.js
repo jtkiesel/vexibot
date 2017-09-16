@@ -335,6 +335,14 @@ const updateEvent = async (prog, sku, retried = false) => {
 					unset.redScore = '';
 					unset.blueScore = '';
 				}
+				let change, reactions;
+				if (scored) {
+					change = 'scored';
+					reactions = vex.matchScoredEmojis;
+				} else {
+					change = 'scheduled';
+					reactions = vex.matchScheduledEmojis;
+				}
 				try {
 					let res;
 					if (!Object.keys(unset).length) {
@@ -344,14 +352,6 @@ const updateEvent = async (prog, sku, retried = false) => {
 					}
 					const old = res.value;
 					if (!old) {
-						let change, reactions;
-						if (scored) {
-							change = 'scored';
-							reactions = vex.matchScoredEmojis;
-						} else {
-							change = 'scheduled';
-							reactions = vex.matchScheduledEmojis;
-						}
 						await sendMatchEmbed(`New match ${change}`, match, reactions);
 						console.log(createMatchEmbed(match).fields);
 					} else {
@@ -387,14 +387,14 @@ const updateEvent = async (prog, sku, retried = false) => {
 		} catch (err) {
 			console.error(err);
 		}
-		teams.forEach(async team => {
+		for (let team of teams) {
 			try {
 				const program = team._id.prog;
 				const teamId = team._id.id;
 				const res = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$set: team}, {upsert: true});
 				const old = res.value;
 				if (!old) {
-					sendToSubscribedChannels('New team registered', {embed: createTeamEmbed(team)}, [team._id]);
+					await sendToSubscribedChannels('New team registered', {embed: createTeamEmbed(team)}, [team._id]);
 					console.log(createTeamEmbed(team).fields);
 				} else {
 					if (team.city !== old.city || team.region !== old.region || team.country !== old.country) {
@@ -405,18 +405,18 @@ const updateEvent = async (prog, sku, retried = false) => {
 						if (Object.keys(unset).length) {
 							try {
 								const res2 = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$unset: unset});
-								sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team))}, [team._id]);
+								await sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team))}, [team._id]);
 								console.log(createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team)).description);
 							} catch (err) {
 								console.error(err);
 							}
 						} else {
-							sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team))}, [team._id]);
+							await sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team))}, [team._id]);
 							console.log(createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team)).description);
 						}
 					}
 					if (team.name !== old.name) {
-						sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'team name', old.name, team.name)}, [team._id]);
+						await sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'team name', old.name, team.name)}, [team._id]);
 						console.log(createTeamChangeEmbed(program, teamId, 'team name', old.name, team.name).description);
 					}
 					if (team.hasOwnProperty('robot') && team.robot !== old.robot) {
@@ -427,15 +427,15 @@ const updateEvent = async (prog, sku, retried = false) => {
 								console.error(err);
 							}
 						}
-						sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot)}, [team._id]);
+						await sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot)}, [team._id]);
 						console.log(createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot).description);
 					}
 				}
 			} catch (err) {
 				console.error(err);
 			}
-		});
-		awards.forEach(async award => {
+		}
+		for (let award of awards) {
 			const unset = Object.assign({},
 				!award.team && {team: ''},
 				!award.qualifies && {qualifies: ''});
@@ -451,30 +451,30 @@ const updateEvent = async (prog, sku, retried = false) => {
 					} else {
 						change = 'added';
 					}
-					sendToSubscribedChannels(`Award ${change}`, {embed: createAwardEmbed(award)}, [team]);
+					await sendToSubscribedChannels(`Award ${change}`, {embed: createAwardEmbed(award)}, [team]);
 					console.log(createAwardEmbed(award).fields);
 				} else {
 					if (!old.team && award.team) {
-						sendToSubscribedChannels('Award won', {embed: createAwardEmbed(award)}, [team]);
+						await sendToSubscribedChannels('Award won', {embed: createAwardEmbed(award)}, [team]);
 						console.log(createAwardEmbed(award).fields);
 					}
 				}
 			} catch (err) {
 				console.error(err);
 			}
-		});
-		skills.forEach(async skill => {
+		}
+		for (let skill of skills) {
 			try {
 				const res = await db.collection('skills').findOneAndUpdate({_id: skill._id}, {$set: skill}, {upsert: true});
 				const old = res.value;
 				if (!old || skill.score != old.score) {
-					sendToSubscribedChannels(`New ${decodeSkill(skill._id.type)} Skills score`, {embed: createSkillsEmbed(skill)}, [skill._id.team]);
+					await sendToSubscribedChannels(`New ${decodeSkill(skill._id.type)} Skills score`, {embed: createSkillsEmbed(skill)}, [skill._id.team]);
 					console.log(createSkillsEmbed(award).fields);
 				}
 			} catch (err) {
 				console.error(err);
 			}
-		});
+		}
 	} catch (err) {
 		console.error(err);
 		if (!retried) {
