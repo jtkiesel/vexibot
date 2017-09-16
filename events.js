@@ -371,7 +371,7 @@ const updateEvent = async (prog, sku, retried = false) => {
 				} catch (err) {
 					console.error(err);
 				}
-			});
+			}
 		}
 		event.divisions = Object.keys(divisionNumberToName).sort((a, b) => a - b).map(divisionNumber => divisionNumberToName[divisionNumber]);
 
