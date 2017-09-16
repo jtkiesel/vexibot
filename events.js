@@ -310,8 +310,7 @@ const updateEvent = async (prog, sku, retried = false) => {
 				let scored = true;
 				if (match.redScore === 0 && match.blueScore === 0) {
 					if (match._id.round < 3) {  // Practice or qualification.
-						if (matches.slice(i + 1).every(otherMatch => otherMatch.redScore == 0 && otherMatch.blueScore == 0)) {
-							console.log(matches.slice(i + 1));
+						if (matches.slice(i + 1).every(otherMatch => otherMatch.redScore === 0 && otherMatch.blueScore === 0)) {
 							scored = false;
 						}
 					/*} else if (match._id.round === 2) {  // Qualification.
