@@ -293,7 +293,7 @@ const updateEvent = async (prog, sku, retried = false) => {
 				}
 			});
 			const matches = JSON.parse(he.decode(regex[3])).filter(match => match.division === divisionNumber).map(match => formatMatch(match, sku, divisionName)).sort(matchCompare);
-			matches.forEach(match => {
+			/*matches.forEach(match => {
 				if (match._id.round === 2 && (match.redScore || match.blueScore)) {
 					[match.red, match.red2, match.red3, match.blue, match.blue2, match.blue3].forEach(team => {
 						if (team) {
@@ -301,7 +301,7 @@ const updateEvent = async (prog, sku, retried = false) => {
 						}
 					});
 				}
-			});
+			});*/
 			for (let i = 0; i < matches.length; i++) {
 				const match = matches[i];
 				const nextMatch = matches[i + 1];
@@ -309,14 +309,14 @@ const updateEvent = async (prog, sku, retried = false) => {
 				const unset = {};
 				let scored = true;
 				if (match.redScore === 0 && match.blueScore === 0) {
-					if (match._id.round === 1) {  // Practice.
+					if (match._id.round < 2) {  // Practice. (OR QUALIFICATION)
 						if (matches.split(i + 1).some(otherMatch => otherMatch.redScore !== 0 || otherMatch.blueScore !== 0)) {
 							scored = false;
 						}
-					} else if (match._id.round === 2) {  // Qualification.
+					/*} else if (match._id.round === 2) {  // Qualification.
 						if ([match.red, match.red2, match.red3, match.blue, match.blue2, match.blue3].every(team => !team || --played[team] < 0)) {
 							scored = false;
-						}
+						}*/
 					} else {  // Elimination.
 						if (match.red3) {
 							if (!match.redSit) {
