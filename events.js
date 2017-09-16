@@ -294,6 +294,7 @@ const updateEvent = async (prog, sku, retried = false) => {
 			});
 			const matches = JSON.parse(he.decode(regex[3])).filter(match => match.division === divisionNumber).map(match => formatMatch(match, sku, divisionName)).sort(matchCompare);
 			matches.forEach(match => {
+				console.log(JSON.stringify(match));
 				if (match._id.round === 2 && (match.redScore || match.blueScore)) {
 					[match.red, match.red2, match.red3, match.blue, match.blue2, match.blue3].forEach(team => {
 						if (team) {
