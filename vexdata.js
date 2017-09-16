@@ -21,9 +21,9 @@ const encodeGrade = dbinfo.encodeGrade;
 const timezone = 'America/New_York';
 
 const updateReTeams = async () => {
-	//await updateTeamsForSeason(1, 119);
-	//await updateTeamsForSeason(4, 120);
-	const programs = [{_id: 1, seasons: [119, 115, 110, 102, 92, 85, 73, 7, 1]},
+	await updateTeamsForSeason(1, 119);
+	await updateTeamsForSeason(4, 120);
+	/*const programs = [{_id: 1, seasons: [119, 115, 110, 102, 92, 85, 73, 7, 1]},
 		{_id: 4, seasons: [120, 116, 111, 103, 93, 88, 76, 10, 4]}];
 	for (let program of programs) {
 		const seasons = program.seasons.sort((a, b) => a - b);
@@ -34,13 +34,13 @@ const updateReTeams = async () => {
 				console.error(err);
 			}
 		}
-	}
+	}*/
 };
 
 const updateReEvents = async () => {
-	//await updateEventsForSeason(1, 119);
-	//await updateEventsForSeason(4, 120);
-	const programs = [{_id: 1, seasons: [119, 115, 110, 102, 92, 85, 73, 7, 1]},
+	await updateEventsForSeason(1, 119);
+	await updateEventsForSeason(4, 120);
+	/*const programs = [{_id: 1, seasons: [119, 115, 110, 102, 92, 85, 73, 7, 1]},
 		{_id: 4, seasons: [120, 116, 111, 103, 93, 88, 76, 10, 4]}];
 	for (let program of programs) {
 		const seasons = program.seasons.sort((a, b) => a - b);
@@ -51,13 +51,13 @@ const updateReEvents = async () => {
 				console.error(err);
 			}
 		}
-	}
+	}*/
 }
 
 const updateMaxSkills = async () => {
-	//await updateMaxSkillsForSeason(1, 119);
-	//await updateMaxSkillsForSeason(4, 120);
-	const programs = [{_id: 1, seasons: [119, 115, 110, 102, 92, 85, 73, 7, 1]},
+	await updateMaxSkillsForSeason(1, 119);
+	await updateMaxSkillsForSeason(4, 120);
+	/*const programs = [{_id: 1, seasons: [119, 115, 110, 102, 92, 85, 73, 7, 1]},
 		{_id: 4, seasons: [120, 116, 111, 103, 93, 88, 76, 10, 4]}]; //await db.collection('programs').find().project({_id: 0, seasons: 1}).toArray();
 	for (let program of programs) {
 		const seasons = program.seasons.sort((a, b) => a - b);
@@ -68,7 +68,7 @@ const updateMaxSkills = async () => {
 				console.error(err);
 			}
 		}
-	}
+	}*/
 };
 
 const updateCurrentEvents = async () => {
