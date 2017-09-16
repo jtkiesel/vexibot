@@ -194,7 +194,7 @@ const updateEvent = async (prog, sku, retried = false) => {
 			}
 		}
 		const skills = [];
-		const skillsData = result.match(/<skills\s+event=".+?"\s+data="(.+?)"\s*>/);
+		const skillsData = result.match(/<skills\s+event=".+?"\s+data="(.+?)"/);
 		if (skillsData) {
 			JSON.parse(he.decode(skillsData[1])).forEach(skillData => {
 				const teamReg = skillData.team_reg;
@@ -275,7 +275,7 @@ const updateEvent = async (prog, sku, retried = false) => {
 		while (regex = divisionsRegex.exec(result)) {
 			divisionIdToName[regex[1]] = he.decode(regex[2]);
 		}
-		const resultsRegex = /id="(.+?)">\s*<div\s+class="row">\s*<div\s+class="col-md-8">\s*<h4>Match Results<\/h4>\s*<results\s+program=".+?"\s+division="([0-9]+)"\s+event=".+?"\s+data="(.+?)"(?:\s|.)*?>(?:\s|.)*?data="(.+?)"/g;
+		const resultsRegex = /id="(.+?)">\s*<div\s+class="row">\s*<div\s+class="col-md-8">\s*<h4>Match Results<\/h4>\s*<results\s+program=".+?"\s+division="([0-9]+)"\s+event=".+?"\s+data="(.+?)"(?:\s|.)*?data="(.+?)"/g;
 		const divisionNumberToName = {};
 		while (regex = resultsRegex.exec(result)) {
 			const divisionName = divisionIdToName[regex[1]];
@@ -433,6 +433,18 @@ const updateEvent = async (prog, sku, retried = false) => {
 				console.error(err);
 			}
 		}
+		for (let skill of skills) {
+			try {
+				const res = await db.collection('skills').findOneAndUpdate({_id: skill._id}, {$set: skill}, {upsert: true});
+				const old = res.value;
+				if (!old || skill.score != old.score) {
+					await sendToSubscribedChannels(`New ${decodeSkill(skill._id.type)} Skills score`, {embed: createSkillsEmbed(skill)}, [skill._id.team]);
+					console.log(createSkillsEmbed(award).fields);
+				}
+			} catch (err) {
+				console.error(err);
+			}
+		}
 		for (let award of awards) {
 			const unset = Object.assign({},
 				!award.team && {team: ''},
@@ -456,18 +468,6 @@ const updateEvent = async (prog, sku, retried = false) => {
 						await sendToSubscribedChannels('Award won', {embed: createAwardEmbed(award)}, [team]);
 						console.log(createAwardEmbed(award).fields);
 					}
-				}
-			} catch (err) {
-				console.error(err);
-			}
-		}
-		for (let skill of skills) {
-			try {
-				const res = await db.collection('skills').findOneAndUpdate({_id: skill._id}, {$set: skill}, {upsert: true});
-				const old = res.value;
-				if (!old || skill.score != old.score) {
-					await sendToSubscribedChannels(`New ${decodeSkill(skill._id.type)} Skills score`, {embed: createSkillsEmbed(skill)}, [skill._id.team]);
-					console.log(createSkillsEmbed(award).fields);
 				}
 			} catch (err) {
 				console.error(err);
