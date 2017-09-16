@@ -77,9 +77,9 @@ const createTeamsString = (teams, teamSit) => {
 	return teams.map(team => (teams.length > 2 && team === teamSit) ? `*${maskedTeamUrl(team)}*` : `**${maskedTeamUrl(team)}**`).join(' ');
 };
 
-const matchScheduledEmojis = ['👍', '👎'];
+const matchScheduledEmojis = ['🔴', '🔵'];
 
-const matchScoredEmojis = ['🔴', '🔵'];
+const matchScoredEmojis = ['👍', '👎'];
 
 const createMatchEmbed = match => {
 	let color;
@@ -90,8 +90,8 @@ const createMatchEmbed = match => {
 	} else {
 		color = (match.redScore > match.blueScore) ? 'RED' : 'BLUE';
 	}
-	let red = `${matchScoredEmojis[0]} Red`;
-	let blue = `${matchScoredEmojis[1]} Blue`;
+	let red = `${matchScheduledEmojis[0]} Red`;
+	let blue = `${matchScheduledEmojis[1]} Blue`;
 	if (match.hasOwnProperty('redScore')) {
 		red += `: ${match.redScore}`;
 		blue += `: ${match.blueScore}`;
