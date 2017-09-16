@@ -102,7 +102,9 @@ const rounds = {
 
 const roundKeys = [1, 2, 9, 8, 7, 6, 3, 4, 5];
 
-const skills = ['Driver', 'Programming', 'Robot'];
+const encodeSkills = ['driver', 'programming', 'robot'];
+
+const decodeSkills = ['Driver', 'Programming', 'Robot'];
 
 const encodeProgram = program => programToId[program];
 
@@ -116,7 +118,9 @@ const decodeRound = round => rounds[round];
 
 const roundIndex = round => roundKeys.indexOf(round);
 
-const decodeSkill = type => skills[type];
+const encodeSkill = type => encodeSkills.indexOf(type);
+
+const decodeSkill = type => decodeSkills[type];
 
 module.exports = {
 	programToId: programToId,
@@ -132,6 +136,8 @@ module.exports = {
 	encodeGrade: encodeGrade,
 	decodeGrade: decodeGrade,
 	decodeRound: decodeRound,
+	decodeSkill: decodeSkill,
+	encodeSkill: encodeSkill,
 	decodeSkill: decodeSkill,
 	roundIndex: roundIndex
 };

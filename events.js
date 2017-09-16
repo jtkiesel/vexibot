@@ -17,6 +17,7 @@ const sendToSubscribedChannels = vex.sendToSubscribedChannels;
 const sendMatchEmbed = vex.sendMatchEmbed;
 const encodeProgram = dbinfo.encodeProgram;
 const encodeGrade = dbinfo.encodeGrade;
+const encodeSkill = dbinfo.encodeSkill;
 const decodeSkill = dbinfo.decodeSkill;
 const roundIndex = dbinfo.roundIndex;
 
@@ -205,7 +206,7 @@ const updateEvent = async (prog, sku, retried = false) => {
 				skills.push({
 					_id: {
 						event: sku,
-						type: skillData.type,
+						type: encodeSkill(skillData.type),
 						team: _id
 					},
 					rank: skillData.rank,
@@ -433,13 +434,14 @@ const updateEvent = async (prog, sku, retried = false) => {
 				console.error(err);
 			}
 		}
+		console.log(JSON.stringify(skills));
 		for (let skill of skills) {
 			try {
 				const res = await db.collection('skills').findOneAndUpdate({_id: skill._id}, {$set: skill}, {upsert: true});
 				const old = res.value;
 				if (!old || skill.score != old.score) {
 					await sendToSubscribedChannels(`New ${decodeSkill(skill._id.type)} Skills score`, {embed: createSkillsEmbed(skill)}, [skill._id.team]);
-					console.log(createSkillsEmbed(award).fields);
+					console.log(createSkillsEmbed(skill).fields);
 				}
 			} catch (err) {
 				console.error(err);
