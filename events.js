@@ -275,7 +275,7 @@ const updateEvent = async (prog, sku, retried = false) => {
 		while (regex = divisionsRegex.exec(result)) {
 			divisionIdToName[regex[1]] = he.decode(regex[2]);
 		}
-		const resultsRegex = /id="(.+?)">\s*<div\s+class="row">\s*<div\s+class="col-md-8">\s*<h4>Match Results<\/h4>\s*<results\s+program=".+?"\s+division="([0-9]+)"\s+event=".+?"\s+data="(.+?)"(?:\s|.)*?>/g;
+		const resultsRegex = /id="(.+?)">\s*<div\s+class="row">\s*<div\s+class="col-md-8">\s*<h4>Match Results<\/h4>\s*<results\s+program=".+?"\s+division="([0-9]+)"\s+event=".+?"\s+data="(.+?)"(?:\s|.)*?>(?:\s|.)*?data="(.+?)"/g;
 		const divisionNumberToName = {};
 		while (regex = resultsRegex.exec(result)) {
 			const divisionName = divisionIdToName[regex[1]];
