@@ -9,6 +9,7 @@ const client = app.client;
 const decodeProgram = dbinfo.decodeProgram;
 const decodeGrade = dbinfo.decodeGrade;
 const decodeRound = dbinfo.decodeRound;
+const decodeSkill = dbinfo.decodeSkill;
 
 const getTeamId = (message, args) => {
 	const arg = args.replace(/\s+/g, '');
@@ -109,6 +110,42 @@ const createMatchEmbed = match => {
 	return embed;
 };
 
+const createAwardEmbed = async award => {
+	const skus = (award.qualifies || []).push(award._id.event);
+	const events = await db.collection('events').find({_id: {$in: skus}}).project({_id: 1, name: 1}).toArray();
+	let eventName;
+	events.forEach(event => {
+		if (event._id === award._id.event) {
+			eventName = event.name;
+		} else {
+			award.qualifies[award.qualifies.indexOf(event._id)] = `[${event.name}](https://vexdb.io/events/view/${event._id})`;
+		}
+	});
+	const embed = new Discord.RichEmbed()
+		.setColor('PURPLE')
+		.setAuthor(eventName, null, `https://vexdb.io/events/view/${award._id.event}?t=awards`)
+		.setTitle(award._id.name);
+	if (award.team) {
+		embed.addField('Team', `[${decodeProgram(isNaN(teamId.charAt(0)) ? 4 : event.prog)} ${award.team}](https://vexdb.io/teams/view/${award.team})`, true);
+	}
+	if (award.qualifies) {
+		embed.addField('Qualifies for', qualifies.join('\n'), true);
+	}
+	return embed;
+};
+
+const createSkillsEmbed = async skill => {
+	const event = await db.collection('events').findOne({_id: skill._id.event});
+	const embed = new Discord.RichEmbed()
+		.setColor('GOLD')
+		.setAuthor(event.name, null, `https://vexdb.io/events/view/${event._id}?t=skills`)
+		.setTitle(`${skill._id.team.prog} ${skill._id.team._id}`)
+		.setURL(`https://vexdb.io/teams/view/${skill._id.team._id}?t=skills`)
+		.addField('Type', decodeSkill(skill._id.type))
+		.addField('Score', skill.score);
+	return embed;
+};
+
 const getMatchTeams = match => [match.red, match.red2, match.red3, match.blue, match.blue2, match.red3].filter(team => team).map(team => {
 	return {prog: (isNaN(team.charAt(0)) ? 4 : match._id.event.prog), id: team};
 });
@@ -116,7 +153,7 @@ const getMatchTeams = match => [match.red, match.red2, match.red3, match.blue, m
 const sendMatchEmbed = async (content, match, reactions) => {
 	try {
 		match._id.event = await db.collection('events').findOne({_id: match._id.event});
-		sendToSubscribedChannels(content, {embed: createMatchEmbed(match)}, getMatchTeams(match), reactions);
+		await sendToSubscribedChannels(content, {embed: createMatchEmbed(match)}, getMatchTeams(match), reactions);
 	} catch (err) {
 		console.error(err);
 	}

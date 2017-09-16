@@ -28,7 +28,7 @@ module.exports = async (message, args) => {
 						rank = (rank <= 3) ? rankEmojis[rank - 1] : rank;
 
 						const embed = new Discord.RichEmbed()
-							.setColor('AQUA')
+							.setColor('GOLD')
 							.setTitle(`${decodeProgram(team._id.prog)} ${teamId}`)
 							.setURL(`https://vexdb.io/teams/view/${teamId}?t=skills`)
 							.addField('Global Rank', rank, true)

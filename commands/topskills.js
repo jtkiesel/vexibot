@@ -53,7 +53,7 @@ module.exports = async (message, args) => {
 				description += `${rank}   \`\​${score}\`   \`(\​${prog} / \​${driver})\`   ${team}\n`;
 			});
 			const embed = new Discord.RichEmbed()
-				.setColor('AQUA')
+				.setColor('GOLD')
 				.setTitle(`${program} ${grade} In the Zone Robot Skills`)
 				.setURL(`https://vexdb.io/skills/${program}/${seasonName}/Robot`)
 				.setDescription(description);

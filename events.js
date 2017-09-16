@@ -11,10 +11,14 @@ const getTeamLocation = vex.getTeamLocation;
 const createTeamEmbed = vex.createTeamEmbed;
 const createTeamChangeEmbed = vex.createTeamChangeEmbed;
 const createMatchEmbed = vex.createMatchEmbed;
+const createAwardEmbed = vex.createAwardEmbed;
+const createSkillsEmbed = vex.createSkillsEmbed;
 const sendToSubscribedChannels = vex.sendToSubscribedChannels;
 const sendMatchEmbed = vex.sendMatchEmbed;
 const encodeProgram = dbinfo.encodeProgram;
 const encodeGrade = dbinfo.encodeGrade;
+const decodeSkill = dbinfo.decodeSkill;
+const roundIndex = dbinfo.roundIndex;
 
 const genders = [
 	'both',
@@ -111,6 +115,20 @@ const formatRanking = (ranking, event, division) => {
 		ranking.high_score !== null && {highScore: ranking.high_score});
 };
 
+const matchCompare = (a, b) => {
+	a = a._id;
+	b = b._id;
+	let sort = roundIndex(a.round) - roundIndex(b.round);
+	if (sort) {
+		return sort;
+	}
+	sort = a.instance - b.instance;
+	if (sort) {
+		return sort;
+	}
+	return a.number - b.number;
+};
+
 const updateEvent = async (prog, sku, retried = false) => {
 	try {
 		const result = await request.get({url: `https://www.robotevents.com/${sku}.html`});
@@ -125,7 +143,7 @@ const updateEvent = async (prog, sku, retried = false) => {
 		let regex, id, name, org, city, region, country;
 		while (regex = teamsRegex.exec(teamList)) {
 			[regex, id, name, org, city, region, country] = regex;
-			const program = (prog == 1 || prog == 4) ? (isNaN(id.charAt(0)) ? 4 : 1) : prog;
+			const program = (prog === 1 || prog === 4) ? (isNaN(id.charAt(0)) ? 4 : 1) : prog;
 
 			teams.push(Object.assign({_id: {prog: program, id: id}},
 				name && {name: he.decode(name)},
@@ -137,17 +155,43 @@ const updateEvent = async (prog, sku, retried = false) => {
 		}
 		const awardsRegex = /<tr>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*((?:[0-9]{1,5}[A-Z]?)|(?:[A-Z]{2,6}[0-9]{0,2}))\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<\/tr>/gi;
 		const awards = [];
-		const awardInstances = [];
+		const awardInstances = {};
 		while (regex = awardsRegex.exec(result)) {
 			const name = regex[1];
 			const id = regex[2];
-			const instance = (awardInstances[name] || 0) + 1;
+			const instance = awardInstances[name] || 0;
 			const program = (prog === 1 || prog === 4) ? (isNaN(id.charAt(0)) ? 4 : 1) : prog;
 
-			awardInstances[name] = instance;
+			awardInstances[name] = instance + 1;
 			awards.push(Object.assign({_id: {event: sku, name: name, instance: instance}},
 				validTeamId(id) && {team: {prog: program, id: id}}
 			));
+		}
+		const qualifiesRegex = /<tr>\s*<td\s+style="text-align:center">\s*(.+?)\s*<\/td>\s*<td\s+style="text-align:left">((?:\s|.)*?)<\/tr>/g;
+		const awardRegex = /\s*(.+?)\s*<br>/g;
+		while (regex = qualifiesRegex.exec(result)) {
+			const name = regex[1];
+			const qualifiesString = regex[2];
+			const qualifies = [];
+			while (regex = awardRegex.exec(qualifiesString)) {
+				const eventName = regex[1];
+				const qualifiesEvent = await db.collection('events').findOne({prog: prog, name: eventName});
+				if (qualifiesEvent) {
+					qualifies.push(qualifiesEvent._id);
+				}
+			}
+			if (qualifies.length) {
+				let found = false;
+				awards.forEach(award => {
+					if (award._id.name === name) {
+						found = true;
+						award.qualifies = qualifies;
+					}
+				});
+				if (!found) {
+					awards.push({_id: {event: sku, name: name, instance: 0}});
+				}
+			}
 		}
 		const skills = [];
 		const skillsData = result.match(/<skills\s+event=".+?"\s+data="(.+?)"\s*>/);
@@ -248,9 +292,9 @@ const updateEvent = async (prog, sku, retried = false) => {
 					console.error(err);
 				}
 			});
-			const matches = JSON.parse(he.decode(regex[3])).filter(match => match.division === divisionNumber).map(match => formatMatch(match, sku, divisionName));
+			const matches = JSON.parse(he.decode(regex[3])).filter(match => match.division === divisionNumber).map(match => formatMatch(match, sku, divisionName)).sort(matchCompare);
 			matches.forEach(match => {
-				if (match.redScore || match.blueScore) {
+				if (match._id.round === 2 && (match.redScore || match.blueScore)) {
 					[match.red, match.red2, match.red3, match.blue, match.blue2, match.blue3].forEach(team => {
 						if (team) {
 							played[team]--;
@@ -258,11 +302,33 @@ const updateEvent = async (prog, sku, retried = false) => {
 					});
 				}
 			});
-			matches.forEach(async match => {
+			matches.forEach(async (match, i) => {
+				const nextMatch = matches[i + 1];
+				//const nextRound = match._id.round === 6 ? 3 : match._id.round + (match._id.round > 6 ? -1 : 1);
 				const unset = {};
 				let scored = true;
-				if (!match.redScore && !match.blueScore && [match.red, match.red2, match.red3, match.blue, match.blue2, match.blue3].filter(team => team).some(team => --played[team] < 0)) {
-					scored = false;
+				if (match.redScore === 0 && match.blueScore === 0) {
+					if (match._id.round === 1) {  // Practice.
+						if (matches.split(i + 1).some(otherMatch => otherMatch.redScore !== 0 || otherMatch.blueScore !== 0)) {
+							scored = false;
+						}
+					} else if (match._id.round === 2) {  // Qualification.
+						if ([match.red, match.red2, match.red3, match.blue, match.blue2, match.blue3].every(team => !team || --played[team] < 0)) {
+							scored = false;
+						}
+					} else {  // Elimination.
+						if (match.red3) {
+							if (!match.redSit) {
+								scored = false;
+							}
+						} else if (!nextMatch || nextMatch._id.round !== match._id.round || nextMatch._id.instance !== match._id.instance) {
+							scored = false;
+						} /*else if (matches._id.round !== 5 && matches.some(otherMatch => otherMatch._id.round === nextRound)) {
+							scored = false;
+						}*/
+					}
+				}
+				if (!scored) {
 					delete match.redScore;
 					delete match.blueScore;
 					unset.redScore = '';
@@ -285,19 +351,19 @@ const updateEvent = async (prog, sku, retried = false) => {
 							change = 'scheduled';
 							reactions = vex.matchScheduledEmojis;
 						}
-						sendMatchEmbed(`New match ${change}`, match, reactions);
+						await sendMatchEmbed(`New match ${change}`, match, reactions);
 						console.log(createMatchEmbed(match).fields);
 					} else {
 						const oldScored = old.hasOwnProperty('redScore');
 						let reactions = vex.matchScoredEmojis;
 						if (!oldScored && scored) {
-							sendMatchEmbed('Match scored', match, reactions);
+							await sendMatchEmbed('Match scored', match, reactions);
 							console.log(createMatchEmbed(match).fields);
 						} else if (oldScored && !scored) {
-							sendMatchEmbed('Match score removed', match, reactions);
+							await sendMatchEmbed('Match score removed', old, reactions);
 							console.log(createMatchEmbed(match).fields);
 						} else if (match.redScore !== old.redScore || match.blueScore !== old.blueScore) {
-							sendMatchEmbed('Match score changed', match, reactions);
+							await sendMatchEmbed('Match score changed', match, reactions);
 							console.log(createMatchEmbed(match).fields);
 						}
 					}
@@ -312,11 +378,10 @@ const updateEvent = async (prog, sku, retried = false) => {
 			event.teams = teams.map(team => team._id.id);
 		}
 		try {
-			const res = await db.collection('events').updateOne({_id: event._id}, {$set: event}, {upsert: true});
-			if (res.upsertedCount) {
-				console.log(`Insert to events: ${JSON.stringify(event)}`);
-			} else if (res.modifiedCount) {
-				console.log(`Update to events: ${JSON.stringify(event)}`);
+			const res = await db.collection('events').findOneAndUpdate({_id: event._id}, {$set: event}, {upsert: true});
+			const old = res.value;
+			if (!old) {
+
 			}
 		} catch (err) {
 			console.error(err);
@@ -332,16 +397,10 @@ const updateEvent = async (prog, sku, retried = false) => {
 					console.log(createTeamEmbed(team).fields);
 				} else {
 					if (team.city !== old.city || team.region !== old.region || team.country !== old.country) {
-						const unset = {};
-						if (!team.city) {
-							unset.city = '';
-						}
-						if (!team.region) {
-							unset.region = '';
-						}
-						if (!team.country) {
-							unset.country = '';
-						}
+						const unset = Object.assign({},
+							!team.city && {city: ''},
+							!team.region && {region: ''},
+							!team.country && {country: ''});
 						if (Object.keys(unset).length) {
 							try {
 								const res2 = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$unset: unset});
@@ -376,40 +435,40 @@ const updateEvent = async (prog, sku, retried = false) => {
 			}
 		});
 		awards.forEach(async award => {
+			const unset = Object.assign({},
+				!award.team && {team: ''},
+				!award.qualifies && {qualifies: ''});
 			try {
+				const program = (prog === 1 || prog === 4) ? (isNaN(id.charAt(0)) ? 4 : 1) : prog;
+				const team = {prog: program, id: award.team};
 				const res = await db.collection('awards').findOneAndUpdate({_id: award._id}, {$set: award}, {upsert: true});
-				/*const old = res.value;
-				if (old) {
-					if (award.team && !old.team) {
-						sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'team name', old.name, team.name)}, [team._id]);
-						console.log(createTeamChangeEmbed(program, teamId, 'team name', old.name, team.name).description);
+				const old = res.value;
+				let change;
+				if (!old) {
+					if (award.team) {
+						change = 'won';
+					} else {
+						change = 'added';
 					}
-					if (team.robot !== old.robot) {
-						if (!team.robot) {
-							try {
-								const res2 = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$unset: {robot: ''}});
-								sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot)}, [team._id]);
-								console.log(createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot).description);
-							} catch (err) {
-								console.error(err);
-							}
-						} else {
-							sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot)}, [team._id]);
-							console.log(createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot).description);
-						}
+					sendToSubscribedChannels(`Award ${change}`, {embed: createAwardEmbed(award)}, [team]);
+					console.log(createAwardEmbed(award).fields);
+				} else {
+					if (!old.team && award.team) {
+						sendToSubscribedChannels('Award won', {embed: createAwardEmbed(award)}, [team]);
+						console.log(createAwardEmbed(award).fields);
 					}
-				}*/
+				}
 			} catch (err) {
 				console.error(err);
 			}
 		});
 		skills.forEach(async skill => {
 			try {
-				const res = await db.collection('skills').updateOne({_id: skill._id}, {$set: skill}, {upsert: true});
-				if (res.upsertedCount) {
-					console.log(`Insert to skills: ${JSON.stringify(skill)}`);
-				} else if (res.modifiedCount) {
-					console.log(`Update to skills: ${JSON.stringify(skill)}`);
+				const res = await db.collection('skills').findOneAndUpdate({_id: skill._id}, {$set: skill}, {upsert: true});
+				const old = res.value;
+				if (!old || skill.score != old.score) {
+					sendToSubscribedChannels(`New ${decodeSkill(skill._id.type)} Skills score`, {embed: createSkillsEmbed(skill)}, [skill._id.team]);
+					console.log(createSkillsEmbed(award).fields);
 				}
 			} catch (err) {
 				console.error(err);

@@ -21,32 +21,54 @@ const encodeGrade = dbinfo.encodeGrade;
 const timezone = 'America/New_York';
 
 const updateReTeams = async () => {
-	await updateTeamsForSeason(1, 119);
-	await updateTeamsForSeason(4, 120);
-	/*[{_id: 1, seasons: [119, 115, 110, 102, 92, 85, 73, 7, 1]},
-		{_id: 4, seasons: [120, 116, 111, 103, 93, 88, 76, 10, 4]}].forEach(program => {
+	//await updateTeamsForSeason(1, 119);
+	//await updateTeamsForSeason(4, 120);
+	const programs = [{_id: 1, seasons: [119, 115, 110, 102, 92, 85, 73, 7, 1]},
+		{_id: 4, seasons: [120, 116, 111, 103, 93, 88, 76, 10, 4]}];
+	for (let program of programs) {
 		const seasons = program.seasons.sort((a, b) => a - b);
-		for (let i = 0; i < seasons.length; i++) {
-			updateTeamsForSeason(program, seasons[i]);
+		for (let season of seasons) {
+			try {
+				await updateTeamsForSeason(program._id, season);
+			} catch (err) {
+				console.error(err);
+			}
 		}
-	});*/
+	}
 };
 
 const updateReEvents = async () => {
-	await updateEventsForSeason(1, 119);
-	await updateEventsForSeason(4, 120);
-	/*[{_id: 1, seasons: [119, 115, 110, 102, 92, 85, 73, 7, 1]},
-		{_id: 4, seasons: [120, 116, 111, 103, 93, 88, 76, 10, 4]}].forEach(program => {
-		program.seasons.forEach(updateEventsForSeason);
-	});*/
+	//await updateEventsForSeason(1, 119);
+	//await updateEventsForSeason(4, 120);
+	const programs = [{_id: 1, seasons: [119, 115, 110, 102, 92, 85, 73, 7, 1]},
+		{_id: 4, seasons: [120, 116, 111, 103, 93, 88, 76, 10, 4]}];
+	for (let program of programs) {
+		const seasons = program.seasons.sort((a, b) => a - b);
+		for (let season of seasons) {
+			try {
+				await updateEventsForSeason(program._id, season);
+			} catch (err) {
+				console.error(err);
+			}
+		}
+	}
 }
 
 const updateMaxSkills = async () => {
-	await updateMaxSkillsForSeason(1, 119);
-	await updateMaxSkillsForSeason(4, 120);
-	/*db.collection('programs').find().project({_id: 0, seasons: 1}).forEach(program => {
-		program.seasons.forEach(season => updateMaxSkillsForSeason(season));
-	});*/
+	//await updateMaxSkillsForSeason(1, 119);
+	//await updateMaxSkillsForSeason(4, 120);
+	const programs = [{_id: 1, seasons: [119, 115, 110, 102, 92, 85, 73, 7, 1]},
+		{_id: 4, seasons: [120, 116, 111, 103, 93, 88, 76, 10, 4]}]; //await db.collection('programs').find().project({_id: 0, seasons: 1}).toArray();
+	for (let program of programs) {
+		const seasons = program.seasons.sort((a, b) => a - b);
+		for (let season of seasons) {
+			try {
+				await updateMaxSkillsForSeason(program._id, season)
+			} catch (err) {
+				console.error(err);
+			}
+		}
+	}
 };
 
 const updateCurrentEvents = async () => {
@@ -55,7 +77,9 @@ const updateCurrentEvents = async () => {
 		const documents = await db.collection('events').find({dates: {$elemMatch: {end: {$gt: now}, start: {$lt: now}}}}).project({_id: 1, prog: 1}).toArray();
 		for (let event of documents) {
 			try {
+				console.log(`starting ${event._id}`);
 				await events.updateEvent(event.prog, event._id);
+				console.log(`ended ${event._id}`);
 			} catch (err) {
 				console.error(err);
 			}
@@ -71,7 +95,8 @@ const skillsJob = new CronJob('00 20 08 * * *', updateMaxSkills, null, true, tim
 const currentEventsJob = new CronJob('00 */2 * * * *', updateCurrentEvents, null, true, timezone);
 
 const update = () => {
-	updateCurrentEvents();
+	//updateCurrentEvents();
+	//events.updateEvent(1, 'RE-VRC-14-0424');
 	//updateReTeams();
 	//updateReEvents();
 	//updateMaxSkills();
@@ -391,6 +416,7 @@ module.exports = {
 	updateProgramsAndSeasons: updateProgramsAndSeasons,
 	updateMaxSkills: updateMaxSkills,
 	updateReTeams: updateReTeams,
+	updateReEvents: updateReEvents,
 	updateTeamsForSeason: updateTeamsForSeason,
 	updateEventsForSeason: updateEventsForSeason,
 	updateMaxSkillsForSeason: updateMaxSkillsForSeason,
