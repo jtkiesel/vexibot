@@ -211,6 +211,8 @@ module.exports = {
 	getTeamLocation: getTeamLocation,
 	createTeamEmbed: createTeamEmbed,
 	createMatchEmbed: createMatchEmbed,
+	createSkillsEmbed: createSkillsEmbed,
+	createAwardEmbed: createAwardEmbed,
 	createTeamChangeEmbed: createTeamChangeEmbed,
 	sendToSubscribedChannels: sendToSubscribedChannels,
 	sendMatchEmbed: sendMatchEmbed,
