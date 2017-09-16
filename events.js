@@ -302,7 +302,8 @@ const updateEvent = async (prog, sku, retried = false) => {
 					});
 				}
 			});
-			matches.forEach(async (match, i) => {
+			for (let i = 0; i < matches.length; i++) {
+				const match = matches[i];
 				const nextMatch = matches[i + 1];
 				//const nextRound = match._id.round === 6 ? 3 : match._id.round + (match._id.round > 6 ? -1 : 1);
 				const unset = {};
