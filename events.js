@@ -329,12 +329,6 @@ const updateEvent = async (prog, sku, retried = false) => {
 						}*/
 					}
 				}
-				if (!scored) {
-					delete match.redScore;
-					delete match.blueScore;
-					unset.redScore = '';
-					unset.blueScore = '';
-				}
 				let change, reactions;
 				if (scored) {
 					change = 'scored';
@@ -342,6 +336,10 @@ const updateEvent = async (prog, sku, retried = false) => {
 				} else {
 					change = 'scheduled';
 					reactions = vex.matchScheduledEmojis;
+					delete match.redScore;
+					delete match.blueScore;
+					unset.redScore = '';
+					unset.blueScore = '';
 				}
 				try {
 					let res;
