@@ -244,27 +244,32 @@ const formatReEvent = event => {
 
 const updateMaxSkillsForSeason = async (program, season) => {
 	const url = `https://www.robotevents.com/api/seasons/${season}/skills?untilSkillsDeadline=0`;
-
 	try {
 		const maxSkills = await request.get({url: url, json: true});
+		let rankByGrade = [];
 		maxSkills.map(maxSkill => formatMaxSkill(maxSkill, program, season)).forEach(async maxSkill => {
+			const grade = maxSkill.team.grade;
+			const gradeRank = (rankByGrade[grade] || 0) + 1;
+			rankByGrade[grade] = gradeRank;
+			maxSkill.gradeRank = gradeRank;
 			try {
 				let result = await db.collection('maxSkills').findOneAndUpdate({_id: maxSkill._id}, {$set: maxSkill}, {upsert: true});
-				const old = result.value;
-				if (!old || maxSkill.team.grade !== old.team.grade) {
+				let old = result.value;
+				if (!old || grade !== old.team.grade) {
 					if (!old) {
 						console.log(`Insert ${JSON.stringify(maxSkill)} to maxSkills.`);
 					}
+					const teamId = maxSkill.team.id;
 					try {
 						result = await db.collection('teams').findOneAndUpdate(
-							{_id: {prog: program, id: maxSkill.team.id}},
-							{$set: {grade: maxSkill.team.grade}}
+							{_id: {prog: program, id: teamId}},
+							{$set: {grade: grade}}
 						);
-						const old = result.value;
+						old = result.value;
 						if (!old) {
-							console.log(`Insert ${maxSkill.team.id} to teams.`);
-						} else if (old && maxSkill.team.grade !== old.grade) {
-							console.log(`Update ${maxSkill.team.id} from ${old.grade} to ${maxSkill.team.grade}.`);
+							console.log(`Insert ${teamId} to teams.`);
+						} else if (old && grade !== old.grade) {
+							console.log(`Update ${teamId} from ${decodeGrade(old.grade)} to ${decodeGrade(grade)}.`);
 						}
 					} catch (err) {
 						console.error(err);

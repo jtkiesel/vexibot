@@ -10,6 +10,7 @@ const getTeamId = vex.getTeamId;
 const validTeamId = vex.validTeamId;
 const getTeam = vex.getTeam;
 const decodeProgram = dbinfo.decodeProgram;
+const decodeGrade = dbinfo.decodeGrade;
 
 const rankEmojis = ['🥇', '🥈', '🥉'];
 
@@ -24,14 +25,14 @@ module.exports = async (message, args) => {
 				try {
 					const maxSkill = await db.collection('maxSkills').findOne({'_id.season': season, 'team.id': teamId});
 					if (maxSkill) {
-						let rank = maxSkill._id.rank;
+						let rank = maxSkill.gradeRank;
 						rank = (rank <= 3) ? rankEmojis[rank - 1] : rank;
 
 						const embed = new Discord.RichEmbed()
 							.setColor('GOLD')
 							.setTitle(`${decodeProgram(team._id.prog)} ${teamId}`)
 							.setURL(`https://vexdb.io/teams/view/${teamId}?t=skills`)
-							.addField('Global Rank', rank, true)
+							.addField(`${decodeGrade(maxSkill.team.grade)} Rank`, rank, true)
 							.addField('Score', maxSkill.score, true)
 							.addField('Programming', maxSkill.prog, true)
 							.addField('Driver', maxSkill.driver, true)

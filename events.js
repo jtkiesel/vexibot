@@ -450,6 +450,7 @@ const updateEvent = async (prog, sku, retried = false) => {
 			}
 		}
 		for (let award of awards) {
+			console.log(award);
 			const unset = Object.assign({},
 				!award.team && {team: ''},
 				!award.qualifies && {qualifies: ''});
@@ -465,12 +466,14 @@ const updateEvent = async (prog, sku, retried = false) => {
 					} else {
 						change = 'added';
 					}
-					await sendToSubscribedChannels(`Award ${change}`, {embed: createAwardEmbed(award)}, [team]);
-					console.log(createAwardEmbed(award).fields);
+					const embed = await createAwardEmbed(award);
+					await sendToSubscribedChannels(`Award ${change}`, {embed: embed}, [team]);
+					console.log(embed);
 				} else {
 					if (!old.team && award.team) {
-						await sendToSubscribedChannels('Award won', {embed: createAwardEmbed(award)}, [team]);
-						console.log(createAwardEmbed(award).fields);
+						const embed = await createAwardEmbed(award);
+						await sendToSubscribedChannels('Award won', {embed: embed}, [team]);
+						console.log(embed);
 					}
 				}
 			} catch (err) {
