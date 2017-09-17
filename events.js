@@ -31,6 +31,8 @@ const encodeGenders = gender => genders.indexOf(gender);
 
 const decodeGenders = gender => genders[gender];
 
+const encodeDate = date => Date.parse(`${date} EDT`);
+
 const getEvent = (result, sku) => {
 	const name = result.match(/<h3\s+class="panel-title\s+col-sm-6">\s*(.+?)\s*<\/h3>/);
 	const totalDates = result.match(/<span\s+class="pull-right text-right col-sm-6">\s*(.+?)(?: - (.+?))?\s*<\/span>/);
@@ -46,8 +48,8 @@ const getEvent = (result, sku) => {
 	while (regex = datesRegex.exec(result)) {
 		[regex, start, end, venue, address, city, region, postcode, country] = regex;
 		dates.push(Object.assign({
-			start: Date.parse(start),
-			end: Date.parse(end ? end : start) + 86399999
+			start: encodeDate(start),
+			end: encodeDate(end ? end : start) + 86399999
 		},
 			venue && {venue: he.decode(venue)},
 			address && {address: he.decode(address)},
@@ -59,8 +61,8 @@ const getEvent = (result, sku) => {
 	return Object.assign({
 		_id: sku,
 		name: he.decode(name[1]),
-		start: Date.parse(totalDates[1]),
-		end: Date.parse(totalDates[2] ? totalDates[2] : totalDates[1]) + 86399999,
+		start: encodeDate(totalDates[1]),
+		end: encodeDate(totalDates[2] ? totalDates[2] : totalDates[1]) + 86399999,
 		dates: dates,
 		type: type[1],
 		size: Number.parseInt(capacity[1]),
@@ -434,14 +436,14 @@ const updateEvent = async (prog, sku, retried = false) => {
 				console.error(err);
 			}
 		}
-		console.log(JSON.stringify(skills));
 		for (let skill of skills) {
 			try {
 				const res = await db.collection('skills').findOneAndUpdate({_id: skill._id}, {$set: skill}, {upsert: true});
 				const old = res.value;
-				if (!old || skill.score != old.score) {
-					await sendToSubscribedChannels(`New ${decodeSkill(skill._id.type)} Skills score`, {embed: createSkillsEmbed(skill)}, [skill._id.team]);
-					console.log(createSkillsEmbed(skill).fields);
+				if (!old && skill.attempts !== 0 || skill.score != old.score) {
+					const embed = await createSkillsEmbed(skill);
+					await sendToSubscribedChannels(`New ${decodeSkill(skill._id.type)} Skills score`, {embed: embed}, [skill._id.team]);
+					console.log(embed.fields);
 				}
 			} catch (err) {
 				console.error(err);

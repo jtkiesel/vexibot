@@ -135,15 +135,21 @@ const createAwardEmbed = async award => {
 };
 
 const createSkillsEmbed = async skill => {
-	const event = await db.collection('events').findOne({_id: skill._id.event});
-	const embed = new Discord.RichEmbed()
-		.setColor('GOLD')
-		.setAuthor(event.name, null, `https://vexdb.io/events/view/${event._id}?t=skills`)
-		.setTitle(`${skill._id.team.prog} ${skill._id.team._id}`)
-		.setURL(`https://vexdb.io/teams/view/${skill._id.team._id}?t=skills`)
-		.addField('Type', decodeSkill(skill._id.type))
-		.addField('Score', skill.score);
-	return embed;
+	let embed;
+	try {
+		const event = await db.collection('events').findOne({_id: skill._id.event});
+		embed = new Discord.RichEmbed()
+			.setColor('GOLD')
+			.setAuthor(event.name, null, `https://vexdb.io/events/view/${event._id}?t=skills`)
+			.setTitle(`${decodeProgram(skill._id.team.prog)} ${skill._id.team.id}`)
+			.setURL(`https://vexdb.io/teams/view/${skill._id.team.id}?t=skills`)
+			.addField('Type', decodeSkill(skill._id.type), true)
+			.addField('Score', skill.score, true);
+	} catch (err) {
+		console.error(err);
+	} finally {
+		return embed;
+	}
 };
 
 const getMatchTeams = match => [match.red, match.red2, match.red3, match.blue, match.blue2, match.red3].filter(team => team).map(team => {

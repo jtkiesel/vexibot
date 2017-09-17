@@ -102,9 +102,9 @@ const rounds = {
 
 const roundKeys = [1, 2, 9, 8, 7, 6, 3, 4, 5];
 
-const encodeSkills = ['driver', 'programming', 'robot'];
+const encodeSkills = ['programming', 'driver'];
 
-const decodeSkills = ['Driver', 'Programming', 'Robot'];
+const decodeSkills = ['Programming', 'Driver'];
 
 const encodeProgram = program => programToId[program];
 

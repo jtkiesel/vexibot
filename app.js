@@ -18,7 +18,7 @@ const commandInfo = {
 };
 const commands = {};
 
-let vexdata;
+let vexdata, events;
 
 let helpDescription = `\`${prefix}help\`: Provides information about all commands.`;
 
@@ -89,6 +89,7 @@ MongoClient.connect(mongodbUri).then(db => {
 	Object.entries(commandInfo).forEach(([name, desc]) => helpDescription += `\n\`${prefix}${name}\`: ${desc}`);
 
 	vexdata = require('./vexdata');
+	events = require('./events');
 	client.login(token).catch(console.error);
 }).catch(console.error);
 
