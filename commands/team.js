@@ -48,8 +48,8 @@ module.exports = async (message, args) => {
 	const teamId = getTeamId(message, args);
 	if (validTeamId(teamId)) {
 		try {
-			let team = await getTeam(teamId);
-			if (team) {
+			const team = await getTeam(teamId);
+			if (team.length) {
 				dynamicTeamEmbed(message, team);
 			} else {
 				message.reply('that team ID has never been registered.').catch(console.error);
