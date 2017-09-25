@@ -27,7 +27,8 @@ module.exports = async (message, args) => {
 	let teamId = getTeamId(message, args);
 	if (validTeamId(teamId)) {
 		try {
-			const team = await getTeam(teamId);
+			let team = await getTeam(teamId);
+			team = team[0];
 			if (team) {
 				teamId = team._id.id;
 				const prog = isNaN(teamId.charAt(0)) ? 4 : 1;
@@ -115,7 +116,7 @@ module.exports = async (message, args) => {
 						}
 						const embed = new Discord.RichEmbed()
 							.setColor('PURPLE')
-							.setTitle(`${decodeProgram(team._id.prog)} ${teamId}`)
+							.setTitle(`${decodeProgram(team.prog)} ${teamId}`)
 							.setURL(`https://vexdb.io/teams/view/${teamId}?t=awards`)
 							.setDescription(description);
 						try {

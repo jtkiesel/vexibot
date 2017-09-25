@@ -7,11 +7,11 @@ const programToId = {
 };
 
 const idToProgram = {
-	'1': 'VRC',
-	'4': 'VEXU',
-	'37': 'CREATE',
-	'40': 'WORKSHOP',
-	'41': 'VIQC'
+	1: 'VRC',
+	4: 'VEXU',
+	37: 'CREATE',
+	40: 'WORKSHOP',
+	41: 'VIQC'
 };
 
 const seasonToId = {
@@ -52,8 +52,6 @@ const idToSeason = {
 	'120': 'In the Zone'
 };
 
-const decodeSeason = id => idToSeason[id];
-
 const idToSeasonUrl = {
 	'-4': 'http://roboticseducation.org/vrc-bridge-battle',
 	'-3': 'http://roboticseducation.org/vrc-elevation',
@@ -77,8 +75,6 @@ const idToSeasonUrl = {
 	'119': 'https://vexrobotics.com/vexedr/competition/vrc-current-game',
 	'120': 'https://vexrobotics.com/vexedr/competition/vrc-current-game'
 };
-
-const decodeSeasonUrl = id => idToSeasonUrl[id];
 
 const grades = [
 	'All',
@@ -109,6 +105,10 @@ const decodeSkills = ['Programming', 'Driver'];
 const encodeProgram = program => programToId[program];
 
 const decodeProgram = program => idToProgram[program];
+
+const decodeSeason = id => idToSeason[id];
+
+const decodeSeasonUrl = id => idToSeasonUrl[id];
 
 const encodeGrade = grade => grades.indexOf(grade);
 

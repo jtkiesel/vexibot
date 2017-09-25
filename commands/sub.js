@@ -20,17 +20,18 @@ module.exports = async (message, args) => {
 	if (message.guild) {
 		if (validTeamId(teamId)) {
 			try {
-				const team = await getTeam(teamId);
+				let team = await getTeam(teamId);
+				team = team[0];
 				let prog, id;
 				let reply;
 				if (team) {
-					prog = team._id.prog;
+					prog = team.prog;
 					id = team._id.id;
-					reply = await message.reply(`subscribe to updates for **${decodeProgram(prog)} ${id}**? (Select ${yes} or ${no}.)`, {embed: createTeamEmbed(team)});
+					reply = await message.reply(`subscribe to updates for **${decodeProgram(prog)} ${id}**?`, {embed: createTeamEmbed(team)});
 				} else {
 					prog = isNaN(teamId.charAt(0)) ? 4 : 1;
 					id = teamId;
-					reply = await message.reply(`that team ID has never been registered, are you sure you want to subscribe to updates for ${decodeProgram(prog)} ${id}? (Select ${yes} or ${no}.)`);
+					reply = await message.reply(`that team ID has never been registered, are you sure you want to subscribe to updates for ${decodeProgram(prog)} ${id}?`);
 				}
 				await reply.react(yes);
 				await reply.react(no);

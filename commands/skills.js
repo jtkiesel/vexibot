@@ -10,6 +10,8 @@ const getTeamId = vex.getTeamId;
 const validTeamId = vex.validTeamId;
 const getTeam = vex.getTeam;
 const decodeProgram = dbinfo.decodeProgram;
+const decodeSeason = dbinfo.decodeSeason;
+const decodeSeasonUrl = dbinfo.decodeSeasonUrl;
 const decodeGrade = dbinfo.decodeGrade;
 
 const rankEmojis = ['🥇', '🥈', '🥉'];
@@ -18,7 +20,8 @@ module.exports = async (message, args) => {
 	let teamId = getTeamId(message, args);
 	if (validTeamId(teamId)) {
 		try {
-			const team = await getTeam(teamId);
+			let team = await getTeam(teamId);
+			team = team[0];
 			if (team) {
 				const season = isNaN(teamId.charAt(0)) ? 120 : 119;
 				teamId = team._id.id;
@@ -30,8 +33,9 @@ module.exports = async (message, args) => {
 
 						const embed = new Discord.RichEmbed()
 							.setColor('GOLD')
-							.setTitle(`${decodeProgram(team._id.prog)} ${teamId}`)
-							.setURL(`https://vexdb.io/teams/view/${teamId}?t=skills`)
+							.setAuthor(`${decodeProgram(team.prog)} ${teamId}`, null, `https://vexdb.io/teams/view/${teamId}?t=skills`)
+							.setTitle(decodeSeason(season))
+							.setURL(decodeSeasonUrl(season))
 							.addField(`${decodeGrade(maxSkill.team.grade)} Rank`, rank, true)
 							.addField('Score', maxSkill.score, true)
 							.addField('Programming', maxSkill.prog, true)

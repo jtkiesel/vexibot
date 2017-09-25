@@ -132,7 +132,7 @@ const matchCompare = (a, b) => {
 	return a.number - b.number;
 };
 
-const updateEvent = async (prog, sku, retried = false) => {
+const updateEvent = async (prog, season, sku, retried = false) => {
 	try {
 		const result = await request.get({url: `https://www.robotevents.com/${sku}.html`});
 		const event = getEvent(result, sku);
@@ -148,7 +148,7 @@ const updateEvent = async (prog, sku, retried = false) => {
 			[regex, id, name, org, city, region, country] = regex;
 			const program = (prog === 1 || prog === 4) ? (isNaN(id.charAt(0)) ? 4 : 1) : prog;
 
-			teams.push(Object.assign({_id: {prog: program, id: id}},
+			teams.push(Object.assign({_id: {id: id, season: season}, prog: program},
 				name && {name: he.decode(name)},
 				org && {org: he.decode(org)},
 				city && {city: he.decode(city)},
@@ -167,7 +167,7 @@ const updateEvent = async (prog, sku, retried = false) => {
 
 			awardInstances[name] = instance + 1;
 			awards.push(Object.assign({_id: {event: sku, name: name, instance: instance}},
-				validTeamId(id) && {team: {prog: program, id: id}}
+				validTeamId(id) && {team: {id: id, season: season}}
 			));
 		}
 		const qualifiesRegex = /<tr>\s*<td\s+style="text-align:center">\s*(.+?)\s*<\/td>\s*<td\s+style="text-align:left">((?:\s|.)*?)<\/tr>/g;
@@ -202,7 +202,7 @@ const updateEvent = async (prog, sku, retried = false) => {
 			JSON.parse(he.decode(skillsData[1])).forEach(skillData => {
 				const teamReg = skillData.team_reg;
 				const _id = {
-					prog: teamReg.team.program_id,
+					season: teamReg.season_id,
 					id: teamReg.team.team
 				};
 				skills.push({
@@ -216,7 +216,7 @@ const updateEvent = async (prog, sku, retried = false) => {
 					attempts: skillData.attempts
 				});
 				for (let i = 0; i < teams.length; i++) {
-					if (teams[i]._id.prog === _id.prog && teams[i]._id.id === _id.id) {
+					if (teams[i].season === _id.season && teams[i]._id.id === _id.id) {
 						const contact = Object.assign({
 							name: teamReg.contact1_name,
 							phone: teamReg.contact1_phone1,
@@ -288,7 +288,7 @@ const updateEvent = async (prog, sku, retried = false) => {
 
 			const played = {};
 			JSON.parse(he.decode(regex[4])).filter(ranking => ranking.division === divisionNumber).map(ranking => formatRanking(ranking, sku, divisionName)).forEach(async ranking => {
-				played[ranking._id.team] = ranking.wins + ranking.losses + ranking.ties;
+				//played[ranking._id.team] = ranking.wins + ranking.losses + ranking.ties;
 				try {
 					const res = await db.collection('rankings').updateOne({_id: ranking._id}, {$set: ranking}, {upsert: true});
 				} catch (err) {
@@ -390,12 +390,13 @@ const updateEvent = async (prog, sku, retried = false) => {
 		}
 		for (let team of teams) {
 			try {
-				const program = team._id.prog;
+				const program = team.prog;
 				const teamId = team._id.id;
+				const teamSubs = [{prog: program, id: teamId}];
 				const res = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$set: team}, {upsert: true});
 				const old = res.value;
 				if (!old) {
-					await sendToSubscribedChannels('New team registered', {embed: createTeamEmbed(team)}, [team._id]);
+					await sendToSubscribedChannels('New team registered', {embed: createTeamEmbed(team)}, teamSubs);
 					console.log(createTeamEmbed(team).fields);
 				} else {
 					if (team.city !== old.city || team.region !== old.region || team.country !== old.country) {
@@ -406,19 +407,22 @@ const updateEvent = async (prog, sku, retried = false) => {
 						if (Object.keys(unset).length) {
 							try {
 								const res2 = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$unset: unset});
-								await sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team))}, [team._id]);
-								console.log(createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team)).description);
+								const embed = createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team));
+								await sendToSubscribedChannels(null, {embed: embed}, teamSubs);
+								console.log(embed.description);
 							} catch (err) {
 								console.error(err);
 							}
 						} else {
-							await sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team))}, [team._id]);
-							console.log(createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team)).description);
+							const embed = createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team));
+							await sendToSubscribedChannels(null, {embed: embed}, teamSubs);
+							console.log(embed.description);
 						}
 					}
 					if (team.name !== old.name) {
-						await sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'team name', old.name, team.name)}, [team._id]);
-						console.log(createTeamChangeEmbed(program, teamId, 'team name', old.name, team.name).description);
+						const embed = createTeamChangeEmbed(program, teamId, 'team name', old.name, team.name);
+						await sendToSubscribedChannels(null, {embed: embed}, teamSubs);
+						console.log(embed.description);
 					}
 					if (team.hasOwnProperty('robot') && team.robot !== old.robot) {
 						if (!team.robot) {
@@ -428,8 +432,9 @@ const updateEvent = async (prog, sku, retried = false) => {
 								console.error(err);
 							}
 						}
-						await sendToSubscribedChannels(null, {embed: createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot)}, [team._id]);
-						console.log(createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot).description);
+						const embed = createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot);
+						await sendToSubscribedChannels(null, {embed: embed}, teamSubs);
+						console.log(embed.description);
 					}
 				}
 			} catch (err) {

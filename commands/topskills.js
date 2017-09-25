@@ -43,7 +43,7 @@ module.exports = async (message, args) => {
 			.sort({'_id.rank': 1})
 			.limit(limit).toArray();
 		if (teams.length) {
-			description = '';
+			let description = '';
 			teams.forEach((maxSkill, i) => {
 				const rank = (i < 3) ? `${rankEmojis[i]}` : `**\`#${String(i + 1).padEnd(2)}\​\`**`;
 				const score = String(maxSkill.score).padStart(3);

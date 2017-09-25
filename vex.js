@@ -7,6 +7,8 @@ const dbinfo = require('./dbinfo');
 const db = app.db;
 const client = app.client;
 const decodeProgram = dbinfo.decodeProgram;
+const decodeSeason = dbinfo.decodeSeason;
+const decodeSeasonUrl = dbinfo.decodeSeasonUrl;
 const decodeGrade = dbinfo.decodeGrade;
 const decodeRound = dbinfo.decodeRound;
 const decodeSkill = dbinfo.decodeSkill;
@@ -21,7 +23,7 @@ const getTeamId = (message, args) => {
 
 const validTeamId = teamId => /^([0-9]{1,5}[A-Z]?|[A-Z]{2,6}[0-9]{0,2})$/i.test(teamId);
 
-const getTeam = teamId => db.collection('teams').findOne({'_id.prog': (isNaN(teamId.charAt(0)) ? 4 : 1), '_id.id': new RegExp(`^${teamId}$`, 'i')});
+const getTeam = teamId => db.collection('teams').find({prog: (isNaN(teamId.charAt(0)) ? 4 : 1), '_id.id': new RegExp(`^${teamId}$`, 'i')}).sort({'_id.season': -1}).toArray();
 
 const getTeamLocation = team => {
 	let location = [team.city];
@@ -36,17 +38,18 @@ const getTeamLocation = team => {
 
 const createTeamEmbed = team => {
 	const teamId = team._id.id;
+	const season = team._id.season;
 	const name = team.name ? he.decode(team.name) : '';
 	const robot = team.robot ? he.decode(team.robot) : '';
 	const org = team.org ? he.decode(team.org) : '';
 	const grade = team.grade ? decodeGrade(team.grade) : '';
-	const registered = team.registered ? 'Yes' : 'No';
 	const location = getTeamLocation(team);
 
 	const embed = new Discord.RichEmbed()
 		.setColor('GREEN')
-		.setTitle(`${decodeProgram(team._id.prog)} ${teamId}`)
-		.setURL(`https://vexdb.io/teams/view/${teamId}`);
+		.setAuthor(teamId, null, `https://vexdb.io/teams/view/${teamId}`)
+		.setTitle(`${decodeProgram(team.prog)} ${decodeSeason(season)}`)
+		.setURL(decodeSeasonUrl(season));
 	if (name) {
 		embed.addField('Team Name', name, true);
 	}
@@ -62,9 +65,6 @@ const createTeamEmbed = team => {
 	if (grade) {
 		embed.addField('Grade', grade, true);
 	}
-	if (team.hasOwnProperty('registered')) {
-		embed.addField('Registered?', registered, true);
-	}
 	return embed;
 };
 
@@ -78,7 +78,6 @@ const createTeamsString = (teams, teamSit) => {
 };
 
 const matchScheduledEmojis = ['🔴', '🔵'];
-
 const matchScoredEmojis = ['👍', '👎'];
 
 const createMatchEmbed = match => {

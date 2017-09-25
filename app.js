@@ -6,6 +6,12 @@ const client = new Discord.Client();
 const MongoClient = new mongodb.MongoClient();
 const token = process.env.VEXIBOT_TOKEN;
 const mongodbUri = process.env.VEXIBOT_DB;
+const mongodbOptions = {
+	keepAlive: 1,
+	connectTimeoutMS: 30000,
+	reconnectTries: 30,
+	reconnectInterval: 5000
+};
 const prefix = '^';
 const commandInfo = {
 	ping: 'Pong!',
@@ -82,7 +88,7 @@ client.on('message', message => {
 	}
 });
 
-MongoClient.connect(mongodbUri).then(db => {
+MongoClient.connect(mongodbUri, mongodbOptions).then(db => {
 	module.exports.db = db;
 
 	Object.keys(commandInfo).forEach(name => commands[name] = require('./commands/' + name));
