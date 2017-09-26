@@ -146,7 +146,7 @@ const updateEvent = async (prog, season, sku, retried = false) => {
 		let regex, id, name, org, city, region, country;
 		while (regex = teamsRegex.exec(teamList)) {
 			[regex, id, name, org, city, region, country] = regex;
-			const program = (prog === 1 || prog === 4) ? (isNaN(id.charAt(0)) ? 4 : 1) : prog;
+			const program = isNaN(id.charAt(0)) ? 4 : prog;
 
 			teams.push(Object.assign({_id: {id: id, season: season}, prog: program},
 				name && {name: he.decode(name)},
@@ -163,7 +163,7 @@ const updateEvent = async (prog, season, sku, retried = false) => {
 			const name = regex[1];
 			const id = regex[2];
 			const instance = awardInstances[name] || 0;
-			const program = (prog === 1 || prog === 4) ? (isNaN(id.charAt(0)) ? 4 : 1) : prog;
+			const program = isNaN(id.charAt(0) ? 4 : prog;
 
 			awardInstances[name] = instance + 1;
 			awards.push(Object.assign({_id: {event: sku, name: name, instance: instance}},
@@ -490,7 +490,7 @@ const updateEvent = async (prog, season, sku, retried = false) => {
 		if (!retried) {
 			console.log(`Retrying ${sku}`);
 			try {
-				await updateEvent(prog, sku, true);
+				await updateEvent(prog, season, sku, true);
 			} catch (err) {
 				console.error(err);
 			}

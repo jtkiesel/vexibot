@@ -39,31 +39,26 @@ const getTeamLocation = team => {
 const createTeamEmbed = team => {
 	const teamId = team._id.id;
 	const season = team._id.season;
-	const name = team.name ? he.decode(team.name) : '';
-	const robot = team.robot ? he.decode(team.robot) : '';
-	const org = team.org ? he.decode(team.org) : '';
-	const grade = team.grade ? decodeGrade(team.grade) : '';
 	const location = getTeamLocation(team);
-
 	const embed = new Discord.RichEmbed()
 		.setColor('GREEN')
 		.setAuthor(teamId, null, `https://vexdb.io/teams/view/${teamId}`)
 		.setTitle(`${decodeProgram(team.prog)} ${decodeSeason(season)}`)
 		.setURL(decodeSeasonUrl(season));
-	if (name) {
-		embed.addField('Team Name', name, true);
+	if (team.name.trim()) {
+		embed.addField('Team Name', he.decode(team.name), true);
 	}
-	if (robot) {
-		embed.addField('Robot Name', robot, true);
+	if (team.robot.trim()) {
+		embed.addField('Robot Name', he.decode(team.robot), true);
 	}
-	if (org) {
-		embed.addField('Organization', org, true);
+	if (team.org.trim()) {
+		embed.addField('Organization', he.decode(team.org), true);
 	}
 	if (location) {
 		embed.addField('Location', location, true);
 	}
-	if (grade) {
-		embed.addField('Grade', grade, true);
+	if (team.grade) {
+		embed.addField('Grade', decodeGrade(team.grade), true);
 	}
 	return embed;
 };
