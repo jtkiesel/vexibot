@@ -192,7 +192,7 @@ const updateEventsForSeason = async (program, season) => {
 					console.log(`Update to events: ${JSON.stringify(event)}`);
 				}
 				console.log(`starting ${event._id}`);
-				await events.updateEvent(program, event._id);
+				await events.updateEvent(program, season, event._id);
 				console.log(`ended ${event._id}`);
 			} catch (err) {
 				console.error(err);

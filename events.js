@@ -7,6 +7,7 @@ const dbinfo = require('./dbinfo');
 
 const db = app.db;
 const validTeamId = vex.validTeamId;
+const getTeam = vex.getTeam;
 const getTeamLocation = vex.getTeamLocation;
 const createTeamEmbed = vex.createTeamEmbed;
 const createTeamChangeEmbed = vex.createTeamChangeEmbed;
@@ -148,7 +149,7 @@ const updateEvent = async (prog, season, sku, retried = false) => {
 			[regex, id, name, org, city, region, country] = regex;
 			const program = isNaN(id.charAt(0)) ? 4 : prog;
 
-			teams.push(Object.assign({_id: {id: id, season: season}, prog: program},
+			teams.push(Object.assign({_id: {id: id, prog: program, season: season}},
 				name && {name: he.decode(name)},
 				org && {org: he.decode(org)},
 				city && {city: he.decode(city)},
@@ -166,9 +167,18 @@ const updateEvent = async (prog, season, sku, retried = false) => {
 			const program = isNaN(id.charAt(0)) ? 4 : prog;
 
 			awardInstances[name] = instance + 1;
-			awards.push(Object.assign({_id: {event: sku, name: name, instance: instance}},
-				validTeamId(id) && {team: {id: id, season: season}}
-			));
+			awards.push({
+				_id: {
+					event: sku,
+					name: name,
+					instance: instance
+				},
+				team: {
+					id: id,
+					prog: program,
+					season: season
+				}
+			});
 		}
 		const qualifiesRegex = /<tr>\s*<td\s+style="text-align:center">\s*(.+?)\s*<\/td>\s*<td\s+style="text-align:left">((?:\s|.)*?)<\/tr>/g;
 		const awardRegex = /\s*(.+?)\s*<br>/g;
@@ -178,7 +188,7 @@ const updateEvent = async (prog, season, sku, retried = false) => {
 			const qualifies = [];
 			while (regex = awardRegex.exec(qualifiesString)) {
 				const eventName = regex[1];
-				const qualifiesEvent = await db.collection('events').findOne({prog: prog, name: eventName});
+				const qualifiesEvent = await db.collection('events').findOne({prog: prog, season: season, name: eventName});
 				if (qualifiesEvent) {
 					qualifies.push(qualifiesEvent._id);
 				}
@@ -212,6 +222,7 @@ const updateEvent = async (prog, season, sku, retried = false) => {
 				const teamReg = skillData.team_reg;
 				const _id = {
 					id: teamReg.team.team,
+					prog: teamReg.team.program_id,
 					season: teamReg.season_id
 				};
 				skills.push({
@@ -405,8 +416,13 @@ const updateEvent = async (prog, season, sku, retried = false) => {
 				const res = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$set: team}, {upsert: true});
 				const old = res.value;
 				if (!old) {
-					await sendToSubscribedChannels('New team registered', {embed: createTeamEmbed(team)}, teamSubs);
-					console.log(createTeamEmbed(team).fields);
+					try {
+						const content = (await getTeam(teamId)).length === 1 ? 'New team registered' : 'Existing team renewed';
+						await sendToSubscribedChannels(content, {embed: createTeamEmbed(team)}, teamSubs);
+						console.log(createTeamEmbed(team).fields);
+					} catch (err) {
+						console.error(err);
+					}
 				} else {
 					if (team.city !== old.city || team.region !== old.region || team.country !== old.country) {
 						const unset = Object.assign({},
@@ -416,22 +432,16 @@ const updateEvent = async (prog, season, sku, retried = false) => {
 						if (Object.keys(unset).length) {
 							try {
 								const res2 = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$unset: unset});
-								const embed = createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team));
-								await sendToSubscribedChannels(null, {embed: embed}, teamSubs);
-								console.log(embed.description);
+								console.log(createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team)).description);
 							} catch (err) {
 								console.error(err);
 							}
 						} else {
-							const embed = createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team));
-							await sendToSubscribedChannels(null, {embed: embed}, teamSubs);
-							console.log(embed.description);
+							console.log(createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team)).description);
 						}
 					}
 					if (team.name !== old.name) {
-						const embed = createTeamChangeEmbed(program, teamId, 'team name', old.name, team.name);
-						await sendToSubscribedChannels(null, {embed: embed}, teamSubs);
-						console.log(embed.description);
+						console.log(createTeamChangeEmbed(program, teamId, 'team name', old.name, team.name).description);
 					}
 					if (team.hasOwnProperty('robot') && team.robot !== old.robot) {
 						if (!team.robot) {
@@ -441,9 +451,7 @@ const updateEvent = async (prog, season, sku, retried = false) => {
 								console.error(err);
 							}
 						}
-						const embed = createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot);
-						await sendToSubscribedChannels(null, {embed: embed}, teamSubs);
-						console.log(embed.description);
+						console.log(createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot).description);
 					}
 				}
 			} catch (err) {
