@@ -45,13 +45,13 @@ const createTeamEmbed = team => {
 		.setAuthor(teamId, null, `https://vexdb.io/teams/view/${teamId}`)
 		.setTitle(`${decodeProgram(team.prog)} ${decodeSeason(season)}`)
 		.setURL(decodeSeasonUrl(season));
-	if (team.name.trim()) {
+	if (team.name && team.name.trim()) {
 		embed.addField('Team Name', he.decode(team.name), true);
 	}
-	if (team.robot.trim()) {
+	if (team.robot && team.robot.trim()) {
 		embed.addField('Robot Name', he.decode(team.robot), true);
 	}
-	if (team.org.trim()) {
+	if (team.org && team.org.trim()) {
 		embed.addField('Organization', he.decode(team.org), true);
 	}
 	if (location) {
