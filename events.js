@@ -163,7 +163,7 @@ const updateEvent = async (prog, season, sku, retried = false) => {
 			const name = regex[1];
 			const id = regex[2];
 			const instance = awardInstances[name] || 0;
-			const program = isNaN(id.charAt(0) ? 4 : prog;
+			const program = isNaN(id.charAt(0)) ? 4 : prog;
 
 			awardInstances[name] = instance + 1;
 			awards.push(Object.assign({_id: {event: sku, name: name, instance: instance}},
