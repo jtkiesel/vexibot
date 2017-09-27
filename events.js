@@ -156,7 +156,7 @@ const updateEvent = async (prog, season, sku, retried = false) => {
 				country && {country: he.decode(country)},
 				program === encodeProgram('VEXU') && {grade: encodeGrade('College')}));
 		}
-		const awardsRegex = /<tr>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*((?:[0-9]{1,5}[A-Z]?)|(?:[A-Z]{2,6}[0-9]{0,2}))\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<\/tr>/gi;
+		const awardsRegex = /<tr>\s*<td>\s*([^<>]+?)\s*<\/td>\s*<td>\s*((?:[0-9]{1,5}[A-Z]?)|(?:[A-Z]{2,6}[0-9]{0,2}))\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<\/tr>/gi;
 		const awards = [];
 		const awardInstances = {};
 		while (regex = awardsRegex.exec(result)) {
@@ -197,26 +197,35 @@ const updateEvent = async (prog, season, sku, retried = false) => {
 			}
 		}
 		const skills = [];
-		const skillsData = result.match(/<skills\s+event=".+?"\s+data="(.+?)"/);
+		let skillsData = result.match(/<skills\s+event=".+?"\s+data="(.+?)"/);
 		if (skillsData) {
-			JSON.parse(he.decode(skillsData[1])).forEach(skillData => {
+			skillsData = JSON.parse(he.decode(skillsData[1]));
+		} else {
+			skillsData = [];
+			const skillsRegex = /<re-legacy-skills\s+type=".+?"\s+event=".+?"\s+data="(.+?)"/g;
+			while (regex = skillsRegex.exec(result)) {
+				skillsData = skillsData.concat(JSON.parse(he.decode(regex[1])));
+			}
+		}
+		if (skillsData) {
+			skillsData.forEach(skillData => {
 				const teamReg = skillData.team_reg;
 				const _id = {
-					season: teamReg.season_id,
-					id: teamReg.team.team
+					id: teamReg.team.team,
+					season: teamReg.season_id
 				};
 				skills.push({
 					_id: {
 						event: sku,
-						type: encodeSkill(skillData.type),
-						team: _id
+						team: _id,
+						type: encodeSkill(skillData.type)
 					},
 					rank: skillData.rank,
 					score: skillData.highscore,
 					attempts: skillData.attempts
 				});
 				for (let i = 0; i < teams.length; i++) {
-					if (teams[i].season === _id.season && teams[i]._id.id === _id.id) {
+					if (teams[i]._id.id === _id.id) {
 						const contact = Object.assign({
 							name: teamReg.contact1_name,
 							phone: teamReg.contact1_phone1,
@@ -243,6 +252,8 @@ const updateEvent = async (prog, season, sku, retried = false) => {
 							{name: teamReg.team_name},
 							{org: teamReg.organization},
 							teamReg.robot_name && {robot: teamReg.robot_name},
+							teamReg.lat && {lat: teamReg.lat},
+							teamReg.lng && {lng: teamReg.lng},
 							teamReg.address && {address: teamReg.address},
 							teamReg.city && {city: teamReg.city},
 							teamReg.postcode && {postcode: teamReg.postcode},
@@ -264,8 +275,6 @@ const updateEvent = async (prog, season, sku, retried = false) => {
 							teamReg.cnt_teachers !== null && {teachers: teamReg.cnt_teachers},
 							teamReg.cnt_mentors !== null && {mentors: teamReg.cnt_mentors},
 							teamReg.team_experience && {exp: Number.parseInt(teamReg.team_experience) || 0},
-							teamReg.lat && {lat: teamReg.lat},
-							teamReg.lng && {lng: teamReg.lng},
 							teamReg.prior_competition && {rookie: teamReg.prior_competition === 0},
 							teamReg.genders && {genders: encodeGenders(teamReg.genders)});
 						break;
