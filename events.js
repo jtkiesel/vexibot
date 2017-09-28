@@ -410,7 +410,7 @@ const updateEvent = async (prog, season, sku, retried = false) => {
 		}
 		for (let team of teams) {
 			try {
-				const program = team.prog;
+				const program = team._id.prog;
 				const teamId = team._id.id;
 				const teamSubs = [{prog: program, id: teamId}];
 				const res = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$set: team}, {upsert: true});
@@ -462,7 +462,7 @@ const updateEvent = async (prog, season, sku, retried = false) => {
 			try {
 				const res = await db.collection('skills').findOneAndUpdate({_id: skill._id}, {$set: skill}, {upsert: true});
 				const old = res.value;
-				if (!old && skill.attempts !== 0 || skill.score != old.score) {
+				if (!old && skill.attempts !== 0 || old && skill.score !== old.score) {
 					const embed = await createSkillsEmbed(skill);
 					await sendToSubscribedChannels(`New ${decodeSkill(skill._id.type)} Skills score`, {embed: embed}, [skill._id.team]);
 					console.log(embed.fields);
@@ -472,31 +472,30 @@ const updateEvent = async (prog, season, sku, retried = false) => {
 			}
 		}
 		for (let award of awards) {
-			console.log(award);
 			const unset = Object.assign({},
 				!award.team && {team: ''},
 				!award.qualifies && {qualifies: ''});
 			try {
-				const program = (prog === 1 || prog === 4) ? (isNaN(id.charAt(0)) ? 4 : 1) : prog;
-				const team = {prog: program, id: award.team};
+				const program = (award.team && isNaN(award.team.id.charAt(0))) ? 4 : prog;
 				const res = await db.collection('awards').findOneAndUpdate({_id: award._id}, {$set: award}, {upsert: true});
 				const old = res.value;
 				let change;
 				if (!old) {
+					let teamArray;
 					if (award.team) {
 						change = 'won';
+						teamArray = [{prog: program, id: award.team.id}];
 					} else {
 						change = 'added';
+						teamArray = [];
 					}
 					const embed = await createAwardEmbed(award);
-					await sendToSubscribedChannels(`Award ${change}`, {embed: embed}, [team]);
-					console.log(embed);
-				} else {
-					if (!old.team && award.team) {
-						const embed = await createAwardEmbed(award);
-						await sendToSubscribedChannels('Award won', {embed: embed}, [team]);
-						console.log(embed);
-					}
+					await sendToSubscribedChannels(`Award ${change}`, {embed: embed}, teamArray);
+					console.log(embed.fields);
+				} else if (!old.team && award.team) {
+					const embed = await createAwardEmbed(award);
+					await sendToSubscribedChannels('Award won', {embed: embed}, [{prog: program, id: award.team.id}]);
+					console.log(embed.fields);
 				}
 			} catch (err) {
 				console.error(err);

@@ -43,7 +43,7 @@ const createTeamEmbed = team => {
 	const embed = new Discord.RichEmbed()
 		.setColor('GREEN')
 		.setAuthor(teamId, null, `https://vexdb.io/teams/view/${teamId}`)
-		.setTitle(`${decodeProgram(team.prog)} ${decodeSeason(season)}`)
+		.setTitle(`${decodeProgram(team._id.prog)} ${decodeSeason(season)}`)
 		.setURL(decodeSeasonUrl(season));
 	if (team.name && team.name.trim()) {
 		embed.addField('Team Name', he.decode(team.name), true);
@@ -105,7 +105,8 @@ const createMatchEmbed = match => {
 };
 
 const createAwardEmbed = async award => {
-	const skus = (award.qualifies || []).push(award._id.event);
+	const skus = award.qualifies ? award.qualifies.slice() : [];
+	skus.unshift(award._id.event);
 	const events = await db.collection('events').find({_id: {$in: skus}}).project({_id: 1, name: 1}).toArray();
 	let eventName;
 	events.forEach(event => {
@@ -117,13 +118,14 @@ const createAwardEmbed = async award => {
 	});
 	const embed = new Discord.RichEmbed()
 		.setColor('PURPLE')
-		.setAuthor(eventName, null, `https://vexdb.io/events/view/${award._id.event}?t=awards`)
-		.setTitle(award._id.name);
+		.setAuthor(eventName)
+		.setTitle(award._id.name)
+		.setURL(`https://vexdb.io/events/view/${award._id.event}?t=awards`);
 	if (award.team) {
-		embed.addField('Team', `[${decodeProgram(isNaN(teamId.charAt(0)) ? 4 : event.prog)} ${award.team}](https://vexdb.io/teams/view/${award.team})`, true);
+		embed.addField('Team', `[${decodeProgram(award.team.prog)} ${award.team.id}](https://vexdb.io/teams/view/${award.team.id})`, true);
 	}
 	if (award.qualifies) {
-		embed.addField('Qualifies for', qualifies.join('\n'), true);
+		embed.addField('Qualifies for', award.qualifies.join('\n'), true);
 	}
 	return embed;
 };
