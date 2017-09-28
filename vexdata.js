@@ -9,6 +9,7 @@ const events = require('./events');
 
 const CronJob = cron.CronJob;
 const db = app.db;
+const getTeam = vex.getTeam;
 const getTeamLocation = vex.getTeamLocation;
 const createTeamEmbed = vex.createTeamEmbed;
 const createMatchEmbed = vex.createMatchEmbed;
@@ -120,13 +121,14 @@ const updateTeamsInGroup = async (program, season, teamGroup, retried = false) =
 				let result = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$set: team}, {upsert: true});
 				const old = result.value;
 				if (!old) {
-					sendToSubscribedChannels('New team registered', {embed: createTeamEmbed(team)}, [team._id]);
-					console.log(createTeamEmbed(team).fields);
-				} else {
-					if (!old.registered && team.registered) {
-						sendToSubscribedChannels('Existing team registered', {embed: createTeamEmbed(old)}, [team._id]);
-						console.log(createTeamEmbed(old).fields);
+					try {
+						const content = (await getTeam(teamId)).length === 1 ? 'New team registered' : 'Existing team renewed';
+						await sendToSubscribedChannels(content, {embed: createTeamEmbed(team)}, [team._id]);
+						console.log(createTeamEmbed(team).fields);
+					} catch (err) {
+						console.error(err);
 					}
+				} else {
 					if (team.city !== old.city || team.region !== old.region) {
 						const unset = {country: ''};
 						if (!team.region) {
@@ -134,17 +136,13 @@ const updateTeamsInGroup = async (program, season, teamGroup, retried = false) =
 						}
 						try {
 							result = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$unset: unset});
-							const embed = createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team));
-							sendToSubscribedChannels(null, {embed: embed}, [team._id]);
-							console.log(embed.description);
+							console.log(createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team)).description);
 						} catch (err) {
 							console.error(err);
 						}
 					}
 					if (team.name !== old.name) {
-						const embed = createTeamChangeEmbed(program, teamId, 'team name', old.name, team.name);
-						sendToSubscribedChannels(null, {embed: embed}, [team._id]);
-						console.log(embed.description);
+						console.log(createTeamChangeEmbed(program, teamId, 'team name', old.name, team.name).description);
 					}
 					if (team.robot !== old.robot) {
 						if (!team.robot) {
@@ -154,9 +152,7 @@ const updateTeamsInGroup = async (program, season, teamGroup, retried = false) =
 								console.error(err);
 							}
 						}
-						const embed = createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot);
-						sendToSubscribedChannels(null, {embed: embed}, [team._id]);
-						console.log(embed.description);
+						console.log(createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot).description);
 					}
 				}
 			} catch (err) {
@@ -219,9 +215,9 @@ const formatTeam = (prog, season, lat, lng, team) => {
 	return Object.assign({
 			_id: {
 				id: team.team,
+				prog: prog,
 				season: season
 			},
-			prog: prog,
 			lat: lat,
 			lng: lng,
 			city: he.decode(team.city)
@@ -267,7 +263,7 @@ const updateMaxSkillsForSeason = async (program, season) => {
 					const teamId = maxSkill.team.id;
 					try {
 						result = await db.collection('teams').findOneAndUpdate(
-							{_id: {prog: program, id: teamId}},
+							{_id: {id: teamId, prog: program, season: season}},
 							{$set: {grade: grade}}
 						);
 						old = result.value;
