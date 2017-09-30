@@ -21,6 +21,20 @@ const encodeGrade = dbinfo.encodeGrade;
 const encodeSkill = dbinfo.encodeSkill;
 const decodeSkill = dbinfo.decodeSkill;
 const roundIndex = dbinfo.roundIndex;
+const seasonToVexu = dbinfo.seasonToVexu;
+
+const sleep = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
+
+const guessSeason = async (prog, date) => {
+	let year = (new Date(date)).getFullYear();
+	const seasonEnd = Date.parse(`5/1/${year}`);
+
+	if (date < seasonEnd) {
+		year--;
+	}
+	const season = await db.collection('seasons').findOne({programId: prog, years: new RegExp(`^${year}`)});
+	return season._id;
+};
 
 const genders = [
 	'both',
@@ -133,11 +147,16 @@ const matchCompare = (a, b) => {
 	return a.number - b.number;
 };
 
-const updateEvent = async (prog, season, sku, retried = false) => {
+const updateEvent = async (prog, season, sku, timeout = 1000) => {
 	try {
 		const result = await request.get({url: `https://www.robotevents.com/${sku}.html`});
 		const event = getEvent(result, sku);
 
+		if (!season) {
+			season = await guessSeason(prog, event.start);
+			event.season = season;
+			console.log(`Guessed season: ${season}`);
+		}
 		let teamList = result.match(/<div\s+class="tab-pane"\s+id="teamList">(\s|.)+?<\/div>/);
 		if (teamList) {
 			teamList = teamList[0];
@@ -147,9 +166,16 @@ const updateEvent = async (prog, season, sku, retried = false) => {
 		let regex, id, name, org, city, region, country;
 		while (regex = teamsRegex.exec(teamList)) {
 			[regex, id, name, org, city, region, country] = regex;
-			const program = isNaN(id.charAt(0)) ? 4 : prog;
-
-			teams.push(Object.assign({_id: {id: id, prog: program, season: season}},
+			let program;
+			let teamSeason;
+			if (prog === 1 && isNaN(id.charAt(0))) {
+				program = 4;
+				teamSeason = seasonToVexu(season);
+			} else {
+				program = prog;
+				teamSeason = season;
+			}
+			teams.push(Object.assign({_id: {id: id, prog: program, season: teamSeason}},
 				name && {name: he.decode(name)},
 				org && {org: he.decode(org)},
 				city && {city: he.decode(city)},
@@ -164,8 +190,15 @@ const updateEvent = async (prog, season, sku, retried = false) => {
 			const name = regex[1];
 			const id = regex[2];
 			const instance = awardInstances[name] || 0;
-			const program = isNaN(id.charAt(0)) ? 4 : prog;
-
+			let program;
+			let teamSeason;
+			if (prog === 1 && isNaN(id.charAt(0))) {
+				program = 4;
+				teamSeason = seasonToVexu(season);
+			} else {
+				program = prog;
+				teamSeason = season;
+			}
 			awardInstances[name] = instance + 1;
 			awards.push({
 				_id: {
@@ -412,13 +445,12 @@ const updateEvent = async (prog, season, sku, retried = false) => {
 			try {
 				const program = team._id.prog;
 				const teamId = team._id.id;
-				const teamSubs = [{prog: program, id: teamId}];
 				const res = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$set: team}, {upsert: true});
 				const old = res.value;
 				if (!old) {
 					try {
 						const content = (await getTeam(teamId)).length === 1 ? 'New team registered' : 'Existing team renewed';
-						await sendToSubscribedChannels(content, {embed: createTeamEmbed(team)}, teamSubs);
+						await sendToSubscribedChannels(content, {embed: createTeamEmbed(team)}, [{prog: program, id: teamId}]);
 						console.log(createTeamEmbed(team).fields);
 					} catch (err) {
 						console.error(err);
@@ -476,15 +508,20 @@ const updateEvent = async (prog, season, sku, retried = false) => {
 				!award.team && {team: ''},
 				!award.qualifies && {qualifies: ''});
 			try {
-				const program = (award.team && isNaN(award.team.id.charAt(0))) ? 4 : prog;
-				const res = await db.collection('awards').findOneAndUpdate({_id: award._id}, {$set: award}, {upsert: true});
+				let res;
+				if (!Object.keys(unset).length) {
+					res = await db.collection('awards').findOneAndUpdate({_id: award._id}, {$set: award}, {upsert: true});
+				} else {
+					res = await db.collection('awards').findOneAndUpdate({_id: award._id}, {$set: award, $unset: unset}, {upsert: true});
+				}
 				const old = res.value;
+				console.log(res);
 				let change;
 				if (!old) {
 					let teamArray;
 					if (award.team) {
 						change = 'won';
-						teamArray = [{prog: program, id: award.team.id}];
+						teamArray = [{prog: award.team.prog, id: award.team.id}];
 					} else {
 						change = 'added';
 						teamArray = [];
@@ -494,7 +531,7 @@ const updateEvent = async (prog, season, sku, retried = false) => {
 					console.log(embed.fields);
 				} else if (!old.team && award.team) {
 					const embed = await createAwardEmbed(award);
-					await sendToSubscribedChannels('Award won', {embed: embed}, [{prog: program, id: award.team.id}]);
+					await sendToSubscribedChannels('Award won', {embed: embed}, [{prog: award.team.prog, id: award.team.id}]);
 					console.log(embed.fields);
 				}
 			} catch (err) {
@@ -502,16 +539,17 @@ const updateEvent = async (prog, season, sku, retried = false) => {
 			}
 		}
 	} catch (err) {
-		console.error(err);
-		if (!retried) {
-			console.log(`Retrying ${sku}`);
+		if (err.statusCode === 404) {
+			console.log(`${sku} is not an event.`);
+		} else {
+			console.error(err);
 			try {
-				await updateEvent(prog, season, sku, true);
+				await sleep(timeout);
+				console.log(`Retrying ${sku}.`);
+				await updateEvent(prog, season, sku, timeout * 2);
 			} catch (err) {
 				console.error(err);
 			}
-		} else {
-			console.log (`*** WARNING: ALREADY RETRIED ${sku}, GIVING UP ***`);
 		}
 	}
 };

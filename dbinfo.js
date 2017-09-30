@@ -122,6 +122,10 @@ const encodeSkill = type => encodeSkills.indexOf(type);
 
 const decodeSkill = type => decodeSkills[type];
 
+const seasons = Object.keys(idToSeasonUrl).map(season => Number.parseInt(season));
+
+const seasonToVexu = season => season === -4 ? null : seasons[seasons.indexOf(season) + 1];
+
 module.exports = {
 	programToId: programToId,
 	idToProgram: idToProgram,
@@ -139,5 +143,6 @@ module.exports = {
 	decodeSkill: decodeSkill,
 	encodeSkill: encodeSkill,
 	decodeSkill: decodeSkill,
-	roundIndex: roundIndex
+	roundIndex: roundIndex,
+	seasonToVexu: seasonToVexu
 };

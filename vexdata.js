@@ -18,8 +18,11 @@ const sendToSubscribedChannels = vex.sendToSubscribedChannels;
 const sendMatchEmbed = vex.sendMatchEmbed;
 const encodeProgram = dbinfo.encodeProgram;
 const encodeGrade = dbinfo.encodeGrade;
+const seasonToVexu = dbinfo.seasonToVexu;
 
 const timezone = 'America/New_York';
+
+const sleep = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
 
 const updateTeams = async () => {
 	await updateTeamsForSeason(1, 119);
@@ -81,7 +84,7 @@ const updateAllMaxSkills = async () => {
 const updateCurrentEvents = async () => {
 	const now = Date.now();
 	try {
-		const documents = await db.collection('events').find({dates: {$elemMatch: {end: {$gt: now}, start: {$lt: now}}}}).project({_id: 1, prog: 1}).toArray();
+		const documents = await db.collection('events').find({dates: {$elemMatch: {end: {$gt: now}, start: {$lt: now}}}}).project({_id: 1, prog: 1, season: 1}).toArray();
 		for (let event of documents) {
 			try {
 				console.log(`starting ${event._id}`);
@@ -109,7 +112,7 @@ const update = () => {
 	//updateMaxSkills();
 };
 
-const updateTeamsInGroup = async (program, season, teamGroup, retried = false) => {
+const updateTeamsInGroup = async (program, season, teamGroup, timeout = 1000) => {
 	const url = 'https://www.robotevents.com/api/teams/getTeamsForLatLng';
 	const lat = teamGroup.position.lat;
 	const lng = teamGroup.position.lng;
@@ -161,15 +164,12 @@ const updateTeamsInGroup = async (program, season, teamGroup, retried = false) =
 		});
 	} catch (err) {
 		console.error(err);
-		if (!retried) {
-			console.log(`Retrying ${lat},${lng}`);
-			try {
-				await updateTeamsInGroup(program, season, teamGroup, true);
-			} catch (err) {
-				console.error(err);
-			}
-		} else {
-			console.log (`*** WARNING: ALREADY RETRIED ${lat},${lng}, GIVING UP ***`);
+		console.log(`Retrying ${lat},${lng}`);
+		try {
+			await sleep(timeout);
+			await updateTeamsInGroup(program, season, teamGroup, timeout * 2);
+		} catch (err) {
+			console.error(err);
 		}
 	}
 };
@@ -212,6 +212,10 @@ const updateTeamsForSeason = async (program, season) => {
 };
 
 const formatTeam = (prog, season, lat, lng, team) => {
+	if (prog === 1 && isNaN(team.team.charAt(0))) {
+		prog = 4;
+		season = seasonToVexu(season);
+	}
 	return Object.assign({
 			_id: {
 				id: team.team,
@@ -236,7 +240,9 @@ const formatEvent = event => {
 			season: event.season_id,
 			name: he.decode(event.name),
 			start: encodeDate(dates[1]),
-			end: encodeDate(dates[2] ? dates[2] : dates[1])
+			end: encodeDate(dates[2] ? dates[2] : dates[1]),
+			lat: event.lat,
+			lng: event.lng
 		},
 		event.email && {email: event.email},
 		event.phone && {phone: event.phone},
