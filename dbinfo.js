@@ -53,27 +53,33 @@ const idToSeason = {
 };
 
 const idToSeasonUrl = {
-	'-4': 'http://roboticseducation.org/vrc-bridge-battle',
-	'-3': 'http://roboticseducation.org/vrc-elevation',
-	'-2': 'http://roboticseducation.org/vrc-elevation',
-	'1': 'http://roboticseducation.org/vrc-clean-sweep',
-	'4': 'http://roboticseducation.org/vrc-clean-sweep',
-	'7': 'http://roboticseducation.org/vrc-round-up',
-	'10': 'http://roboticseducation.org/vrc-round-up',
-	'73': 'http://roboticseducation.org/vrc-gateway',
-	'76': 'http://roboticseducation.org/vrc-gateway',
-	'85': 'http://roboticseducation.org/vrc-sack-attack',
-	'88': 'http://roboticseducation.org/vrc-sack-attack',
-	'92': 'http://roboticseducation.org/vrc-toss-up',
-	'93': 'http://roboticseducation.org/vrc-toss-up',
-	'102': 'http://roboticseducation.org/vrc-skyrise',
-	'103': 'http://roboticseducation.org/vrc-skyrise',
-	'110': 'http://roboticseducation.org/vrc-nothing-but-net',
-	'111': 'http://roboticseducation.org/vrc-nothing-but-net',
-	'115': 'http://roboticseducation.org/vrc-history-2016-2017-starstruck',
-	'116': 'http://roboticseducation.org/vrc-history-2016-2017-starstruck',
+	'-4': 'https://roboticseducation.org/vrc-bridge-battle',
+	'-3': 'https://roboticseducation.org/vrc-elevation',
+	'-2': 'https://roboticseducation.org/vrc-elevation',
+	'-1': 'https://roboticseducation.org/viqc-rings-n-things',
+	'1': 'https://roboticseducation.org/vrc-clean-sweep',
+	'4': 'https://roboticseducation.org/vrc-clean-sweep',
+	'7': 'https://roboticseducation.org/vrc-round-up',
+	'10': 'https://roboticseducation.org/vrc-round-up',
+	'73': 'https://roboticseducation.org/vrc-gateway',
+	'76': 'https://roboticseducation.org/vrc-gateway',
+	'85': 'https://roboticseducation.org/vrc-sack-attack',
+	'88': 'https://roboticseducation.org/vrc-sack-attack',
+	'92': 'https://roboticseducation.org/vrc-toss-up',
+	'93': 'https://roboticseducation.org/vrc-toss-up',
+	'96': 'https://roboticseducation.org/viqc-add-it-up',
+	'101': 'https://roboticseducation.org/viqc-highrise',
+	'102': 'https://roboticseducation.org/vrc-skyrise',
+	'103': 'https://roboticseducation.org/vrc-skyrise',
+	'109': 'https://roboticseducation.org/viqc-bank-shot',
+	'110': 'https://roboticseducation.org/vrc-nothing-but-net',
+	'111': 'https://roboticseducation.org/vrc-nothing-but-net',
+	'114': 'https://roboticseducation.org/viqc-crossover',
+	'115': 'https://roboticseducation.org/vrc-history-2016-2017-starstruck',
+	'116': 'https://roboticseducation.org/vrc-history-2016-2017-starstruck',
 	'119': 'https://vexrobotics.com/vexedr/competition/vrc-current-game',
-	'120': 'https://vexrobotics.com/vexedr/competition/vrc-current-game'
+	'120': 'https://vexrobotics.com/vexedr/competition/vrc-current-game',
+	'121': 'https://vexrobotics.com/vexiq/competition/viqc-current-game'
 };
 
 const grades = [
@@ -93,10 +99,11 @@ const rounds = {
 	6: 'R16',
 	3: 'QF',
 	4: 'SF',
-	5: 'F'
+	5: 'F',
+	15: 'F'
 };
 
-const roundKeys = [1, 2, 9, 8, 7, 6, 3, 4, 5];
+const roundKeys = [1, 2, 9, 8, 7, 6, 3, 4, 5, 15];
 
 const encodeSkills = ['programming', 'driver'];
 

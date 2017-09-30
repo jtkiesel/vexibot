@@ -23,7 +23,7 @@ const getTeamId = (message, args) => {
 
 const validTeamId = teamId => /^([0-9]{1,5}[A-Z]?|[A-Z]{2,6}[0-9]{0,2})$/i.test(teamId);
 
-const getTeam = teamId => db.collection('teams').find({prog: (isNaN(teamId.charAt(0)) ? 4 : 1), '_id.id': new RegExp(`^${teamId}$`, 'i')}).sort({'_id.season': -1}).toArray();
+const getTeam = teamId => db.collection('teams').find({'_id.id': new RegExp(`^${teamId}$`, 'i'), '_id.prog': (isNaN(teamId.charAt(0)) ? 4 : 1)}).sort({'_id.season': -1}).toArray();
 
 const getTeamLocation = team => {
 	let location = [team.city];
@@ -65,7 +65,7 @@ const createTeamEmbed = team => {
 
 const maskedTeamUrl = teamId => `[${teamId}](https://vexdb.io/teams/view/${teamId})`;
 
-const createMatchString = (round, instance, number) => `${decodeRound(round)}${round < 3 ? '' : ` ${instance}-`}${number}`;
+const createMatchString = (round, instance, number) => `${decodeRound(round)}${round < 3 || round > 9 ? '' : ` ${instance}-`}${number}`;
 
 const createTeamsString = (teams, teamSit) => {
 	teams = teams.filter(team => team);
