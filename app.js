@@ -87,10 +87,10 @@ client.on('message', message => {
 		handleCommand(message);
 	}
 });
-
-MongoClient.connect(mongodbUri, mongodbOptions).then(db => {
-	module.exports.db = db;
-
+let db;
+MongoClient.connect(mongodbUri, mongodbOptions).then(mdb => {
+	module.exports.db = mdb;
+	db = mdb;
 	Object.keys(commandInfo).forEach(name => commands[name] = require('./commands/' + name));
 	Object.entries(commandInfo).forEach(([name, desc]) => helpDescription += `\n\`${prefix}${name}\`: ${desc}`);
 
