@@ -68,7 +68,7 @@ const updateExistingEvents = async () => {
 		try {
 			console.log(`starting ${event._id}`);
 			await events.updateEvent(event.prog, event.season, event._id);
-			console.log(`starting ${event._id}`);
+			console.log(`ended ${event._id}`);
 		} catch (err) {
 			console.error(err);
 		}
