@@ -153,7 +153,8 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 		const event = getEvent(result, sku);
 
 		if (!season) {
-			season = await guessSeason(prog, event.start);
+			season = await guessSeason(prog, event.deadline ? event.deadline : event.start);
+			event.prog = prog;
 			event.season = season;
 			console.log(`Guessed season: ${season}`);
 		}
@@ -410,7 +411,6 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 						console.log(createMatchEmbed(match).fields);
 					} else {
 						const oldScored = old.hasOwnProperty('redScore');
-						let reactions = vex.matchScoredEmojis;
 						if (!oldScored && scored) {
 							await sendMatchEmbed('Match scored', match, reactions);
 							console.log(createMatchEmbed(match).fields);
@@ -456,7 +456,7 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 						console.error(err);
 					}
 				} else {
-					if (team.city !== old.city || team.region !== old.region || team.country !== old.country) {
+					if (team.city !== old.city || team.region && team.region !== old.region || team.country && team.country !== old.country) {
 						const unset = Object.assign({},
 							!team.city && {city: ''},
 							!team.region && {region: ''},
@@ -515,7 +515,6 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 					res = await db.collection('awards').findOneAndUpdate({_id: award._id}, {$set: award, $unset: unset}, {upsert: true});
 				}
 				const old = res.value;
-				console.log(res);
 				let change;
 				if (!old) {
 					let teamArray;

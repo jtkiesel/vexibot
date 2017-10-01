@@ -62,6 +62,17 @@ const updateAllEvents = async () => {
 	}
 };
 
+const updateExistingEvents = async () => {
+	const eventArray = await db.collection('events').find().project({_id: 1, prog: 1, season: 1}).toArray();
+	for (let event of eventArray) {
+		try {
+			await events.updateEvent(event.prog, event.season, event._id);
+		} catch (err) {
+			console.error(err);
+		}
+	}
+};
+
 const updateMaxSkills = async () => {
 	await updateMaxSkillsForSeason(1, 119);
 	await updateMaxSkillsForSeason(4, 120);
@@ -431,6 +442,7 @@ module.exports = {
 	updateEvents: updateEvents,
 	updateAllTeams: updateAllTeams,
 	updateAllEvents: updateAllEvents,
+	updateExistingEvents,
 	updateAllMaxSkills: updateAllMaxSkills,
 	updateTeamsForSeason: updateTeamsForSeason,
 	updateEventsForSeason: updateEventsForSeason,
