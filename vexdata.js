@@ -66,7 +66,9 @@ const updateExistingEvents = async () => {
 	const eventArray = await db.collection('events').find().project({_id: 1, prog: 1, season: 1}).toArray();
 	for (let event of eventArray) {
 		try {
+			console.log(`starting ${event._id}`);
 			await events.updateEvent(event.prog, event.season, event._id);
+			console.log(`starting ${event._id}`);
 		} catch (err) {
 			console.error(err);
 		}
