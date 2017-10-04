@@ -30,7 +30,7 @@ let helpDescription = `\`${prefix}help\`: Provides information about all command
 
 const clean = text => {
 	if (typeof(text) === 'string') {
-		return text.replace(/`/g, '`' + String.fromCharCode(8203)).replace(/@/g, '@' + String.fromCharCode(8203)).slice(0, 2000);
+		return text.replace(/`/g, '`' + String.fromCharCode(8203)).replace(/@/g, '@' + String.fromCharCode(8203)).slice(0, 1990);
 	}
 	return text;
 };
