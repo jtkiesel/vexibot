@@ -24,6 +24,8 @@ const timezone = 'America/New_York';
 
 const sleep = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
 
+const encodeText = value => he.decode(value.trim().replace(/\s\s*/g, ' '));
+
 const updateTeams = async () => {
 	await updateTeamsForSeason(1, 119);
 	await updateTeamsForSeason(4, 120);
@@ -115,10 +117,10 @@ const updateCurrentEvents = async () => {
 const eventsJob = new CronJob('00 00 08 * * *', updateEvents, null, true, timezone);
 const teamsJob = new CronJob('00 10 08 * * *', updateTeams, null, true, timezone);
 const skillsJob = new CronJob('00 20 08 * * *', updateMaxSkills, null, true, timezone);
-const currentEventsJob = new CronJob('00 */2 * * * *', updateCurrentEvents, null, true, timezone);
+//const currentEventsJob = new CronJob('00 */2 * * * *', updateCurrentEvents, null, true, timezone);
 
 const update = () => {
-	updateCurrentEvents();
+	//updateCurrentEvents();
 	//events.updateEvent(1, 'RE-VRC-17-2849');
 	//updateTeams();
 	//updateEvents();
@@ -138,8 +140,9 @@ const updateTeamsInGroup = async (program, season, teamGroup, timeout = 1000) =>
 				const old = result.value;
 				if (!old) {
 					try {
-						const content = (await getTeam(teamId)).length === 1 ? 'New team registered' : 'Existing team renewed';
-						await sendToSubscribedChannels(content, {embed: createTeamEmbed(team)}, [team._id]);
+						if ((await getTeam(teamId)).length !== 1) {
+							await sendToSubscribedChannels('New team registered', {embed: createTeamEmbed(team)}, [team._id]);
+						}
 						console.log(createTeamEmbed(team).fields);
 					} catch (err) {
 						console.error(err);
@@ -194,11 +197,10 @@ const updateEventsForSeason = async (program, season) => {
 		eventsData = eventsData.filter((event, i, self) => self.findIndex(e => e.sku === event.sku) === i).map(formatEvent);
 		for (let event of eventsData) {
 			try {
-				const result = await db.collection('events').updateOne({_id: event._id}, {$set: event}, {upsert: true});
-				if (result.upsertedCount) {
-					console.log(`Insert to events: ${JSON.stringify(event)}`);
-				} else if (result.modifiedCount) {
-					console.log(`Update to events: ${JSON.stringify(event)}`);
+				const result = await db.collection('events').findOneAndUpdate({_id: event._id}, {$set: event}, {upsert: true});
+				const old = result.value;
+				if (!old) {
+					console.log(`New event: ${JSON.stringify(event)}`);
 				}
 				console.log(`starting ${event._id}`);
 				await events.updateEvent(program, season, event._id);
@@ -237,11 +239,11 @@ const formatTeam = (prog, season, lat, lng, team) => {
 			},
 			lat: lat,
 			lng: lng,
-			city: he.decode(team.city)
+			city: encodeText(team.city)
 		},
-		team.name && {region: he.decode(team.name)},
-		team.team_name && {name: he.decode(team.team_name)},
-		team.robot_name && {robot: he.decode(team.robot_name)},
+		team.name && {region: encodeText(team.name)},
+		team.team_name && {name: encodeText(team.team_name)},
+		team.robot_name && {robot: encodeText(team.robot_name)},
 		prog === encodeProgram('VEXU') && {grade: encodeGrade('College')});
 };
 
@@ -251,7 +253,7 @@ const formatEvent = event => {
 			_id: event.sku,
 			prog: event.program_id,
 			season: event.season_id,
-			name: he.decode(event.name),
+			name: encodeText(event.name),
 			start: encodeDate(dates[1]),
 			end: encodeDate(dates[2] ? dates[2] : dates[1]),
 			lat: event.lat,

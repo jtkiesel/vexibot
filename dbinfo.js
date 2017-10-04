@@ -135,7 +135,7 @@ const encodeSkill = type => encodeSkills.indexOf(type);
 
 const decodeSkill = type => decodeSkills[type];
 
-const seasons = Object.keys(idToSeason).map(season => Number.parseInt(season));
+const seasons = Object.keys(idToSeason).map(season => parseInt(season));
 
 const seasonToVexu = season => season === -4 ? null : seasons[seasons.indexOf(season) + 1];
 

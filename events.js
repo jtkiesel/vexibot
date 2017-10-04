@@ -11,6 +11,7 @@ const getTeam = vex.getTeam;
 const getTeamLocation = vex.getTeamLocation;
 const createTeamEmbed = vex.createTeamEmbed;
 const createTeamChangeEmbed = vex.createTeamChangeEmbed;
+const createEventEmbed = vex.createEventEmbed;
 const createMatchEmbed = vex.createMatchEmbed;
 const createSkillsEmbed = vex.createSkillsEmbed;
 const createAwardEmbed = vex.createAwardEmbed;
@@ -27,13 +28,13 @@ const sleep = milliseconds => new Promise(resolve => setTimeout(resolve, millise
 
 const guessSeason = async (prog, date) => {
 	let year = (new Date(date)).getFullYear();
-	const seasonEnd = Date.parse(`5/1/${year}`);
+	const seasonEnd = Date.parse(`5/15/${year}`);
 
 	if (date < seasonEnd) {
 		year--;
 	}
-	const season = await db.collection('seasons').findOne({programId: prog, years: new RegExp(`^${year}`)});
-	return season._id;
+	const season = await db.collection('seasons').findOne({prog: prog, years: new RegExp(`^${year}`)});
+	return season ? season._id : 0;
 };
 
 const genders = [
@@ -48,14 +49,22 @@ const decodeGenders = gender => genders[gender];
 
 const encodeDate = date => Date.parse(`${date} EDT`);
 
+const encodeBoolean = value => Boolean(value.toLowerCase() === 'yes');
+
+const encodeText = value => he.decode(value.trim().replace(/\s\s*/g, ' '));
+
 const getEvent = (result, sku) => {
 	const name = result.match(/<h3\s+class="panel-title\s+col-sm-6">\s*(.+?)\s*<\/h3>/);
 	const totalDates = result.match(/<span\s+class="pull-right text-right col-sm-6">\s*(.+?)(?: - (.+?))?\s*<\/span>/);
-	const type = result.match(/Type of Event\s*<\/strong>[^A-Za-z]*(.+?)[^A-Za-z]*<\/p>/);
+	const type = result.match(/Type of Event\s*<\/strong>[^A-Z]*(.+?)[^A-Z]*<\/p>/i);
 	const capacity = result.match(/Capacity<\/strong>[^0-9]*(.+?)[^0-9]*(.+?)[^0-9]*<\/p>/);
 	const orgLimit = result.match(/Max Registrations per Organization<\/strong>[^0-9]*(.+?)[^0-9]*<\/p>/);
-	const deadline = result.match(/Registration Deadline<\/strong>[^0-9A-Za-z]*(.+?)[^0-9A-Za-z]*<\/p>/);
-	const cost = result.match(/Price<\/strong>[^0-9A-Z]*(.+?)[^0-9A-Z]*<\/p>/);
+	const opens = result.match(/Registration Opens<\/strong>[^0-9A-Z]*(.+?)[^0-9A-Z]*<\/p>/i);
+	const deadline = result.match(/Registration Deadline<\/strong>[^0-9A-Z]*(.+?)[^0-9A-Z]*<\/p>/i);
+	const cost = result.match(/Price<\/strong>[^0-9A-Z]*(.+?)[^0-9A-Z]*<\/p>/i);
+	const grade = result.match(/Grade Level[^A-Z]*(.+?)[^A-Z]*<\/p>/i);
+	const skills = result.match(/Robot Skills Challenge Offered[^A-Z]*(.+?)[^A-Z]*<\/p>/i);
+	const tsa = result.match(/TSA Event[^A-Z]*(.+?)[^A-Z]*<\/p>/i);
 
 	const datesRegex = /Date:\s*(.+?)(?:[^/0-9]+(.+?))?\s*<\/p>\s*<p>\s*Venue\/Location:\s*<div\s+class="well well-sm">\s*(.+?)\s*<br>\s*(?:(.+?)\s*<br>\s*)?(.+?)\s*,\s*(?:(.*?)\s+)??(?:(.+?)\s*<br>\s*)?(.+?)\s*<br>/g;
 	const dates = [];
@@ -66,37 +75,43 @@ const getEvent = (result, sku) => {
 			start: encodeDate(start),
 			end: encodeDate(end ? end : start) + 86399999
 		},
-			venue && {venue: he.decode(venue)},
-			address && {address: he.decode(address)},
-			city && {city: he.decode(city)},
-			region && {region: he.decode(region)},
-			postcode && {postcode: he.decode(postcode)},
-			country && {country: he.decode(country)}));
+			venue && {venue: encodeText(venue)},
+			address && {address: encodeText(address)},
+			city && {city: encodeText(city)},
+			region && {region: encodeText(region)},
+			postcode && {postcode: encodeText(postcode)},
+			country && {country: encodeText(country)}));
 	}
 	return Object.assign({
 		_id: sku,
-		name: he.decode(name[1]),
+		name: encodeText(name[1]),
 		start: encodeDate(totalDates[1]),
 		end: encodeDate(totalDates[2] ? totalDates[2] : totalDates[1]) + 86399999,
 		dates: dates,
 		type: type[1],
-		size: Number.parseInt(capacity[1]),
-		capacity: Number.parseInt(capacity[2]),
-		cost: (!cost || cost[1] === 'FREE') ? 0 : Math.round(Number.parseFloat(cost[1]) * 100),
+		size: parseInt(capacity[1]),
+		capacity: parseInt(capacity[2]),
+		cost: (!cost || cost[1].toLowerCase() === 'free') ? 0 : Math.round(parseFloat(cost[1]) * 100),
+		grade: encodeGrade(grade ? grade[1] : 'All'),
+		skills: encodeBoolean(skills[1]),
+		tsa: encodeBoolean(tsa[1])
 	},
-		orgLimit && {orgLimit: Number.parseInt(orgLimit[1])},
+		orgLimit && {orgLimit: parseInt(orgLimit[1])},
+		opens && {opens: Date.parse(opens[1])},
 		deadline && {deadline: Date.parse(deadline[1])});
 };
 
 const formatMatch = (match, event, division) => {
 	return Object.assign({
 		_id: {
-			event: event,
+			event: event._id,
 			division: division,
 			round: match.round,
 			instance: match.instance,
 			number: match.matchnum
-		}
+		},
+		prog: event.prog,
+		season: event.season
 	},
 		match.timescheduled && {start: Date.parse(match.timescheduled)},
 		match.red1 && {red: match.red1},
@@ -105,18 +120,26 @@ const formatMatch = (match, event, division) => {
 		match.blue1 && {blue: match.blue1},
 		match.blue2 && {blue2: match.blue2},
 		match.blue3 && {blue3: match.blue3},
-		match.hasOwnProperty('redscore') && {redScore: match.redscore},
-		match.hasOwnProperty('bluescore') && {blueScore: match.bluescore},
 		match.redsit && match.red2 && {redSit: match.redsit},
-		match.bluesit && match.blue2 && {blueSit: match.bluesit});
+		match.bluesit && match.blue2 && {blueSit: match.bluesit},
+		match.hasOwnProperty('redscore') && {redScore: match.redscore},
+		match.hasOwnProperty('bluescore') && {blueScore: match.bluescore});
 };
 
-const formatRanking = (ranking, event, division) => {
+const formatRanking = (ranking, event, division, prog, season) => {
+	if (prog == 1 && isNaN(ranking.teamnum.charAt(0))) {
+		prog = 4;
+		season = seasonToVexu(season);
+	}
 	return Object.assign({
 		_id: {
 			event: event,
 			division: division,
-			team: ranking.teamnum
+			team: {
+				id: ranking.teamnum,
+				prog: prog,
+				season: season
+			}
 		},
 		rank: ranking.rank,
 		wins: ranking.wins,
@@ -126,11 +149,11 @@ const formatRanking = (ranking, event, division) => {
 		ap: ranking.ap,
 		sp: ranking.sp
 	},
-		ranking.numplayed !== null && {played: ranking.numplayed},
-		ranking.win_percentage !== null && {winPct: ranking.win_percentage},
-		ranking.average_points !== null && {avgScore: ranking.average_points},
-		ranking.total_points !== null && {totalPoints: ranking.total_points},
-		ranking.high_score !== null && {highScore: ranking.high_score});
+		ranking.numplayed != null && {played: ranking.numplayed},
+		ranking.win_percentage != null && {winPct: ranking.win_percentage},
+		ranking.average_points != null && {avgScore: ranking.average_points},
+		ranking.total_points != null && {totalPoints: ranking.total_points},
+		ranking.high_score != null && {highScore: ranking.high_score});
 };
 
 const matchCompare = (a, b) => {
@@ -151,13 +174,22 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 	try {
 		const result = await request.get({url: `https://www.robotevents.com/${sku}.html`});
 		const event = getEvent(result, sku);
+		const foundSeason = result.match(/season_id&quot;:([0-9]+)/);
+		const guessedSeason = await guessSeason(prog, event.deadline ? event.deadline : event.start);
 
-		if (!season) {
-			season = await guessSeason(prog, event.deadline ? event.deadline : event.start);
-			event.prog = prog;
-			event.season = season;
-			console.log(`Guessed season: ${season}`);
+		if (foundSeason) {
+			season = parseInt(foundSeason[1]);
+			console.log(`Found season for ${sku}: ${season}`);
 		}
+		if (!season) {
+			season = guessedSeason;
+			console.log(`Guessed season for ${sku}: ${season}`);
+		} else if (season !== guessedSeason) {
+			console.log(`***WARNING***: ${sku} HAS DIFFERENT SEASON (${season}) THAN GUESSED SEASON ${guessedSeason}!!`);
+		}
+		event.prog = prog;
+		event.season = season;
+
 		let teamList = result.match(/<div\s+class="tab-pane"\s+id="teamList">(\s|.)+?<\/div>/);
 		if (teamList) {
 			teamList = teamList[0];
@@ -177,11 +209,11 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 				teamSeason = season;
 			}
 			teams.push(Object.assign({_id: {id: id, prog: program, season: teamSeason}},
-				name && {name: he.decode(name)},
-				org && {org: he.decode(org)},
-				city && {city: he.decode(city)},
-				region && {region: he.decode(region)},
-				country && {country: he.decode(country)},
+				name && {name: encodeText(name)},
+				org && {org: encodeText(org)},
+				city && {city: encodeText(city)},
+				region && {region: encodeText(region)},
+				country && {country: encodeText(country)},
 				program === encodeProgram('VEXU') && {grade: encodeGrade('College')}));
 		}
 		const awardsRegex = /<tr>\s*<td>\s*([^<>]+?)\s*<\/td>\s*<td>\s*((?:[0-9]{1,5}[A-Z]?)|(?:[A-Z]{2,6}[0-9]{0,2}))\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<\/tr>/gi;
@@ -221,11 +253,9 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 			const qualifiesString = regex[2];
 			const qualifies = [];
 			while (regex = awardRegex.exec(qualifiesString)) {
-				const eventName = regex[1];
+				const eventName = encodeText(regex[1]);
 				const qualifiesEvent = await db.collection('events').findOne({prog: prog, season: season, name: eventName});
-				if (qualifiesEvent) {
-					qualifies.push(qualifiesEvent._id);
-				}
+				qualifies.push(qualifiesEvent ? qualifiesEvent._id : eventName);
 			}
 			if (qualifies.length) {
 				let found = false;
@@ -252,7 +282,7 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 			}
 		}
 		if (skillsData) {
-			skillsData.forEach(skillData => {
+			skillsData.forEach((skillData, i) => {
 				const teamReg = skillData.team_reg;
 				const _id = {
 					id: teamReg.team.team,
@@ -262,10 +292,11 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 				skills.push({
 					_id: {
 						event: sku,
-						team: _id,
-						type: encodeSkill(skillData.type)
+						type: encodeSkill(skillData.type),
+						index: i
 					},
 					rank: skillData.rank,
+					team: _id,
 					score: skillData.highscore,
 					attempts: skillData.attempts
 				});
@@ -294,19 +325,19 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 						const students = teamReg.num_students.match(/([0-9]+)-?(\+|[0-9]*)/);
 						Object.assign(teams[i],
 							{grade: teamReg.grade_level_id},
-							{name: teamReg.team_name},
-							{org: teamReg.organization},
-							teamReg.robot_name && {robot: teamReg.robot_name},
+							{name: encodeText(teamReg.team_name)},
+							{org: encodeText(teamReg.organization)},
+							teamReg.robot_name && {robot: encodeText(teamReg.robot_name)},
 							teamReg.lat && {lat: teamReg.lat},
 							teamReg.lng && {lng: teamReg.lng},
-							teamReg.address && {address: teamReg.address},
-							teamReg.city && {city: teamReg.city},
-							teamReg.postcode && {postcode: teamReg.postcode},
+							teamReg.address && {address: encodeText(teamReg.address)},
+							teamReg.city && {city: encodeText(teamReg.city)},
+							teamReg.postcode && {postcode: encodeText(teamReg.postcode)},
 							teamReg.emergency_phone && {emergPhone: teamReg.emergency_phone},
 							Object.keys(contact).length && {contact: contact},
 							Object.keys(contact2).length && {contact2: contact2},
 							Object.keys(finance).length && {finance: finance},
-							students && {minStudents: Number.parseInt(students[1]), maxStudents: (Number.parseInt(students[2] ? students[2] : students[1]) || '+')},
+							students && {minStudents: parseInt(students[1]), maxStudents: (parseInt(students[2] ? students[2] : students[1]) || '+')},
 							teamReg.special_needs && {specialNeeds: teamReg.special_needs},
 							teamReg.sponsor && {sponsor: teamReg.sponsor},
 							teamReg.other_programs && teamReg.other_programs[0] && {progs: teamReg.other_programs},
@@ -319,7 +350,7 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 							teamReg.cnt_students_female !== null && {females: teamReg.cnt_students_female},
 							teamReg.cnt_teachers !== null && {teachers: teamReg.cnt_teachers},
 							teamReg.cnt_mentors !== null && {mentors: teamReg.cnt_mentors},
-							teamReg.team_experience && {exp: Number.parseInt(teamReg.team_experience) || 0},
+							teamReg.team_experience && {exp: parseInt(teamReg.team_experience) || 0},
 							teamReg.prior_competition && {rookie: teamReg.prior_competition === 0},
 							teamReg.genders && {genders: encodeGenders(teamReg.genders)});
 						break;
@@ -336,12 +367,12 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 		const divisionNumberToName = {};
 		while (regex = resultsRegex.exec(result)) {
 			const divisionName = divisionIdToName[regex[1]];
-			const divisionNumber = Number.parseInt(regex[2]);
+			const divisionNumber = parseInt(regex[2]);
 
 			divisionNumberToName[divisionNumber] = divisionName;
 
 			const played = {};
-			JSON.parse(he.decode(regex[4])).filter(ranking => ranking.division === divisionNumber).map(ranking => formatRanking(ranking, sku, divisionName)).forEach(async ranking => {
+			JSON.parse(he.decode(regex[4])).filter(ranking => ranking.division === divisionNumber).map(ranking => formatRanking(ranking, sku, divisionName, prog, season)).forEach(async ranking => {
 				//played[ranking._id.team] = ranking.wins + ranking.losses + ranking.ties;
 				try {
 					const res = await db.collection('rankings').updateOne({_id: ranking._id}, {$set: ranking}, {upsert: true});
@@ -349,7 +380,7 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 					console.error(err);
 				}
 			});
-			const matches = JSON.parse(he.decode(regex[3])).filter(match => match.division === divisionNumber).map(match => formatMatch(match, sku, divisionName)).sort(matchCompare);
+			const matches = JSON.parse(he.decode(regex[3])).filter(match => match.division === divisionNumber).map(match => formatMatch(match, event, divisionName)).sort(matchCompare);
 			/*matches.forEach(match => {
 				if (match._id.round === 2 && (match.redScore || match.blueScore)) {
 					[match.red, match.red2, match.red3, match.blue, match.blue2, match.blue3].forEach(team => {
@@ -436,7 +467,12 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 			const res = await db.collection('events').findOneAndUpdate({_id: event._id}, {$set: event}, {upsert: true});
 			const old = res.value;
 			if (!old) {
-
+				try {
+					await sendToSubscribedChannels('New event', {embed: createEventEmbed(event)});
+					console.log(createEventEmbed(event).fields);
+				} catch (err) {
+					console.error(err);
+				}
 			}
 		} catch (err) {
 			console.error(err);
@@ -449,8 +485,9 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 				const old = res.value;
 				if (!old) {
 					try {
-						const content = (await getTeam(teamId)).length === 1 ? 'New team registered' : 'Existing team renewed';
-						await sendToSubscribedChannels(content, {embed: createTeamEmbed(team)}, [{prog: program, id: teamId}]);
+						if ((await getTeam(teamId)).length !== 1) {
+							await sendToSubscribedChannels('New team registered', {embed: createTeamEmbed(team)}, [{prog: program, id: teamId}]);
+						}
 						console.log(createTeamEmbed(team).fields);
 					} catch (err) {
 						console.error(err);
@@ -527,11 +564,9 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 					}
 					const embed = await createAwardEmbed(award);
 					await sendToSubscribedChannels(`Award ${change}`, {embed: embed}, teamArray);
-					console.log(embed.fields);
 				} else if (!old.team && award.team) {
 					const embed = await createAwardEmbed(award);
 					await sendToSubscribedChannels('Award won', {embed: embed}, [{prog: award.team.prog, id: award.team.id}]);
-					console.log(embed.fields);
 				}
 			} catch (err) {
 				console.error(err);

@@ -8,7 +8,6 @@ const addFooter = app.addFooter;
 const encodeGrade = dbinfo.encodeGrade;
 
 const rankEmojis = ['🥇', '🥈', '🥉'];
-const defaultEmoji = '🏅';
 
 module.exports = async (message, args) => {
 	const seasonName = 'In_The_Zone';
@@ -23,7 +22,7 @@ module.exports = async (message, args) => {
 		grade = 'High School';
 		season = 119;
 		limit = 35;
-	} else if (['m', 'ms', 'middle', 'middleschool'].includes(grade)) {
+	} else if (['m', 'ms', 'mid', 'middle', 'middleschool'].includes(grade)) {
 		program = 'VRC';
 		grade = 'Middle School';
 		season = 119;
