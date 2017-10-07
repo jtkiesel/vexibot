@@ -108,9 +108,9 @@ const createMatchEmbed = match => {
 	}
 	const embed = new Discord.RichEmbed()
 		.setColor(color)
-		.setAuthor(match._id.event.name, null, `https://robotevents.com/${match._id.event._id}`)
+		.setAuthor(match._id.event.name, null, `https://robotevents.com/${match._id.event._id}.html`)
 		.setTitle(match._id.division)
-		.setURL(`https://robotevents.com/${match._id.event._id}`)
+		.setURL(`https://robotevents.com/${match._id.event._id}.html`)
 		.setDescription(createMatchString(match._id.round, match._id.instance, match._id.number))
 		.addField(red, createTeamsString([match.red, match.red2, match.red3], match.redSit), true)
 		.addField(blue, createTeamsString([match.blue, match.blue2, match.blue3], match.blueSit), true);
