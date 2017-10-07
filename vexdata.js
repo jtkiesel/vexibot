@@ -117,10 +117,10 @@ const updateCurrentEvents = async () => {
 const eventsJob = new CronJob('00 00 08 * * *', updateEvents, null, true, timezone);
 const teamsJob = new CronJob('00 10 08 * * *', updateTeams, null, true, timezone);
 const skillsJob = new CronJob('00 20 08 * * *', updateMaxSkills, null, true, timezone);
-//const currentEventsJob = new CronJob('00 */2 * * * *', updateCurrentEvents, null, true, timezone);
+const currentEventsJob = new CronJob('00 */2 * * * *', updateCurrentEvents, null, true, timezone);
 
 const update = () => {
-	//updateCurrentEvents();
+	updateCurrentEvents();
 	//events.updateEvent(1, 'RE-VRC-17-2849');
 	//updateTeams();
 	//updateEvents();

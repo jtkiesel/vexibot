@@ -156,7 +156,9 @@ const createSkillsEmbed = async skill => {
 			.setTitle(`${decodeProgram(skill.team.prog)} ${skill.team.id}`)
 			.setURL(`https://vexdb.io/teams/view/${skill.team.id}?t=skills`)
 			.addField('Type', decodeSkill(skill._id.type), true)
-			.addField('Score', skill.score, true);
+			.addField('Rank', skill.rank, true)
+			.addField('Score', skill.score, true)
+			.addField('Attempts', skill.attempts, true);
 	} catch (err) {
 		console.error(err);
 	} finally {

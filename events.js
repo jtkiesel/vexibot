@@ -194,7 +194,7 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 		if (teamList) {
 			teamList = teamList[0];
 		}
-		const teamsRegex = /<tr>\s*<td>\s*((?:[0-9]{1,5}[A-Z]?)|(?:[A-Z]{2,6}[0-9]{0,2}))\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*(?:(.+?),?)?[\t ]*[\n\r][\t ]*(?:(.+?),?)?[\t ]*[\n\r][\t ]*(.+?)?\s*<\/td>\s*<\/tr>/gi;
+		const teamsRegex = /<tr>\s*<td>\s*((?:[0-9]{1,5}[A-Z]?)|(?:[A-Z]{2,6}[0-9]{0,2}))\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*(.+?),?\s*[\n\r](?:(.+?),\s*[\n\r])?(?:(.+?))?\s*<\/td>\s*<\/tr>/gi;
 		const teams = [];
 		let regex, id, name, org, city, region, country;
 		while (regex = teamsRegex.exec(teamList)) {
