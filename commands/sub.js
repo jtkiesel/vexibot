@@ -25,7 +25,7 @@ module.exports = async (message, args) => {
 				let prog, id;
 				let reply;
 				if (team) {
-					prog = team.prog;
+					prog = team._id.prog;
 					id = team._id.id;
 					reply = await message.reply(`subscribe to updates for **${decodeProgram(prog)} ${id}**?`, {embed: createTeamEmbed(team)});
 				} else {
