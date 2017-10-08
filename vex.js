@@ -181,7 +181,7 @@ const getMatchTeams = match => [match.red, match.red2, match.red3, match.blue, m
 const sendMatchEmbed = async (content, match, reactions) => {
 	try {
 		match._id.event = await db.collection('events').findOne({_id: match._id.event});
-		await sendToSubscribedChannels((match.hasOwnProperty('redScore') ? `${matchNotification(match)}\n${content}` : content), {embed: createMatchEmbed(match)}, getMatchTeams(match), reactions);
+		await sendToSubscribedChannels((match.hasOwnProperty('redScore') ? `${matchScoredNotification(match)}\n${content}` : content), {embed: createMatchEmbed(match)}, getMatchTeams(match), reactions);
 	} catch (err) {
 		console.error(err);
 	}
