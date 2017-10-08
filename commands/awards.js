@@ -15,10 +15,10 @@ const decodeSeason = dbinfo.decodeSeason;
 const decodeSeasonUrl = dbinfo.decodeSeasonUrl;
 
 const emojiToRegex = {
-	'🏆': /^(.+World Champion.+)$/i,
-	'🥇': /^(.+(?:Excellence Award)|(?:Tournament Champions)|(?:(?:Robot|Programming)(?: Challenge)? Skills Winner))/i,
-	'🥈': /^(.+(?:Tournament Finalists)|(?:(?:Robot|Programming) Skills(?: Challenge)? Finalist))/i,
-	'🥉': /^(.+(?:Tournament Semifinalists)|(?:(?:Robot|Programming) Skills(?: Challenge)? Third Place))/i,
+	'🏆': /^(.*World Champion.*)$/i,
+	'🥇': /^(.*(?:Excellence Award)|(?:Tournament Champions)|(?:(?:Robot|Programming)(?: Challenge)? Skills Winner))/i,
+	'🥈': /^(.*(?:Tournament Finalists)|(?:(?:Robot|Programming) Skills(?: Challenge)? Finalist))/i,
+	'🥉': /^(.*(?:Tournament Semifinalists)|(?:(?:Robot|Programming) Skills(?: Challenge)? Third Place))/i,
 	'🏅': /^(.+?)(?=\s+\(|$)/
 };
 
