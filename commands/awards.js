@@ -15,9 +15,10 @@ const decodeSeason = dbinfo.decodeSeason;
 const decodeSeasonUrl = dbinfo.decodeSeasonUrl;
 
 const emojiToRegex = {
-	'🥇': /^((?:Excellence Award)|(?:Tournament Champions)|(?:(?:Robot|Programming) Skills Winner))/,
-	'🥈': /^((?:Tournament Finalists)|(?:(?:Robot|Programming) Skills Finalist))/,
-	'🥉': /^((?:Tournament Semifinalists)|(?:(?:Robot|Programming) Skills Third Place))/,
+	'🏆': /^(.+World Champion.+)$/i,
+	'🥇': /^(.+(?:Excellence Award)|(?:Tournament Champions)|(?:(?:Robot|Programming)(?: Challenge)? Skills Winner))/i,
+	'🥈': /^(.+(?:Tournament Finalists)|(?:(?:Robot|Programming) Skills(?: Challenge)? Finalist))/i,
+	'🥉': /^(.+(?:Tournament Semifinalists)|(?:(?:Robot|Programming) Skills(?: Challenge)? Third Place))/i,
 	'🏅': /^(.+?)(?=\s+\(|$)/
 };
 
@@ -31,7 +32,7 @@ module.exports = async (message, args) => {
 			team = team[0];
 			if (team) {
 				teamId = team._id.id;
-				const prog = isNaN(teamId.charAt(0)) ? 4 : 1;
+				const prog = team._id.prog;
 				try {
 					const awards = await db.collection('awards').aggregate()
 						.match({'team.prog': prog, 'team.id': teamId})
@@ -116,7 +117,7 @@ module.exports = async (message, args) => {
 						}
 						const embed = new Discord.RichEmbed()
 							.setColor('PURPLE')
-							.setTitle(`${decodeProgram(team.prog)} ${teamId}`)
+							.setTitle(`${decodeProgram(prog)} ${teamId}`)
 							.setURL(`https://vexdb.io/teams/view/${teamId}?t=awards`)
 							.setDescription(description);
 						try {
