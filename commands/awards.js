@@ -34,7 +34,7 @@ module.exports = async (message, args) => {
 				const prog = isNaN(teamId.charAt(0)) ? 4 : 1;
 				try {
 					const awards = await db.collection('awards').aggregate()
-						.match({'_id.team.prog': prog, '_id.team.id': teamId})
+						.match({'team.prog': prog, 'team.id': teamId})
 						.lookup({from: 'events', localField: '_id.event', foreignField: '_id', as: 'events'})
 						.project({sku: '$_id.event', name: '$_id.name', event: {$arrayElemAt: ['$events', 0]}})
 						.sort({'event.season': -1, 'event.end': -1, sku: -1})
