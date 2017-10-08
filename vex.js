@@ -89,6 +89,14 @@ const createTeamsString = (teams, teamSit, scored) => {
 const matchScheduledEmojis = ['🔴', '🔵'];
 const matchScoredEmojis = ['👍', '👎'];
 
+const matchScoredNotification = match => {
+	const round = match._id.round;
+	const matchString = `${decodeRound(round)}${round < 3 || round > 9 ? '' : `${match._id.instance}-`}${match._id.number}`;
+	const redTeams = [match.red, match.red2, match.red3].filter(team => team && team !== match.redSit);
+	const blueTeams = [match.blue, match.blue2, match.blue3].filter(team => team && team !== match.blueSit);
+	return `${matchString}:**${redTeams[0]}**${redTeams[1] ? redTeams[1] : ''}${matchScheduledEmojis[0]}${match.redScore}-${match.blueScore}${matchScheduledEmojis[1]}${blueTeams[1] ? blueTeams[1] : ''}**${blueTeams[0]}**`
+};
+
 const createMatchEmbed = match => {
 	let color;
 	if (!match.hasOwnProperty('redScore')) {
@@ -173,7 +181,7 @@ const getMatchTeams = match => [match.red, match.red2, match.red3, match.blue, m
 const sendMatchEmbed = async (content, match, reactions) => {
 	try {
 		match._id.event = await db.collection('events').findOne({_id: match._id.event});
-		await sendToSubscribedChannels(content, {embed: createMatchEmbed(match)}, getMatchTeams(match), reactions);
+		await sendToSubscribedChannels((match.hasOwnProperty('redScore') ? `${matchNotification(match)}\n${content}` : content), {embed: createMatchEmbed(match)}, getMatchTeams(match), reactions);
 	} catch (err) {
 		console.error(err);
 	}
