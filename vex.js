@@ -79,7 +79,7 @@ const createEventEmbed = event => {
 
 const maskedTeamUrl = teamId => `[${teamId}](https://vexdb.io/teams/view/${teamId})`;
 
-const createMatchString = (round, instance, number) => `${decodeRound(round)}${round < 3 || round > 9 ? '' : ` ${instance}-`}${number}`;
+const createMatchString = (round, instance, number) => `${decodeRound(round)}${round < 3 || round > 8 ? '' : ` ${instance}-`}${number}`;
 
 const createTeamsString = (teams, teamSit, scored) => {
 	teams = teams.filter(team => team);
@@ -91,7 +91,7 @@ const matchScoredEmojis = ['👍', '👎'];
 
 const matchScoredNotification = match => {
 	const round = match._id.round;
-	const matchString = `${decodeRound(round)}${round < 3 || round > 9 ? '' : `${match._id.instance}-`}${match._id.number}`;
+	const matchString = `${decodeRound(round)}${round < 3 || round > 8 ? '' : `${match._id.instance}-`}${match._id.number}`;
 	const redTeams = [match.red, match.red2, match.red3].filter(team => team && team !== match.redSit);
 	const blueTeams = [match.blue, match.blue2, match.blue3].filter(team => team && team !== match.blueSit);
 	return `${matchString}:**${redTeams[0]}**${redTeams[1] ? redTeams[1] : ''}${matchScheduledEmojis[0]}${match.redScore}-${match.blueScore}${matchScheduledEmojis[1]}${blueTeams[1] ? blueTeams[1] : ''}**${blueTeams[0]}**`
