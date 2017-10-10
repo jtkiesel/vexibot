@@ -26,7 +26,7 @@ const dynamicSkillsEmbed = async (message, skills, index = 0, reply, end) => {
 	for (let i = index; i < skills.length && i < (index + pageSize); i++) {
 		const skill = skills[i];
 		let rank = skill.gradeRank;
-		rank = (rank < 4) ? `${rankEmojis[rank - 1]}` : `**\`#${String(rank).padEnd(2)}\​\`**`;
+		rank = (rank < 4) ? `${rankEmojis[rank - 1]}  ` : `**\`#${String(rank).padEnd(3)}\​\`**`;
 		const score = String(skill.score).padStart(3);
 		const prog = String(skill.prog).padStart(3);
 		const driver = String(skill.driver).padStart(3);
