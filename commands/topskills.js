@@ -6,11 +6,69 @@ const dbinfo = require('../dbinfo');
 const db = app.db;
 const addFooter = app.addFooter;
 const encodeGrade = dbinfo.encodeGrade;
+const decodeProgram = dbinfo.decodeProgram;
+const decodeGrade = dbinfo.decodeGrade;
+const decodeSeason = dbinfo.decodeSeason;
+const decodeSeasonUrl = dbinfo.decodeSeasonUrl;
 
 const rankEmojis = ['🥇', '🥈', '🥉'];
+const pageSize = 10;
+const previous = '🔺';
+const next = '🔻';
+
+const dynamicSkillsEmbed = async (message, skills, index = 0, reply, end) => {
+	if (index >= skills.length) {
+		index = 0;
+	} else if (index < 0) {
+		index = skills.length - pageSize;
+	}
+	let description = '';
+	for (let i = index; i < skills.length && i < (index + pageSize); i++) {
+		const skill = skills[i];
+		let rank = skill.gradeRank;
+		rank = (rank < 4) ? `${rankEmojis[rank - 1]}` : `**\`#${String(rank).padEnd(2)}\​\`**`;
+		const score = String(skill.score).padStart(3);
+		const prog = String(skill.prog).padStart(3);
+		const driver = String(skill.driver).padStart(3);
+		const team = skill.team.id;
+		description += `${rank}   \`\​${score}\`   \`(\​${prog} / \​${driver})\`   [${team}](https://vexdb.io/teams/view/${team})\n`;
+	}
+	const prog = decodeProgram(skills[0].team.prog);
+	const grade = decodeGrade(skills[0].team.grade);
+	const season = decodeSeason(skills[0]._id.season);
+	const seasonUrl = decodeSeasonUrl(skills[0]._id.season);
+	const embed = new Discord.RichEmbed()
+		.setColor('GOLD')
+		.setAuthor(`${prog} ${grade} World Skills Standings`, null, `https://vexdb.io/skills/${prog}/${season.replace(/ /g, '_')}/Robot`)
+		.setTitle(season)
+		.setURL(seasonUrl)
+		.setDescription(description);
+	let time;
+	try {
+		if (!reply) {
+			reply = await message.channel.send({embed: embed});
+			await reply.react(previous);
+			await reply.react(next);
+			time = 30000;
+			end = Date.now() + time;
+		} else {
+			reply = await reply.edit({embed: embed});
+			time = end - Date.now();
+		}
+		const reactions = await reply.awaitReactions((reaction, user) => user.id === message.author.id && (reaction.emoji.name === previous || reaction.emoji.name === next), {max: 1, time: time});
+		if (reactions.size) {
+			index += (reactions.get(next) ? pageSize : -pageSize);
+			dynamicSkillsEmbed(message, skills, index, reply, end);
+		} else {
+			reply.clearReactions();
+			addFooter(message, embed, reply);
+		}
+	} catch (err) {
+		console.error(err);
+	}
+};
 
 module.exports = async (message, args) => {
-	const seasonName = 'In_The_Zone';
 	const arg = args ? args.replace(/\s+/g, '') : '';
 
 	let grade = arg ? arg.toLowerCase() : 'h';
@@ -37,31 +95,11 @@ module.exports = async (message, args) => {
 		return;
 	}
 	try {
-		const teams = await db.collection('maxSkills')
+		const skills = await db.collection('maxSkills')
 			.find({'_id.season': season, 'team.grade': encodeGrade(grade)})
-			.sort({'_id.rank': 1})
-			.limit(limit).toArray();
-		if (teams.length) {
-			let description = '';
-			teams.forEach((maxSkill, i) => {
-				const rank = (i < 3) ? `${rankEmojis[i]}` : `**\`#${String(i + 1).padEnd(2)}\​\`**`;
-				const score = String(maxSkill.score).padStart(3);
-				const prog = String(maxSkill.prog).padStart(3);
-				const driver = String(maxSkill.driver).padStart(3);
-				const team = maxSkill.team.id;
-				description += `${rank}   \`\​${score}\`   \`(\​${prog} / \​${driver})\`   ${team}\n`;
-			});
-			const embed = new Discord.RichEmbed()
-				.setColor('GOLD')
-				.setTitle(`${program} ${grade} In the Zone Robot Skills`)
-				.setURL(`https://vexdb.io/skills/${program}/${seasonName}/Robot`)
-				.setDescription(description);
-			try {
-				const reply = await message.channel.send({embed});
-				addFooter(message, embed, reply);
-			} catch (err) {
-				console.error(err);
-			}
+			.sort({'_id.rank': 1}).toArray();
+		if (skills.length) {
+			dynamicSkillsEmbed(message, skills);
 		} else {
 			message.reply(`no skills scores available for ${program} ${grade} In the Zone.`);
 		}
