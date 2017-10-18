@@ -3,6 +3,7 @@ const Discord = require('discord.js');
 const app = require('../app');
 const dbinfo = require('../dbinfo');
 
+const client = app.client;
 const db = app.db;
 const addFooter = app.addFooter;
 const encodeGrade = dbinfo.encodeGrade;
@@ -39,8 +40,8 @@ const dynamicSkillsEmbed = async (message, skills, index = 0, reply, end) => {
 	const seasonUrl = decodeSeasonUrl(skills[0]._id.season);
 	const embed = new Discord.RichEmbed()
 		.setColor('GOLD')
-		.setAuthor(`${prog} ${grade} World Skills Standings`, null, `https://vexdb.io/skills/${prog}/${season.replace(/ /g, '_')}/Robot`)
-		.setTitle(season)
+		.setAuthor(`${grade} World Skills Standings`, null, `https://vexdb.io/skills/${prog}/${season.replace(/ /g, '_')}/Robot`)
+		.setTitle(`${prog} ${season}`)
 		.setURL(seasonUrl)
 		.setDescription(description);
 	let time;
@@ -55,7 +56,12 @@ const dynamicSkillsEmbed = async (message, skills, index = 0, reply, end) => {
 			reply = await reply.edit({embed: embed});
 			time = end - Date.now();
 		}
-		const reactions = await reply.awaitReactions((reaction, user) => user.id === message.author.id && (reaction.emoji.name === previous || reaction.emoji.name === next), {max: 1, time: time});
+		const reactions = await reply.awaitReactions((reaction, user) => {
+			if (user.id !== client.user.id) {
+				reaction.remove(user);
+			}
+			return user.id === message.author.id && (reaction.emoji.name === previous || reaction.emoji.name === next);
+		}, {max: 1, time: time});
 		if (reactions.size) {
 			index += (reactions.get(next) ? pageSize : -pageSize);
 			dynamicSkillsEmbed(message, skills, index, reply, end);

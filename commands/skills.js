@@ -33,8 +33,8 @@ module.exports = async (message, args) => {
 
 						const embed = new Discord.RichEmbed()
 							.setColor('GOLD')
-							.setAuthor(`${decodeProgram(team.prog)} ${teamId}`, null, `https://vexdb.io/teams/view/${teamId}?t=skills`)
-							.setTitle(decodeSeason(season))
+							.setAuthor(teamId, null, `https://vexdb.io/teams/view/${teamId}?t=skills`)
+							.setTitle(`${decodeProgram(maxSkill.team.prog)} ${decodeSeason(season)}`)
 							.setURL(decodeSeasonUrl(season))
 							.addField(`${decodeGrade(maxSkill.team.grade)} Rank`, rank, true)
 							.addField('Score', maxSkill.score, true)
