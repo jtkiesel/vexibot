@@ -77,7 +77,7 @@ const addFooter = (message, embed, reply) => {
 
 client.on('ready', () => {
 	console.log('Ready!');
-	client.user.setGame(`${prefix}help`, 'https://github.com/jtkiesel/bigbro');
+	client.user.setGame(`${prefix}help`, 'https://github.com/jtkiesel/vexibot');
 	vexdata.update();
 });
 
