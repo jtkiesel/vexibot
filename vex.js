@@ -197,13 +197,20 @@ const sendToSubscribedChannels = async (content, options, teams, reactions = [])
 		const channel = client.channels.get(id);
 		if (channel) {
 			try {
-				let teamSubs = [];
+				let subscribers = [];
 				for (let team of teams) {
-					teamSubs = teamSubs.concat(await db.collection('teamSubs').find({_id: {guild: channel.guild.id, team: team}}).toArray());
+					const teamSubs = await db.collection('teamSubs').find({_id: {guild: channel.guild.id, team: team}}).toArray();
+					for (let teamSub of teamSubs) {
+						for (let user of teamSub.users) {
+							if (subscribers.indexOf(user) < 0) {
+								subscribers.push(user);
+							}
+						}
+					}
 				}
 				let text;
-				if (teamSubs) {
-					text = teamSubs.map(teamSub => teamSub.users.map(subscriber => `<@${subscriber}>`).join('')).join('');
+				if (subscribers.length) {
+					text = subscribers.map(subscriber => `<@${subscriber}>`).join('');
 				}
 				if (content) {
 					text = text ? `${content}\n${text}` : content;

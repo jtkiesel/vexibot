@@ -22,38 +22,42 @@ module.exports = async (message, args) => {
 			try {
 				let team = await getTeam(teamId);
 				team = team[0];
-				let prog, id;
+				const prog = team ? team._id.prog : isNaN(teamId.charAt(0)) ? 4 : 1;
+				const id = team ? team._id.id : teamId;
+				const teamString = `${decodeProgram(prog)} ${id}`;
+				const teamSub = {
+					_id: {
+						guild: message.guild.id,
+						team: {
+							prog: prog,
+							id: id
+						}
+					}
+				};
+				const cancel = await db.collection('teamSubs').findOne({_id: teamSub._id, users: message.author.id}) ? `you are already subscribed to updates for ${teamString}, would you like to cancel your subscription?` : '';
 				let reply;
 				if (team) {
-					prog = team._id.prog;
-					id = team._id.id;
-					reply = await message.reply(`subscribe to updates for **${decodeProgram(prog)} ${id}**?`, {embed: createTeamEmbed(team)});
+					reply = await message.reply(cancel || `subscribe to updates for ${teamString}?`, {embed: createTeamEmbed(team)});
 				} else {
-					prog = isNaN(teamId.charAt(0)) ? 4 : 1;
-					id = teamId;
-					reply = await message.reply(`that team ID has never been registered, are you sure you want to subscribe to updates for ${decodeProgram(prog)} ${id}?`);
+					reply = await message.reply(cancel || `that team ID has never been registered, are you sure you want to subscribe to updates for ${teamString}?`);
 				}
 				await reply.react(yes);
 				await reply.react(no);
 				const reactions = await reply.awaitReactions((reaction, user) => user.id === message.author.id && (reaction.emoji.name === yes || reaction.emoji.name === no), {max: 1, time: 30000});
-				let text;
+				let status;
 				if (reactions.get(yes)) {
-					const teamSub = {
-						_id: {
-							guild: message.guild.id,
-							team: {
-								prog: prog,
-								id: id
-							}
-						}
-					};
-					await db.collection('teamSubs').findOneAndUpdate({_id: teamSub._id}, {$set: teamSub, $addToSet: {users: message.author.id}}, {upsert: true});
-					text = `you are now subscribed to updates for **${decodeProgram(prog)} ${id}**!`;
+					if (!cancel) {
+						status = 'are now';
+						await db.collection('teamSubs').findOneAndUpdate({_id: teamSub._id}, {$set: teamSub, $addToSet: {users: message.author.id}}, {upsert: true});
+					} else {
+						status = 'are no longer';
+						await db.collection('teamSubs').findOneAndUpdate({_id: teamSub._id}, {$set: teamSub, $pull: {users: message.author.id}});
+					}
 				} else {
-					text = `your subscription request for **${decodeProgram(prog)} ${id}** has been canceled.`;
+					status = cancel ? 'are still' : 'have not been';
 				}
 				reply = await reply.clearReactions();
-				reply.edit(`${message.author}, ${text}`, {embed: null});
+				reply.edit(`${message.author}, you ${status} subscribed to updates for ${teamString}.`, {embed: null});
 			} catch (err) {
 				console.error(err);
 			}
