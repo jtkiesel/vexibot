@@ -485,7 +485,7 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 				const old = res.value;
 				if (!old) {
 					try {
-						if ((await getTeam(teamId)).length !== 1) {
+						if ((await getTeam(teamId)).length === 1) {
 							await sendToSubscribedChannels('New team registered', {embed: createTeamEmbed(team)}, [{prog: program, id: teamId}]);
 						}
 						console.log(createTeamEmbed(team).fields);
