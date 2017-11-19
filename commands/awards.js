@@ -35,7 +35,7 @@ module.exports = async (message, args) => {
 				const prog = team._id.prog;
 				try {
 					const awards = await db.collection('awards').aggregate()
-						.match({'team.prog': prog, 'team.id': teamId})
+						.match({'team.id': teamId, 'team.prog': prog})
 						.lookup({from: 'events', localField: '_id.event', foreignField: '_id', as: 'events'})
 						.project({sku: '$_id.event', name: '$_id.name', event: {$arrayElemAt: ['$events', 0]}})
 						.sort({'event.season': -1, 'event.end': -1, sku: -1})
@@ -76,7 +76,7 @@ module.exports = async (message, args) => {
 							event += `\n${awardEmoji}${awardName}`;
 
 							if (award.season !== season) {
-								seasonHeaders[season] = `\n***[${decodeSeason(season)}](${decodeSeasonUrl(season)})*** (${awardCount})`
+								seasonHeaders[season] = `\n***[${decodeSeason(season)}](${decodeSeasonUrl(season)})*** (${awardCount})`;
 								season = award.season;
 								awardCount = 1;
 							} else {
@@ -88,7 +88,7 @@ module.exports = async (message, args) => {
 						} else {
 							eventsBySeason[season] = [event];
 						}
-						seasonHeaders[season] = `\n***[${decodeSeason(season)}](${decodeSeasonUrl(season)})*** (${awardCount})`
+						seasonHeaders[season] = `\n***[${decodeSeason(season)}](${decodeSeasonUrl(season)})*** (${awardCount})`;
 
 						let description = descriptionHeader;
 						let atLimit = false;
@@ -96,7 +96,7 @@ module.exports = async (message, args) => {
 						let charsRemaining = 2048 - (descriptionHeader.length + awardsOmitted);
 						Object.values(seasonHeaders).forEach(header => charsRemaining -= header.length);
 
-						for (let [season, header] of Object.entries(seasonHeaders)) {
+						for (let [season, header] of Object.entries(seasonHeaders).sort((a, b) => parseInt(b[0]) - parseInt(a[0]))) {
 							description += header;
 
 							if (!atLimit) {
