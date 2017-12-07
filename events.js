@@ -1,5 +1,6 @@
 const request = require('request-promise-native');
 const he = require('he');
+const math = require('mathjs');
 
 const app = require('./app');
 const vex = require('./vex');
@@ -365,6 +366,7 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 		}
 		const resultsRegex = /id="(.+?)">\s*<div\s+class="row">\s*<div\s+class="col-md-8">\s*<h4>Match Results<\/h4>\s*<results\s+program=".+?"\s+division="([0-9]+)"\s+event=".+?"\s+data="(.+?)"(?:\s|.)*?data="(.+?)"/g;
 		const divisionNumberToName = {};
+		const teamsVector = [];
 		while (regex = resultsRegex.exec(result)) {
 			const divisionName = divisionIdToName[regex[1]];
 			const divisionNumber = parseInt(regex[2]);
@@ -390,6 +392,13 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 					});
 				}
 			});*/
+			matches.forEach(match => {
+				[match.red, match.red2, match.red3, match.blue, match.blue2, match.blue3].forEach(team => {
+					if (team && !teamsVector.includes(team)) {
+						teamsVector.push(team);
+					}
+				});
+			});
 			for (let i = 0; i < matches.length; i++) {
 				const match = matches[i];
 				const nextMatch = matches[i + 1];
@@ -438,6 +447,52 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 					}
 					const old = res.value;
 					if (!old) {
+						if (!scored) {
+							const alliancesMatrix = [];
+							const scoresVector = [];
+							matches.forEach(m => {
+								if (m.hasOwnProperty('redScore')) {
+									const red = {teams: [m.red, m.red2, m.red3].filter(team => team && team !== match.redSit), score: match.redScore};
+									const blue = {teams: [m.blue, m.blue2, m.blue3].filter(team => team && team !== match.blueSit), score: match.blueScore};
+									[red, blue].forEach(alliance => {
+										const allianceVector = Array(teamsVector.length).fill(0);
+										alliance.teams.forEach(team => {
+											allianceVector[teamsVector.indexOf(team)] = 1;
+										});
+										alliancesMatrix.push(allianceVector);
+										scoresVector.push(alliance.score);
+									});
+								}
+							});
+							if (scoresVector.length) {
+								const transpose = math.transpose(alliancesMatrix);
+								try {
+									const manipulatedMatrix = math.multiply(math.inv(math.multiply(transpose, alliancesMatrix)), transpose);
+									const oprVector = math.multiply(manipulatedMatrix, scoresVector);
+									const scoreDiffsVector = [];
+									matches.forEach(m => {
+										if (m.hasOwnProperty('redScore')) {
+											const redOpr = [m.red, m.red2, m.red3].reduce((total, team) => total + ((team && team !== m.redSit) ? oprVector[teamsVector.indexOf(team)] : 0), 0);
+											const blueOpr = [m.blue, m.blue2, m.blue3].reduce((total, team) => total + ((team && team !== m.blueSit) ? oprVector[teamsVector.indexOf(team)] : 0), 0);
+											scoreDiffsVector.push(m.blueScore - blueOpr);
+											scoreDiffsVector.push(m.redScore - redOpr);
+										}
+									});
+									const dprVector = math.multiply(manipulatedMatrix, scoreDiffsVector);
+
+									const redOpr = [match.red, match.red2, match.red3].reduce((total, team) => total + ((team/* && team !== newMatch.redSit*/) ? oprVector[teamsVector.indexOf(team)] : 0), 0);
+									const blueOpr = [match.blue, match.blue2, match.blue3].reduce((total, team) => total + ((team/* && team !== newMatch.blueSit*/) ? oprVector[teamsVector.indexOf(team)] : 0), 0);
+
+									const redDpr = [match.red, match.red2, match.red3].reduce((total, team) => total + ((team/* && team !== newMatch.redSit*/) ? dprVector[teamsVector.indexOf(team)] : 0), 0);
+									const blueDpr = [match.blue, match.blue2, match.blue3].reduce((total, team) => total + ((team/* && team !== newMatch.blueSit*/) ? dprVector[teamsVector.indexOf(team)] : 0), 0);
+
+									match.redScorePred = redOpr + blueDpr;
+									match.blueScorePred = blueOpr + redDpr;
+								} catch (err) {
+									// Can't calculate OPRs yet (not enough matches scored).
+								}
+							}
+						}
 						await sendMatchEmbed(`New match ${change}`, match, reactions);
 						console.log(createMatchEmbed(match).fields);
 					} else {

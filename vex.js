@@ -40,7 +40,7 @@ const createTeamEmbed = team => {
 	const teamId = team._id.id;
 	const season = team._id.season;
 	const location = getTeamLocation(team);
-	const embed = new Discord.RichEmbed()
+	const embed = new Discord.MessageEmbed()
 		.setColor('GREEN')
 		.setAuthor(teamId, null, `https://vexdb.io/teams/view/${teamId}`)
 		.setTitle(`${decodeProgram(team._id.prog)} ${decodeSeason(season)}`)
@@ -64,7 +64,7 @@ const createTeamEmbed = team => {
 };
 
 const createEventEmbed = event => {
-	const embed = new Discord.RichEmbed()
+	const embed = new Discord.MessageEmbed()
 		.setColor('ORANGE')
 		.setAuthor(event.name, null, `https://robotevents.com/${event._id}.html`)
 		.setTitle(`${event.tsa ? 'TSA ' : ''}${decodeProgram(event.prog)} ${decodeSeason(event.season)}`)
@@ -113,8 +113,11 @@ const createMatchEmbed = match => {
 	if (match.hasOwnProperty('redScore')) {
 		red += `: ${match.redScore}`;
 		blue += `: ${match.blueScore}`;
+	} else if (match.hasOwnProperty('redScorePred')) {
+		red += `: ${match.redScorePred} (predicted)`;
+		blue += `: ${match.blueScorePred} (predicted)`;
 	}
-	const embed = new Discord.RichEmbed()
+	const embed = new Discord.MessageEmbed()
 		.setColor(color)
 		.setAuthor(match._id.event.name, null, `https://robotevents.com/${match._id.event._id}.html`)
 		.setTitle(match._id.division)
@@ -140,7 +143,7 @@ const createAwardEmbed = async award => {
 			award.qualifies[award.qualifies.indexOf(event._id)] = `[${event.name}](https://vexdb.io/events/view/${event._id})`;
 		}
 	});
-	const embed = new Discord.RichEmbed()
+	const embed = new Discord.MessageEmbed()
 		.setColor('PURPLE')
 		.setAuthor(eventName)
 		.setTitle(award._id.name)
@@ -158,7 +161,7 @@ const createSkillsEmbed = async skill => {
 	let embed;
 	try {
 		const event = await db.collection('events').findOne({_id: skill._id.event});
-		embed = new Discord.RichEmbed()
+		embed = new Discord.MessageEmbed()
 			.setColor('GOLD')
 			.setAuthor(event.name, null, `https://vexdb.io/events/view/${event._id}?t=skills`)
 			.setTitle(`${decodeProgram(skill.team.prog)} ${skill.team.id}`)
@@ -237,7 +240,7 @@ const createTeamChangeEmbed = (program, teamId, field, oldValue, newValue) => {
 	} else {
 		change = `changed their ${field} from **"**${escapeMarkdown(he.decode(oldValue))}**"** to **"**${escapeMarkdown(he.decode(newValue))}**"**`;
 	}
-	return new Discord.RichEmbed()
+	return new Discord.MessageEmbed()
 		.setColor('GREEN')
 		.setDescription(`[${decodeProgram(program)} ${teamId}](https://vexdb.io/teams/view/${teamId}) ${change}.`);
 };

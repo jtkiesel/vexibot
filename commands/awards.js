@@ -115,7 +115,7 @@ module.exports = async (message, args) => {
 								}
 							}
 						}
-						const embed = new Discord.RichEmbed()
+						const embed = new Discord.MessageEmbed()
 							.setColor('PURPLE')
 							.setTitle(`${decodeProgram(prog)} ${teamId}`)
 							.setURL(`https://vexdb.io/teams/view/${teamId}?t=awards`)

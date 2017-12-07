@@ -4,7 +4,7 @@ const app = require('../app');
 
 module.exports = (message, args) => {
 	const ping = Date.now();
-	const embed = new Discord.RichEmbed()
+	const embed = new Discord.MessageEmbed()
 		.setColor('RANDOM')
 		.setDescription('🏓 Pong!');
 	message.channel.send({embed}).then(reply => {

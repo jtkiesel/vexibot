@@ -43,7 +43,50 @@ const dynamicTeamEmbed = async (message, team, index = 0, reply, end) => {
 		console.error(err);
 	}
 };
-
+/*
+const dynamicTeamEmbed = async (message, team) => {
+	let index = 0;
+	let embed = createTeamEmbed(team[index]);
+	try {
+		const reply = await message.channel.send({embed: embed});
+		const collector = reply.createReactionCollector((reaction, user) => user.id === message.author.id && (reaction.emoji.name === previous || reaction.emoji.name === next), {time: 30000, dispose: true});
+		console.log(collector.options);
+		collector.on('collect', reaction => {
+			console.log('collect');
+			index += (reaction.emoji.name === previous) ? -1 : 1;
+			if (index >= team.length) {
+				index = 0;
+			} else if (index < 0) {
+				index = team.length - 1;
+			}
+			embed = createTeamEmbed(team[index]);
+			reply.edit({embed: embed});
+		});
+		collector.on('remove', reaction => {
+			console.log('remove');
+			index += (reaction.emoji.name === previous) ? -1 : 1;
+			if (index >= team.length) {
+				index = 0;
+			} else if (index < 0) {
+				index = team.length - 1;
+			}
+			embed = createTeamEmbed(team[index]);
+			reply.edit({embed: embed});
+		});
+		collector.on('dispose', reaction => {
+			console.log('dispose');
+		});
+		collector.on('end', () => {
+			reply.clearReactions();
+			addFooter(message, embed, reply);
+		});
+		await reply.react(previous);
+		await reply.react(next);
+	} catch (err) {
+		console.error(err);
+	}
+};
+*/
 module.exports = async (message, args) => {
 	const teamId = getTeamId(message, args);
 	if (validTeamId(teamId)) {

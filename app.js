@@ -43,7 +43,7 @@ const handleCommand = message => {
 	if (commands.hasOwnProperty(cmd)) {
 		commands[cmd](message, args);
 	} else if (cmd === 'help') {
-		const embed = new Discord.RichEmbed()
+		const embed = new Discord.MessageEmbed()
 			.setColor('RANDOM')
 			.setTitle('Commands')
 			.setDescription(helpDescription);
@@ -77,7 +77,7 @@ const addFooter = (message, embed, reply) => {
 
 client.on('ready', () => {
 	console.log('Ready!');
-	client.user.setGame(`${prefix}help`, 'https://github.com/jtkiesel/vexibot');
+	client.user.setPresence({status: 'online', activity: {name: `${prefix}help`, type: 'STREAMING', url: 'https://github.com/jtkiesel/vexibot'}});
 	vexdata.update();
 });
 

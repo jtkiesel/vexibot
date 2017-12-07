@@ -44,7 +44,7 @@ module.exports = (message, args) => {
 	if (halfHours) {
 		emojis += clockEmojis[halfHours];
 	}
-	const embed = new Discord.RichEmbed()
+	const embed = new Discord.MessageEmbed()
 		.setColor('RANDOM')
 		.setDescription(`${emojis}\n${uptime.join(', ')}`);
 	message.channel.send({embed})

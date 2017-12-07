@@ -31,7 +31,7 @@ module.exports = async (message, args) => {
 						let rank = maxSkill.gradeRank;
 						rank = (rank <= 3) ? rankEmojis[rank - 1] : rank;
 
-						const embed = new Discord.RichEmbed()
+						const embed = new Discord.MessageEmbed()
 							.setColor('GOLD')
 							.setAuthor(teamId, null, `https://vexdb.io/teams/view/${teamId}?t=skills`)
 							.setTitle(`${decodeProgram(maxSkill.team.prog)} ${decodeSeason(season)}`)

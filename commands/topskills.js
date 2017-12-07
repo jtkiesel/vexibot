@@ -38,7 +38,7 @@ const dynamicSkillsEmbed = async (message, skills, index = 0, reply, end) => {
 	const grade = decodeGrade(skills[0].team.grade);
 	const season = decodeSeason(skills[0]._id.season);
 	const seasonUrl = decodeSeasonUrl(skills[0]._id.season);
-	const embed = new Discord.RichEmbed()
+	const embed = new Discord.MessageEmbed()
 		.setColor('GOLD')
 		.setAuthor(`${grade} World Skills Standings`, null, `https://vexdb.io/skills/${prog}/${season.replace(/ /g, '_')}/Robot`)
 		.setTitle(`${prog} ${season}`)
