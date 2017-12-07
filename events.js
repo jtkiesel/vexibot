@@ -452,11 +452,9 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 							const scoresVector = [];
 							matches.forEach(m => {
 								if (m.hasOwnProperty('redScore')) {
-									console.log(2);
 									const red = {teams: [m.red, m.red2, m.red3].filter(team => team && team !== m.redSit), score: m.redScore};
 									const blue = {teams: [m.blue, m.blue2, m.blue3].filter(team => team && team !== m.blueSit), score: m.blueScore};
 									[red, blue].forEach(alliance => {
-										console.log(3);
 										const allianceVector = Array(teamsVector.length).fill(0);
 										alliance.teams.forEach(team => {
 											allianceVector[teamsVector.indexOf(team)] = 1;
@@ -466,7 +464,6 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 									});
 								}
 							});
-							console.log(1);
 							if (scoresVector.length) {
 								const transpose = math.transpose(alliancesMatrix);
 								try {
@@ -475,7 +472,6 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 									const scoreDiffsVector = [];
 									matches.forEach(m => {
 										if (m.hasOwnProperty('redScore')) {
-											console.log(4);
 											const redOpr = [m.red, m.red2, m.red3].reduce((total, team) => total + ((team && team !== m.redSit) ? oprVector[teamsVector.indexOf(team)] : 0), 0);
 											const blueOpr = [m.blue, m.blue2, m.blue3].reduce((total, team) => total + ((team && team !== m.blueSit) ? oprVector[teamsVector.indexOf(team)] : 0), 0);
 											scoreDiffsVector.push(m.blueScore - blueOpr);
@@ -484,17 +480,31 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 									});
 									const dprVector = math.multiply(manipulatedMatrix, scoreDiffsVector);
 
-									const redOpr = [match.red, match.red2, match.red3].reduce((total, team) => total + ((team/* && team !== newMatch.redSit*/) ? oprVector[teamsVector.indexOf(team)] : 0), 0);
-									const blueOpr = [match.blue, match.blue2, match.blue3].reduce((total, team) => total + ((team/* && team !== newMatch.blueSit*/) ? oprVector[teamsVector.indexOf(team)] : 0), 0);
+									const redOpr = [match.red, match.red2, match.red3].map(team => (team/* && team !== newMatch.redSit*/) ? oprVector[teamsVector.indexOf(team)] : 0);
+									const blueOpr = [match.blue, match.blue2, match.blue3].map(team => (team/* && team !== newMatch.blueSit*/) ? oprVector[teamsVector.indexOf(team)] : 0);
 
-									const redDpr = [match.red, match.red2, match.red3].reduce((total, team) => total + ((team/* && team !== newMatch.redSit*/) ? dprVector[teamsVector.indexOf(team)] : 0), 0);
-									const blueDpr = [match.blue, match.blue2, match.blue3].reduce((total, team) => total + ((team/* && team !== newMatch.blueSit*/) ? dprVector[teamsVector.indexOf(team)] : 0), 0);
+									const redDpr = [match.red, match.red2, match.red3].reduce(team => (team/* && team !== newMatch.redSit*/) ? dprVector[teamsVector.indexOf(team)] : 0);
+									const blueDpr = [match.blue, match.blue2, match.blue3].reduce(team => (team/* && team !== newMatch.blueSit*/) ? dprVector[teamsVector.indexOf(team)] : 0);
 
-									match.redScorePred = redOpr + blueDpr;
-									match.blueScorePred = blueOpr + redDpr;
+									const redCcwm = redOpr.map((opr, index) => opr - redDpr[index]);
+									const blueCcwm = blueOpr.map((opr, index) => opr - blueDpr[index]);
+
+									const bestRed = redCcwm.sort((a, b) => b - a);
+									const bestBlue = blueCcwm.sort((a, b) => b - a);
+
+									const redIndices = [redCcwm.indexOf(bestRed[0]), redCcwm.indexOf(bestRed[1])];
+									const blueIndices = [blueCcwm.indexOf(bestBlue[0]), blueCcwm.indexOf(bestBlue[1])];
+
+									const redOprSum = redOpr[redIndices[0]] + redOpr[redIndices[1]];
+									const blueOprSum = blueOpr[blueIndices[0]] + blueOpr[blueIndices[1]];
+
+									const redDprSum = redDpr[redIndices[0]] + redDpr[redIndices[1]];
+									const blueDprSum = blueDpr[blueIndices[0]] + blueDpr[blueIndices[1]];
+
+									match.redScorePred = Math.round(redOprSum + blueDprSum);
+									match.blueScorePred = Math.round(blueOprSum + redDprDum);
 								} catch (err) {
 									// Can't calculate OPRs yet (not enough matches scored).
-									console.log(err);
 								}
 							}
 						}
