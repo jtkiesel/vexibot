@@ -490,6 +490,7 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 									match.blueScorePred = blueOpr + redDpr;
 								} catch (err) {
 									// Can't calculate OPRs yet (not enough matches scored).
+									console.log(err);
 								}
 							}
 						}
