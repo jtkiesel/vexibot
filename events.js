@@ -452,9 +452,11 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 							const scoresVector = [];
 							matches.forEach(m => {
 								if (m.hasOwnProperty('redScore')) {
+									console.log(2);
 									const red = {teams: [m.red, m.red2, m.red3].filter(team => team && team !== m.redSit), score: m.redScore};
 									const blue = {teams: [m.blue, m.blue2, m.blue3].filter(team => team && team !== m.blueSit), score: m.blueScore};
 									[red, blue].forEach(alliance => {
+										console.log(3);
 										const allianceVector = Array(teamsVector.length).fill(0);
 										alliance.teams.forEach(team => {
 											allianceVector[teamsVector.indexOf(team)] = 1;
@@ -464,6 +466,7 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 									});
 								}
 							});
+							console.log(1);
 							if (scoresVector.length) {
 								const transpose = math.transpose(alliancesMatrix);
 								try {
@@ -472,6 +475,7 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 									const scoreDiffsVector = [];
 									matches.forEach(m => {
 										if (m.hasOwnProperty('redScore')) {
+											console.log(4);
 											const redOpr = [m.red, m.red2, m.red3].reduce((total, team) => total + ((team && team !== m.redSit) ? oprVector[teamsVector.indexOf(team)] : 0), 0);
 											const blueOpr = [m.blue, m.blue2, m.blue3].reduce((total, team) => total + ((team && team !== m.blueSit) ? oprVector[teamsVector.indexOf(team)] : 0), 0);
 											scoreDiffsVector.push(m.blueScore - blueOpr);
