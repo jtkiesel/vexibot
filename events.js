@@ -452,8 +452,8 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 							const scoresVector = [];
 							matches.forEach(m => {
 								if (m.hasOwnProperty('redScore')) {
-									const red = {teams: [m.red, m.red2, m.red3].filter(team => team && team !== match.redSit), score: match.redScore};
-									const blue = {teams: [m.blue, m.blue2, m.blue3].filter(team => team && team !== match.blueSit), score: match.blueScore};
+									const red = {teams: [m.red, m.red2, m.red3].filter(team => team && team !== m.redSit), score: m.redScore};
+									const blue = {teams: [m.blue, m.blue2, m.blue3].filter(team => team && team !== m.blueSit), score: m.blueScore};
 									[red, blue].forEach(alliance => {
 										const allianceVector = Array(teamsVector.length).fill(0);
 										alliance.teams.forEach(team => {
