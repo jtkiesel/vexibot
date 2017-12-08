@@ -482,27 +482,27 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 
 									const redOpr = [match.red, match.red2, match.red3].map(team => (team/* && team !== newMatch.redSit*/) ? oprVector[teamsVector.indexOf(team)] : 0);
 									const blueOpr = [match.blue, match.blue2, match.blue3].map(team => (team/* && team !== newMatch.blueSit*/) ? oprVector[teamsVector.indexOf(team)] : 0);
-
+console.log(redOpr);
 									const redDpr = [match.red, match.red2, match.red3].reduce(team => (team/* && team !== newMatch.redSit*/) ? dprVector[teamsVector.indexOf(team)] : 0);
 									const blueDpr = [match.blue, match.blue2, match.blue3].reduce(team => (team/* && team !== newMatch.blueSit*/) ? dprVector[teamsVector.indexOf(team)] : 0);
-
+console.log(redDpr);
 									const redCcwm = redOpr.map((opr, index) => opr - redDpr[index]);
 									const blueCcwm = blueOpr.map((opr, index) => opr - blueDpr[index]);
-
+console.log(redCcwm);
 									const bestRed = redCcwm.sort((a, b) => b - a);
 									const bestBlue = blueCcwm.sort((a, b) => b - a);
-
+console.log(bestRed);
 									const redIndices = [redCcwm.indexOf(bestRed[0]), redCcwm.indexOf(bestRed[1])];
 									const blueIndices = [blueCcwm.indexOf(bestBlue[0]), blueCcwm.indexOf(bestBlue[1])];
-
+console.log(redIndices);
 									const redOprSum = redOpr[redIndices[0]] + redOpr[redIndices[1]];
 									const blueOprSum = blueOpr[blueIndices[0]] + blueOpr[blueIndices[1]];
-
+console.log(redOprSum);
 									const redDprSum = redDpr[redIndices[0]] + redDpr[redIndices[1]];
 									const blueDprSum = blueDpr[blueIndices[0]] + blueDpr[blueIndices[1]];
-
+console.log(redDprSum);
 									match.redScorePred = Math.round(redOprSum + blueDprSum);
-									match.blueScorePred = Math.round(blueOprSum + redDprDum);
+									match.blueScorePred = Math.round(blueOprSum + redDprSum);
 								} catch (err) {
 									// Can't calculate OPRs yet (not enough matches scored).
 								}
