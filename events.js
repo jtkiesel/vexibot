@@ -480,11 +480,11 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 									});
 									const dprVector = math.multiply(manipulatedMatrix, scoreDiffsVector);
 
-									const redOpr = [match.red, match.red2, match.red3].map(team => (team/* && team !== newMatch.redSit*/) ? oprVector[teamsVector.indexOf(team)] : 0);
-									const blueOpr = [match.blue, match.blue2, match.blue3].map(team => (team/* && team !== newMatch.blueSit*/) ? oprVector[teamsVector.indexOf(team)] : 0);
+									const redOpr = [match.red, match.red2, match.red3].map(team => (team/* && team !== match.redSit*/) ? oprVector[teamsVector.indexOf(team)] : 0);
+									const blueOpr = [match.blue, match.blue2, match.blue3].map(team => (team/* && team !== match.blueSit*/) ? oprVector[teamsVector.indexOf(team)] : 0);
 console.log(redOpr);
-									const redDpr = [match.red, match.red2, match.red3].reduce(team => (team/* && team !== newMatch.redSit*/) ? dprVector[teamsVector.indexOf(team)] : 0);
-									const blueDpr = [match.blue, match.blue2, match.blue3].reduce(team => (team/* && team !== newMatch.blueSit*/) ? dprVector[teamsVector.indexOf(team)] : 0);
+									const redDpr = [match.red, match.red2, match.red3].map(team => (team/* && team !== match.redSit*/) ? dprVector[teamsVector.indexOf(team)] : 0);
+									const blueDpr = [match.blue, match.blue2, match.blue3].map(team => (team/* && team !== match.blueSit*/) ? dprVector[teamsVector.indexOf(team)] : 0);
 console.log(redDpr);
 									const redCcwm = redOpr.map((opr, index) => opr - redDpr[index]);
 									const blueCcwm = blueOpr.map((opr, index) => opr - blueDpr[index]);
