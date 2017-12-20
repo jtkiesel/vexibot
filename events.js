@@ -499,8 +499,8 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 							const redDprSum = redDpr[redIndices[0]] + redDpr[redIndices[1]];
 							const blueDprSum = blueDpr[blueIndices[0]] + blueDpr[blueIndices[1]];
 
-							match.redScorePred = Math.round(redOprSum + blueDprSum);
-							match.blueScorePred = Math.round(blueOprSum + redDprSum);
+							match.redScorePred = Math.max(0, Math.round(redOprSum + blueDprSum));
+							match.blueScorePred = Math.max(0, Math.round(blueOprSum + redDprSum));
 						} catch (err) {
 							// Can't calculate OPRs yet (not enough matches scored).
 						}
