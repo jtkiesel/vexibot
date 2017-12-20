@@ -111,7 +111,8 @@ const createMatchEmbed = match => {
 	let red = `${matchScheduledEmojis[0]} Red`;
 	let blue = `${matchScheduledEmojis[1]} Blue`;
 	if (match.hasOwnProperty('redScore') || match.hasOwnProperty('redScorePred')) {
-		red += ':'
+		red += ':';
+		blue += ':';
 		if (match.hasOwnProperty('redScore')) {
 			red += ` ${match.redScore}`;
 			blue += ` ${match.blueScore}`;
