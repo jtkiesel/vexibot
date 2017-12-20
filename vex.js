@@ -110,12 +110,16 @@ const createMatchEmbed = match => {
 	}
 	let red = `${matchScheduledEmojis[0]} Red`;
 	let blue = `${matchScheduledEmojis[1]} Blue`;
-	if (match.hasOwnProperty('redScore')) {
-		red += `: ${match.redScore}`;
-		blue += `: ${match.blueScore}`;
-	} else if (match.hasOwnProperty('redScorePred')) {
-		red += `: ${match.redScorePred} (predicted)`;
-		blue += `: ${match.blueScorePred} (predicted)`;
+	if (match.hasOwnProperty('redScore') || match.hasOwnProperty('redScorePred')) {
+		red += ':'
+		if (match.hasOwnProperty('redScore')) {
+			red += ` ${match.redScore}`;
+			blue += ` ${match.blueScore}`;
+		}
+		if (match.hasOwnProperty('redScorePred')) {
+			red += ` (${match.redScorePred} predicted)`;
+			blue += ` (${match.blueScorePred} predicted)`;
+		}
 	}
 	const embed = new Discord.MessageEmbed()
 		.setColor(color)

@@ -445,69 +445,67 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 					} else {
 						res = await db.collection('matches').findOneAndUpdate({_id: match._id}, {$set: match, $unset: unset}, {upsert: true});
 					}
-					const old = res.value;
-					if (!old) {
-						if (!scored) {
-							const alliancesMatrix = [];
-							const scoresVector = [];
+					const alliancesMatrix = [];
+					const scoresVector = [];
+					matches.forEach(m => {
+						if (m.hasOwnProperty('redScore')) {
+							const red = {teams: [m.red, m.red2, m.red3].filter(team => team && team !== m.redSit), score: m.redScore};
+							const blue = {teams: [m.blue, m.blue2, m.blue3].filter(team => team && team !== m.blueSit), score: m.blueScore};
+							[red, blue].forEach(alliance => {
+								const allianceVector = Array(teamsVector.length).fill(0);
+								alliance.teams.forEach(team => {
+									allianceVector[teamsVector.indexOf(team)] = 1;
+								});
+								alliancesMatrix.push(allianceVector);
+								scoresVector.push(alliance.score);
+							});
+						}
+					});
+					if (scoresVector.length) {
+						const transpose = math.transpose(alliancesMatrix);
+						try {
+							const manipulatedMatrix = math.multiply(math.inv(math.multiply(transpose, alliancesMatrix)), transpose);
+							const oprVector = math.multiply(manipulatedMatrix, scoresVector);
+							const scoreDiffsVector = [];
 							matches.forEach(m => {
 								if (m.hasOwnProperty('redScore')) {
-									const red = {teams: [m.red, m.red2, m.red3].filter(team => team && team !== m.redSit), score: m.redScore};
-									const blue = {teams: [m.blue, m.blue2, m.blue3].filter(team => team && team !== m.blueSit), score: m.blueScore};
-									[red, blue].forEach(alliance => {
-										const allianceVector = Array(teamsVector.length).fill(0);
-										alliance.teams.forEach(team => {
-											allianceVector[teamsVector.indexOf(team)] = 1;
-										});
-										alliancesMatrix.push(allianceVector);
-										scoresVector.push(alliance.score);
-									});
+									const redOpr = [m.red, m.red2, m.red3].reduce((total, team) => total + ((team && team !== m.redSit) ? oprVector[teamsVector.indexOf(team)] : 0), 0);
+									const blueOpr = [m.blue, m.blue2, m.blue3].reduce((total, team) => total + ((team && team !== m.blueSit) ? oprVector[teamsVector.indexOf(team)] : 0), 0);
+									scoreDiffsVector.push(m.blueScore - blueOpr);
+									scoreDiffsVector.push(m.redScore - redOpr);
 								}
 							});
-							if (scoresVector.length) {
-								const transpose = math.transpose(alliancesMatrix);
-								try {
-									const manipulatedMatrix = math.multiply(math.inv(math.multiply(transpose, alliancesMatrix)), transpose);
-									const oprVector = math.multiply(manipulatedMatrix, scoresVector);
-									const scoreDiffsVector = [];
-									matches.forEach(m => {
-										if (m.hasOwnProperty('redScore')) {
-											const redOpr = [m.red, m.red2, m.red3].reduce((total, team) => total + ((team && team !== m.redSit) ? oprVector[teamsVector.indexOf(team)] : 0), 0);
-											const blueOpr = [m.blue, m.blue2, m.blue3].reduce((total, team) => total + ((team && team !== m.blueSit) ? oprVector[teamsVector.indexOf(team)] : 0), 0);
-											scoreDiffsVector.push(m.blueScore - blueOpr);
-											scoreDiffsVector.push(m.redScore - redOpr);
-										}
-									});
-									const dprVector = math.multiply(manipulatedMatrix, scoreDiffsVector);
+							const dprVector = math.multiply(manipulatedMatrix, scoreDiffsVector);
 
-									const redOpr = [match.red, match.red2, match.red3].map(team => (team/* && team !== match.redSit*/) ? oprVector[teamsVector.indexOf(team)] : 0);
-									const blueOpr = [match.blue, match.blue2, match.blue3].map(team => (team/* && team !== match.blueSit*/) ? oprVector[teamsVector.indexOf(team)] : 0);
-console.log(redOpr);
-									const redDpr = [match.red, match.red2, match.red3].map(team => (team/* && team !== match.redSit*/) ? dprVector[teamsVector.indexOf(team)] : 0);
-									const blueDpr = [match.blue, match.blue2, match.blue3].map(team => (team/* && team !== match.blueSit*/) ? dprVector[teamsVector.indexOf(team)] : 0);
-console.log(redDpr);
-									const redCcwm = redOpr.map((opr, index) => opr - redDpr[index]);
-									const blueCcwm = blueOpr.map((opr, index) => opr - blueDpr[index]);
-console.log(redCcwm);
-									const bestRed = redCcwm.sort((a, b) => b - a);
-									const bestBlue = blueCcwm.sort((a, b) => b - a);
-console.log(bestRed);
-									const redIndices = [redCcwm.indexOf(bestRed[0]), redCcwm.indexOf(bestRed[1])];
-									const blueIndices = [blueCcwm.indexOf(bestBlue[0]), blueCcwm.indexOf(bestBlue[1])];
-console.log(redIndices);
-									const redOprSum = redOpr[redIndices[0]] + redOpr[redIndices[1]];
-									const blueOprSum = blueOpr[blueIndices[0]] + blueOpr[blueIndices[1]];
-console.log(redOprSum);
-									const redDprSum = redDpr[redIndices[0]] + redDpr[redIndices[1]];
-									const blueDprSum = blueDpr[blueIndices[0]] + blueDpr[blueIndices[1]];
-console.log(redDprSum);
-									match.redScorePred = Math.round(redOprSum + blueDprSum);
-									match.blueScorePred = Math.round(blueOprSum + redDprSum);
-								} catch (err) {
-									// Can't calculate OPRs yet (not enough matches scored).
-								}
-							}
+							const redOpr = [match.red, match.red2, match.red3].map(team => team ? oprVector[teamsVector.indexOf(team)] : 0);
+							const blueOpr = [match.blue, match.blue2, match.blue3].map(team => team ? oprVector[teamsVector.indexOf(team)] : 0);
+
+							const redDpr = [match.red, match.red2, match.red3].map(team => team ? dprVector[teamsVector.indexOf(team)] : 0);
+							const blueDpr = [match.blue, match.blue2, match.blue3].map(team => team ? dprVector[teamsVector.indexOf(team)] : 0);
+
+							const redCcwm = redOpr.map((opr, index) => opr - redDpr[index]);
+							const blueCcwm = blueOpr.map((opr, index) => opr - blueDpr[index]);
+
+							const bestRed = redCcwm.sort((a, b) => b - a);
+							const bestBlue = blueCcwm.sort((a, b) => b - a);
+
+							const redIndices = [redCcwm.indexOf(bestRed[0]), redCcwm.indexOf(bestRed[1])];
+							const blueIndices = [blueCcwm.indexOf(bestBlue[0]), blueCcwm.indexOf(bestBlue[1])];
+
+							const redOprSum = redOpr[redIndices[0]] + redOpr[redIndices[1]];
+							const blueOprSum = blueOpr[blueIndices[0]] + blueOpr[blueIndices[1]];
+
+							const redDprSum = redDpr[redIndices[0]] + redDpr[redIndices[1]];
+							const blueDprSum = blueDpr[blueIndices[0]] + blueDpr[blueIndices[1]];
+
+							match.redScorePred = Math.round(redOprSum + blueDprSum);
+							match.blueScorePred = Math.round(blueOprSum + redDprSum);
+						} catch (err) {
+							// Can't calculate OPRs yet (not enough matches scored).
 						}
+					}
+					const old = res.value;
+					if (!old) {
 						await sendMatchEmbed(`New match ${change}`, match, reactions);
 						console.log(createMatchEmbed(match).fields);
 					} else {
