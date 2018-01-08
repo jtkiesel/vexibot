@@ -447,7 +447,8 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 					}
 					const alliancesMatrix = [];
 					const scoresVector = [];
-					matches.forEach(m => {
+					const prevMatches = matches.slice(0, i - 1);
+					prevMatches.forEach(m => {
 						if (m.hasOwnProperty('redScore')) {
 							const red = {teams: [m.red, m.red2, m.red3].filter(team => team && team !== m.redSit), score: m.redScore};
 							const blue = {teams: [m.blue, m.blue2, m.blue3].filter(team => team && team !== m.blueSit), score: m.blueScore};
@@ -467,7 +468,7 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 							const manipulatedMatrix = math.multiply(math.inv(math.multiply(transpose, alliancesMatrix)), transpose);
 							const oprVector = math.multiply(manipulatedMatrix, scoresVector);
 							const scoreDiffsVector = [];
-							matches.forEach(m => {
+							prevMatches.forEach(m => {
 								if (m.hasOwnProperty('redScore')) {
 									const redOpr = [m.red, m.red2, m.red3].reduce((total, team) => total + ((team && team !== m.redSit) ? oprVector[teamsVector.indexOf(team)] : 0), 0);
 									const blueOpr = [m.blue, m.blue2, m.blue3].reduce((total, team) => total + ((team && team !== m.blueSit) ? oprVector[teamsVector.indexOf(team)] : 0), 0);
@@ -498,8 +499,8 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 							const redDprSum = redDpr[redIndices[0]] + redDpr[redIndices[1]];
 							const blueDprSum = blueDpr[blueIndices[0]] + blueDpr[blueIndices[1]];
 
-							match.redScorePred = Math.round(redOprSum + blueDprSum);
-							match.blueScorePred = Math.round(blueOprSum + redDprSum);
+							match.redScorePred = Math.max(0, Math.round(redOprSum + blueDprSum));
+							match.blueScorePred = Math.max(0, Math.round(blueOprSum + redDprSum));
 						} catch (err) {
 							// Can't calculate OPRs yet (not enough matches scored).
 						}
