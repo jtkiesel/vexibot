@@ -18,6 +18,7 @@ const sendToSubscribedChannels = vex.sendToSubscribedChannels;
 const sendMatchEmbed = vex.sendMatchEmbed;
 const encodeProgram = dbinfo.encodeProgram;
 const encodeGrade = dbinfo.encodeGrade;
+const decodeGrade = dbinfo.decodeGrade;
 const seasonToVexu = dbinfo.seasonToVexu;
 
 const timezone = 'America/New_York';
@@ -68,9 +69,7 @@ const updateExistingEvents = async () => {
 	const eventArray = await db.collection('events').find().project({_id: 1, prog: 1, season: 1}).toArray();
 	for (let event of eventArray) {
 		try {
-			console.log(`starting ${event._id}`);
 			await events.updateEvent(event.prog, event.season, event._id);
-			console.log(`ended ${event._id}`);
 		} catch (err) {
 			console.error(err);
 		}
@@ -78,8 +77,9 @@ const updateExistingEvents = async () => {
 };
 
 const updateMaxSkills = async () => {
-	await updateMaxSkillsForSeason(1, 119);
-	await updateMaxSkillsForSeason(4, 120);
+	await updateMaxSkillsForSeason(1, 119, 2);
+	await updateMaxSkillsForSeason(1, 119, 3);
+	await updateMaxSkillsForSeason(4, 120, 4);
 };
 
 const updateAllMaxSkills = async () => {
@@ -102,9 +102,7 @@ const updateCurrentEvents = async () => {
 		const documents = await db.collection('events').find({dates: {$elemMatch: {end: {$gt: now}, start: {$lt: now}}}}).project({_id: 1, prog: 1, season: 1}).toArray();
 		for (let event of documents) {
 			try {
-				console.log(`starting ${event._id}`);
 				await events.updateEvent(event.prog, event.season, event._id);
-				console.log(`ended ${event._id}`);
 			} catch (err) {
 				console.error(err);
 			}
@@ -264,29 +262,19 @@ const formatEvent = event => {
 		event.webcast_link && {webcast: event.webcast_link});
 };
 
-const updateMaxSkillsForSeason = async (program, season) => {
-	const url = `https://www.robotevents.com/api/seasons/${season}/skills?untilSkillsDeadline=0`;
+const updateMaxSkillsForSeason = async (program, season, grade) => {
+	const url = `https://www.robotevents.com/api/seasons/${season}/skills?untilSkillsDeadline=0&grade_level=${decodeGrade(grade)}`;
 	try {
 		const maxSkills = await request.get({url: url, json: true});
-		let rankByGrade = [];
-		maxSkills.map(maxSkill => formatMaxSkill(maxSkill, program, season)).forEach(async maxSkill => {
-			const grade = maxSkill.team.grade;
-			const gradeRank = (rankByGrade[grade] || 0) + 1;
-			rankByGrade[grade] = gradeRank;
-			maxSkill.gradeRank = gradeRank;
+		maxSkills.map(maxSkill => formatMaxSkill(maxSkill, program, season, grade)).forEach(async maxSkill => {
 			try {
 				let result = await db.collection('maxSkills').findOneAndUpdate({_id: maxSkill._id}, {$set: maxSkill}, {upsert: true});
 				let old = result.value;
-				if (!old || grade !== old.team.grade) {
-					if (!old) {
-						console.log(`Insert ${JSON.stringify(maxSkill)} to maxSkills.`);
-					}
+				if (!old) {
+					console.log(`Insert ${JSON.stringify(maxSkill)} to maxSkills.`);
 					const teamId = maxSkill.team.id;
 					try {
-						result = await db.collection('teams').findOneAndUpdate(
-							{_id: {id: teamId, prog: program, season: season}},
-							{$set: {grade: grade}}
-						);
+						result = await db.collection('teams').findOneAndUpdate({_id: {id: teamId, prog: program, season: season}}, {$set: {grade: grade}}, {upsert: true});
 						old = result.value;
 						if (!old) {
 							console.log(`Insert ${teamId} to teams.`);
@@ -301,15 +289,19 @@ const updateMaxSkillsForSeason = async (program, season) => {
 				console.error(err);
 			}
 		});
+		if (maxSkills.length) {
+			await db.collection('maxSkills').deleteMany({'_id.season': season, '_id.grade': grade, '_id.rank': {$gt: maxSkills.length}});
+		}
 	} catch (err) {
 		console.error(err);
 	}
 };
 
-const formatMaxSkill = (maxSkill, prog, season) => {
+const formatMaxSkill = (maxSkill, prog, season, grade) => {
 	const document = {
 		_id: {
 			season: season,
+			grade: grade,
 			rank: maxSkill.rank
 		},
 		team: {
@@ -323,7 +315,6 @@ const formatMaxSkill = (maxSkill, prog, season) => {
 	if (maxSkill.team.country) {
 		document.team.country = he.decode(maxSkill.team.country);
 	}
-	document.team.grade = encodeGrade(maxSkill.team.gradeLevel);
 	document.event = {
 		sku: maxSkill.event.sku,
 		start: encodeDate(maxSkill.event.startDate)
@@ -333,6 +324,7 @@ const formatMaxSkill = (maxSkill, prog, season) => {
 	document.driver = maxSkill.scores.driver;
 	document.maxProg = maxSkill.scores.maxProgramming;
 	document.maxDriver = maxSkill.scores.maxDriver;
+	document.eligible = maxSkill.eligible;
 	return document;
 };
 

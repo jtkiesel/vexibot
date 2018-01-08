@@ -26,7 +26,7 @@ const dynamicSkillsEmbed = async (message, skills, index = 0, reply, end) => {
 	let description = '';
 	for (let i = index; i < skills.length && i < (index + pageSize); i++) {
 		const skill = skills[i];
-		let rank = skill.gradeRank;
+		let rank = skill._id.rank;
 		rank = (rank < 4) ? `${rankEmojis[rank - 1]}  ` : `**\`#${String(rank).padEnd(3)}\​\`**`;
 		const score = String(skill.score).padStart(3);
 		const prog = String(skill.prog).padStart(3);
@@ -35,7 +35,7 @@ const dynamicSkillsEmbed = async (message, skills, index = 0, reply, end) => {
 		description += `${rank}   \`\​${score}\`   \`(\​${prog} / \​${driver})\`   [${team}](https://vexdb.io/teams/view/${team})\n`;
 	}
 	const prog = decodeProgram(skills[0].team.prog);
-	const grade = decodeGrade(skills[0].team.grade);
+	const grade = decodeGrade(skills[0]._id.grade);
 	const season = decodeSeason(skills[0]._id.season);
 	const seasonUrl = decodeSeasonUrl(skills[0]._id.season);
 	const embed = new Discord.MessageEmbed()
@@ -102,7 +102,7 @@ module.exports = async (message, args) => {
 	}
 	try {
 		const skills = await db.collection('maxSkills')
-			.find({'_id.season': season, 'team.grade': encodeGrade(grade)})
+			.find({'_id.season': season, '_id.grade': encodeGrade(grade)})
 			.sort({'_id.rank': 1}).toArray();
 		if (skills.length) {
 			dynamicSkillsEmbed(message, skills);
