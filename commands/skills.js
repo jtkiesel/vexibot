@@ -28,7 +28,7 @@ module.exports = async (message, args) => {
 				try {
 					const maxSkill = await db.collection('maxSkills').findOne({'_id.season': season, 'team.id': teamId});
 					if (maxSkill) {
-						let rank = maxSkill.gradeRank;
+						let rank = maxSkill._id.rank;
 						rank = (rank <= 3) ? rankEmojis[rank - 1] : rank;
 
 						const embed = new Discord.MessageEmbed()
@@ -36,7 +36,7 @@ module.exports = async (message, args) => {
 							.setAuthor(teamId, null, `https://vexdb.io/teams/view/${teamId}?t=skills`)
 							.setTitle(`${decodeProgram(maxSkill.team.prog)} ${decodeSeason(season)}`)
 							.setURL(decodeSeasonUrl(season))
-							.addField(`${decodeGrade(maxSkill.team.grade)} Rank`, rank, true)
+							.addField(`${decodeGrade(maxSkill._id.grade)} Rank`, rank, true)
 							.addField('Score', maxSkill.score, true)
 							.addField('Programming', maxSkill.prog, true)
 							.addField('Driver', maxSkill.driver, true)
