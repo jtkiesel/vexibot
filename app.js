@@ -3,7 +3,7 @@ const mongodb = require('mongodb');
 const util = require('util');
 
 const client = new Discord.Client();
-const MongoClient = new mongodb.MongoClient();
+const MongoClient = mongodb.MongoClient;
 const token = process.env.VEXIBOT_TOKEN;
 const mongodbUri = process.env.VEXIBOT_DB;
 const mongodbOptions = {
@@ -88,10 +88,10 @@ client.on('message', message => {
 		handleCommand(message);
 	}
 });
-let db;
-MongoClient.connect(mongodbUri, mongodbOptions).then(mdb => {
-	module.exports.db = mdb;
-	db = mdb;
+
+MongoClient.connect(mongodbUri, mongodbOptions).then(mongoClient => {
+	module.exports.db = mongoClient.db(mongodbUri.match(/\/([^/]+)$/)[1]);
+
 	Object.keys(commandInfo).forEach(name => commands[name] = require('./commands/' + name));
 	Object.entries(commandInfo).forEach(([name, desc]) => helpDescription += `\n\`${prefix}${name}\`: ${desc}`);
 

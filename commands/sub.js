@@ -41,23 +41,30 @@ module.exports = async (message, args) => {
 				} else {
 					reply = await message.reply(cancel || `that team ID has never been registered, are you sure you want to subscribe to updates for ${teamString}?`);
 				}
+				const collector = reply.createReactionCollector((reaction, user) => {
+					return user.id === message.author.id && (reaction.emoji.name === yes || reaction.emoji.name === no);
+				}, {max: 1, time: 30000});
+				collector.on('end', async (collected, reason) => {
+					let status;
+					if (collected.get(yes)) {
+						if (!cancel) {
+							status = 'are now';
+							await db.collection('teamSubs').findOneAndUpdate({_id: teamSub._id}, {$set: teamSub, $addToSet: {users: message.author.id}}, {upsert: true});
+						} else {
+							status = 'are no longer';
+							await db.collection('teamSubs').findOneAndUpdate({_id: teamSub._id}, {$set: teamSub, $pull: {users: message.author.id}});
+						}
+					} else {
+						status = cancel ? 'are still' : 'have not been';
+					}
+					let users = reply.reactions.get(yes).users;
+					users.forEach(user => users.remove(user));
+					users = reply.reactions.get(no).users;
+					users.forEach(user => users.remove(user));
+					reply.edit(`${message.author}, you ${status} subscribed to updates for ${teamString}.`, {embed: null});
+				});
 				await reply.react(yes);
 				await reply.react(no);
-				const reactions = await reply.awaitReactions((reaction, user) => user.id === message.author.id && (reaction.emoji.name === yes || reaction.emoji.name === no), {max: 1, time: 30000});
-				let status;
-				if (reactions.get(yes)) {
-					if (!cancel) {
-						status = 'are now';
-						await db.collection('teamSubs').findOneAndUpdate({_id: teamSub._id}, {$set: teamSub, $addToSet: {users: message.author.id}}, {upsert: true});
-					} else {
-						status = 'are no longer';
-						await db.collection('teamSubs').findOneAndUpdate({_id: teamSub._id}, {$set: teamSub, $pull: {users: message.author.id}});
-					}
-				} else {
-					status = cancel ? 'are still' : 'have not been';
-				}
-				reply = await reply.clearReactions();
-				reply.edit(`${message.author}, you ${status} subscribed to updates for ${teamString}.`, {embed: null});
 			} catch (err) {
 				console.error(err);
 			}
