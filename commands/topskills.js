@@ -75,10 +75,10 @@ module.exports = async (message, args) => {
 				.setDescription(getDescription(skills));
 
 			try {
-				reply = await message.channel.send({embed: embed});
+				const reply = await message.channel.send({embed: embed});
 				let index = 0;
 				const collector = reply.createReactionCollector((reaction, user) => {
-					return user.id !== app.client.user.id && (reaction.emoji.name === previous || reaction.emoji.name === next);
+					return user.id !== client.user.id && (reaction.emoji.name === previous || reaction.emoji.name === next);
 				}, {time: 30000, dispose: true});
 				collector.on('collect', (reaction, user) => {
 					if (user.id === message.author.id) {
@@ -86,7 +86,7 @@ module.exports = async (message, args) => {
 						if (index >= skills.length) {
 							index = 0;
 						} else if (index < 0) {
-							index = skills.length - pageSize;
+							index = Math.max(skills.length - pageSize, 0);
 						}
 						reply.edit({embed: embed.setDescription(getDescription(skills, index))});
 					} else {
@@ -94,13 +94,12 @@ module.exports = async (message, args) => {
 					}
 				});
 				collector.on('remove', (reaction, user) => {
-					console.log('removed');
 					if (user.id === message.author.id) {
 						index += (reaction.emoji.name === next ? 1 : -1) * pageSize;
 						if (index >= skills.length) {
 							index = 0;
 						} else if (index < 0) {
-							index = skills.length - pageSize;
+							index = Math.max(skills.length - pageSize, 0);
 						}
 						reply.edit({embed: embed.setDescription(getDescription(skills, index))});
 					}
