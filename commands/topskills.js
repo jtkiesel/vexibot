@@ -63,10 +63,11 @@ module.exports = async (message, args) => {
 			.find({'_id.season': season, '_id.grade': encodeGrade(grade)})
 			.sort({'_id.rank': 1}).toArray();
 		if (skills.length) {
-			const prog = decodeProgram(skills[0].team.prog);
-			const grade = decodeGrade(skills[0]._id.grade);
-			const season = decodeSeason(skills[0]._id.season);
-			const seasonUrl = decodeSeasonUrl(skills[0]._id.season);
+			let index = 0;
+			const prog = decodeProgram(skills[index].team.prog);
+			const grade = decodeGrade(skills[index]._id.grade);
+			const season = decodeSeason(skills[index]._id.season);
+			const seasonUrl = decodeSeasonUrl(skills[index]._id.season);
 			const embed = new Discord.MessageEmbed()
 				.setColor('GOLD')
 				.setAuthor(`${grade} World Skills Standings`, null, `https://vexdb.io/skills/${prog}/${season.replace(/ /g, '_')}/Robot`)
@@ -76,7 +77,6 @@ module.exports = async (message, args) => {
 
 			try {
 				const reply = await message.channel.send({embed: embed});
-				let index = 0;
 				const collector = reply.createReactionCollector((reaction, user) => {
 					return user.id !== client.user.id && (reaction.emoji.name === previous || reaction.emoji.name === next);
 				}, {time: 30000, dispose: true});
