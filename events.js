@@ -173,7 +173,7 @@ const matchCompare = (a, b) => {
 
 const updateEvent = async (prog, season, sku, timeout = 1000) => {
 	try {
-		const result = await request.get({url: `https://www.robotevents.com/${sku}.html`});
+		const result = (await request.get({url: `https://www.robotevents.com/${sku}.html`})).data;
 		const event = getEvent(result, sku);
 		const foundSeason = result.match(/season_id&quot;:([0-9]+)/);
 		const guessedSeason = await guessSeason(prog, event.deadline ? event.deadline : event.start);

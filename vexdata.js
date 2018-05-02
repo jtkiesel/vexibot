@@ -192,7 +192,7 @@ const updateEventsForSeason = async (program, season) => {
 	const url = 'https://www.robotevents.com/api/events';
 	try {
 		let eventsData = await request.post({url: url, form: {when: 'past', season_id: season}, json: true});
-		eventsData = eventsData.filter((event, i, self) => self.findIndex(e => e.sku === event.sku) === i).map(formatEvent);
+		eventsData = eventsData.data.filter((event, i, self) => self.findIndex(e => e.sku === event.sku) === i).map(formatEvent);
 		for (let event of eventsData) {
 			try {
 				const result = await db.collection('events').findOneAndUpdate({_id: event._id}, {$set: event}, {upsert: true});
