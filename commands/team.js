@@ -3,6 +3,7 @@ const Discord = require('discord.js');
 const app = require('../app');
 const vex = require('../vex');
 
+const client = app.client;
 const addFooter = app.addFooter;
 const getTeamId = vex.getTeamId;
 const validTeamId = vex.validTeamId;
