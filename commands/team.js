@@ -10,9 +10,8 @@ const validTeamId = vex.validTeamId;
 const getTeam = vex.getTeam;
 const createTeamEmbed = vex.createTeamEmbed;
 
-const pageSize = 10;
-const previous = '🔺';
-const next = '🔻';
+const previous = '\u25C0';
+const next = '\u25B6';
 
 module.exports = async (message, args) => {
 	const arg = args ? args.replace(/\s+/g, '') : '';
@@ -31,11 +30,11 @@ module.exports = async (message, args) => {
 					}, {time: 30000, dispose: true});
 					collector.on('collect', (reaction, user) => {
 						if (user.id === message.author.id) {
-							index += (reaction.emoji.name === next ? 1 : -1) * pageSize;
+							index += (reaction.emoji.name === next ? -1 : 1);
 							if (index >= team.length) {
 								index = 0;
 							} else if (index < 0) {
-								index = Math.max(team.length - pageSize, 0);
+								index = team.length - 1;
 							}
 							reply.edit({embed: createTeamEmbed(team[index])});
 						} else {
@@ -44,20 +43,23 @@ module.exports = async (message, args) => {
 					});
 					collector.on('remove', (reaction, user) => {
 						if (user.id === message.author.id) {
-							index += (reaction.emoji.name === next ? 1 : -1) * pageSize;
+							index += (reaction.emoji.name === next ? -1 : 1);
 							if (index >= team.length) {
 								index = 0;
 							} else if (index < 0) {
-								index = Math.max(team.length - pageSize, 0);
+								index = team.length - 1;
 							}
 							reply.edit({embed: createTeamEmbed(team[index])});
 						}
 					});
 					collector.on('end', (collected, reason) => {
-						let users = reply.reactions.get(next).users;
-						users.forEach(user => users.remove(user));
-						users = reply.reactions.get(previous).users;
-						users.forEach(user => users.remove(user));
+						[previous, next].forEach(emoji => {
+							const reaction = reply.reactions.get(emoji);
+							if (reaction) {
+								const users = reaction.users;
+								users.forEach(user => users.remove(user));
+							}
+						});
 						addFooter(message, embed, reply);
 					});
 					await reply.react(previous);
