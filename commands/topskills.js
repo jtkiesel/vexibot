@@ -27,7 +27,7 @@ const getDescription = (skills, index = 0) => {
 		const prog = String(skill.prog).padStart(3);
 		const driver = String(skill.driver).padStart(3);
 		const team = skill.team.id;
-		description += `${rank}   \`\​${score}\`   \`(\​${prog} / \​${driver})\`   [${team}](https://vexdb.io/teams/view/${team})\n`;
+		description += `${rank}   \`\​${score}\`   \`(\​${prog} / \​${driver})\`   [${team}](https://robotevents.com/teams/${decodeProgram(skill.team.prog)}/${team})\n`;
 	}
 	return description;
 };

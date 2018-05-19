@@ -59,7 +59,7 @@ module.exports = async (message, args) => {
 										eventsBySeason[season] = [event];
 									}
 								}
-								event = `\n[${he.decode(award.event)}](https://vexdb.io/events/view/${award.sku}?t=awards)`;
+								event = `\n[${he.decode(award.event)}](https://robotevents.com/${award.sku}.html#tab-awards)`;
 								sku = award.sku;
 							}
 							let awardEmoji = '🏅';
@@ -115,10 +115,11 @@ module.exports = async (message, args) => {
 								}
 							}
 						}
+						const program = decodeProgram(prog);
 						const embed = new Discord.MessageEmbed()
 							.setColor('PURPLE')
-							.setTitle(`${decodeProgram(prog)} ${teamId}`)
-							.setURL(`https://vexdb.io/teams/view/${teamId}?t=awards`)
+							.setTitle(`${program} ${teamId}`)
+							.setURL(`https://robotevents.com/teams/${program}/${teamId}`)
 							.setDescription(description);
 						try {
 							const reply = await message.channel.send({embed});

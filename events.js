@@ -314,61 +314,61 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 					attempts: skillData.attempts
 				});
 				if (teamReg) {
-					for (let i = 0; i < teams.length; i++) {
-						if (teams[i]._id.id === _id.id) {
-							const contact = Object.assign({
+					const team = teams.find(team => team._id.id === _id.id);
+					if (team) {
+						const contact = Object.assign({
 								name: teamReg.contact1_name,
 								phone: teamReg.contact1_phone1,
 								email: teamReg.contact1_email1
 							},
-								teamReg.contact1_phone2 && {phone2: teamReg.contact1_phone2},
-								teamReg.contact1_email2 && {email2: teamReg.contact1_email2});
-							const contact2 = Object.assign({},
-								teamReg.contact2_name && {name: teamReg.contact2_name},
-								teamReg.contact2_phone1 && {phone: teamReg.contact2_phone1},
-								teamReg.contact2_email1 && {email: teamReg.contact2_email1},
-								teamReg.contact2_phone2 && {phone2: teamReg.contact2_phone2},
-								teamReg.contact2_email2 && {email2: teamReg.contact2_email2});
-							const finance = Object.assign({
+							teamReg.contact1_phone2 && {phone2: teamReg.contact1_phone2},
+							teamReg.contact1_email2 && {email2: teamReg.contact1_email2});
+						const contact2 = Object.assign({},
+							teamReg.contact2_name && {name: teamReg.contact2_name},
+							teamReg.contact2_phone1 && {phone: teamReg.contact2_phone1},
+							teamReg.contact2_email1 && {email: teamReg.contact2_email1},
+							teamReg.contact2_phone2 && {phone2: teamReg.contact2_phone2},
+							teamReg.contact2_email2 && {email2: teamReg.contact2_email2});
+						const finance = Object.assign({
 								name: teamReg.financial_name,
 								phone: teamReg.financial_phone1,
 								email: teamReg.financial_email1
 							},
-								teamReg.financial_phone2 && {phone2: teamReg.financial_phone2},
-								teamReg.financial_email2 && {email2: teamReg.financial_email2});
-							const students = teamReg.num_students.match(/([0-9]+)-?(\+|[0-9]*)/);
-							Object.assign(teams[i],
-								{grade: teamReg.grade_level_id},
-								{name: encodeText(teamReg.team_name)},
-								{org: encodeText(teamReg.organization)},
-								teamReg.robot_name && {robot: encodeText(teamReg.robot_name)},
-								teamReg.lat && {lat: teamReg.lat},
-								teamReg.lng && {lng: teamReg.lng},
-								teamReg.address && {address: encodeText(teamReg.address)},
-								teamReg.city && {city: encodeText(teamReg.city)},
-								teamReg.postcode && {postcode: encodeText(teamReg.postcode)},
-								teamReg.emergency_phone && {emergPhone: teamReg.emergency_phone},
-								Object.keys(contact).length && {contact: contact},
-								Object.keys(contact2).length && {contact2: contact2},
-								Object.keys(finance).length && {finance: finance},
-								students && {minStudents: parseInt(students[1]), maxStudents: (parseInt(students[2] ? students[2] : students[1]) || '+')},
-								teamReg.special_needs && {specialNeeds: teamReg.special_needs},
-								teamReg.sponsor && {sponsor: teamReg.sponsor},
-								teamReg.other_programs && teamReg.other_programs[0] && {progs: teamReg.other_programs},
-								teamReg.about_team && {aboutTeam: teamReg.about_team},
-								teamReg.about_sponsor && {aboutSponsor: teamReg.about_sponsor},
-								teamReg.about_season && {aboutSeason: teamReg.about_season},
-								teamReg.reason && {reason: teamReg.reason},
-								teamReg.cad_software && teamReg.cad_software[0] && {cad: teamReg.cad_software},
-								teamReg.cnt_students_male !== null && {males: teamReg.cnt_students_male},
-								teamReg.cnt_students_female !== null && {females: teamReg.cnt_students_female},
-								teamReg.cnt_teachers !== null && {teachers: teamReg.cnt_teachers},
-								teamReg.cnt_mentors !== null && {mentors: teamReg.cnt_mentors},
-								teamReg.team_experience && {exp: parseInt(teamReg.team_experience) || 0},
-								teamReg.prior_competition && {rookie: teamReg.prior_competition === 0},
-								teamReg.genders && {genders: encodeGenders(teamReg.genders)});
-							break;
-						}
+							teamReg.financial_phone2 && {phone2: teamReg.financial_phone2},
+							teamReg.financial_email2 && {email2: teamReg.financial_email2});
+						const students = teamReg.num_students.match(/([0-9]+)-?(\+|[0-9]*)/);
+						Object.assign(team,
+							{grade: teamReg.grade_level_id},
+							{name: encodeText(teamReg.team_name)},
+							{org: encodeText(teamReg.organization)},
+							teamReg.robot_name && {robot: encodeText(teamReg.robot_name)},
+							teamReg.lat && {lat: teamReg.lat},
+							teamReg.lng && {lng: teamReg.lng},
+							teamReg.address && {address: encodeText(teamReg.address)},
+							teamReg.city && {city: encodeText(teamReg.city)},
+							teamReg.postcode && {postcode: encodeText(teamReg.postcode)},
+							teamReg.emergency_phone && {emergPhone: teamReg.emergency_phone},
+							Object.keys(contact).length && {contact: contact},
+							Object.keys(contact2).length && {contact2: contact2},
+							Object.keys(finance).length && {finance: finance},
+							students && {minStudents: parseInt(students[1]), maxStudents: (parseInt(students[2] ? students[2] : students[1]) || '+')},
+							teamReg.special_needs && {specialNeeds: teamReg.special_needs},
+							teamReg.sponsor && {sponsor: teamReg.sponsor},
+							teamReg.other_programs && teamReg.other_programs[0] && {progs: teamReg.other_programs},
+							teamReg.about_team && {aboutTeam: teamReg.about_team},
+							teamReg.about_sponsor && {aboutSponsor: teamReg.about_sponsor},
+							teamReg.about_season && {aboutSeason: teamReg.about_season},
+							teamReg.reason && {reason: teamReg.reason},
+							teamReg.cad_software && teamReg.cad_software[0] && {cad: teamReg.cad_software},
+							teamReg.cnt_students_male !== null && {males: teamReg.cnt_students_male},
+							teamReg.cnt_students_female !== null && {females: teamReg.cnt_students_female},
+							teamReg.cnt_teachers !== null && {teachers: teamReg.cnt_teachers},
+							teamReg.cnt_mentors !== null && {mentors: teamReg.cnt_mentors},
+							teamReg.team_experience && {exp: parseInt(teamReg.team_experience) || 0},
+							teamReg.prior_competition && {rookie: teamReg.prior_competition === 0},
+							teamReg.genders && {genders: encodeGenders(teamReg.genders)});
+					} else {
+						console.log(`Team list missing skills team ${dbinfo.decodeProgram(_id.prog)} ${_id.id}`);
 					}
 				}
 			});
@@ -459,6 +459,14 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 					} else {
 						res = await db.collection('matches').findOneAndUpdate({_id: match._id}, {$set: match, $unset: unset}, {upsert: true});
 					}
+					const old = res.value;
+					let oldScored = false;
+					if (old) {
+						oldScored = old.hasOwnProperty('redScore');
+						if (oldScored && scored && match.redScore === old.redScore && match.blueScore === old.blueScore) {
+							continue;
+						}
+					}
 					const alliancesMatrix = [];
 					const scoresVector = [];
 					const prevMatches = matches.slice(0, i - 1);
@@ -519,7 +527,6 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 							// Can't calculate OPRs yet (not enough matches scored).
 						}
 					}
-					const old = res.value;
 					if (!old) {
 						await sendMatchEmbed(`New match ${change}`, match, reactions);
 						console.log(createMatchEmbed(match).fields);

@@ -38,12 +38,13 @@ const getTeamLocation = team => {
 
 const createTeamEmbed = team => {
 	const teamId = team._id.id;
+	const program = decodeProgram(team._id.prog);
 	const season = team._id.season;
 	const location = getTeamLocation(team);
 	const embed = new Discord.MessageEmbed()
 		.setColor('GREEN')
-		.setAuthor(teamId, null, `https://vexdb.io/teams/view/${teamId}`)
-		.setTitle(`${decodeProgram(team._id.prog)} ${decodeSeason(season)}`)
+		.setAuthor(teamId, null, `https://www.robotevents.com/teams/${program}/${teamId}`)
+		.setTitle(`${program} ${decodeSeason(season)}`)
 		.setURL(decodeSeasonUrl(season));
 	if (team.name) {
 		embed.addField('Team Name', team.name, true);
@@ -77,13 +78,23 @@ const createEventEmbed = event => {
 	return embed;
 };
 
-const maskedTeamUrl = teamId => `[${teamId}](https://vexdb.io/teams/view/${teamId})`;
+const maskedTeamUrl = (program, teamId) => `[${teamId}](https://robotevents.com/teams/${program}/${teamId})`;
 
 const createMatchString = (round, instance, number) => `${decodeRound(round)}${round < 3 || round > 8 ? '' : ` ${instance}-`}${number}`;
 
-const createTeamsString = (teams, teamSit, scored) => {
+const createTeamsString = (prog, teams, teamSit, scored) => {
 	teams = teams.filter(team => team);
-	return teams.map(team => scored ? ((teams.length > 2 && team === teamSit) ? `*${maskedTeamUrl(team)}*` : `**${maskedTeamUrl(team)}**`) : maskedTeamUrl(team)).join(' ');
+	return teams.map(team => {
+		const program = (isNaN(team.charAt(0)) ? 4 : prog);
+		const teamLink = maskedTeamUrl(program, team);
+		if (!scored) {
+			return teamLink;
+		}
+		if (teams.length > 2 && team === teamSit) {
+			return `*${teamLink}*`;
+		}
+		return `**${teamLink}**`;
+	}).join(' ');
 };
 
 const matchScheduledEmojis = ['🔴', '🔵'];
@@ -126,10 +137,10 @@ const createMatchEmbed = match => {
 		.setColor(color)
 		.setAuthor(match._id.event.name, null, `https://robotevents.com/${match._id.event._id}.html`)
 		.setTitle(match._id.division)
-		.setURL(`https://robotevents.com/${match._id.event._id}.html`)
+		.setURL(`https://robotevents.com/${match._id.event._id}.html#tab-results`)
 		.setDescription(createMatchString(match._id.round, match._id.instance, match._id.number))
-		.addField(red, createTeamsString([match.red, match.red2, match.red3], match.redSit), true)
-		.addField(blue, createTeamsString([match.blue, match.blue2, match.blue3], match.blueSit), true);
+		.addField(red, createTeamsString(match.prog, [match.red, match.red2, match.red3], match.redSit), true)
+		.addField(blue, createTeamsString(match.prog, [match.blue, match.blue2, match.blue3], match.blueSit), true);
 	if (match.hasOwnProperty('start')) {
 		embed.setTimestamp(new Date(match.start));
 	}
@@ -145,16 +156,17 @@ const createAwardEmbed = async award => {
 		if (event._id === award._id.event) {
 			eventName = event.name;
 		} else {
-			award.qualifies[award.qualifies.indexOf(event._id)] = `[${event.name}](https://vexdb.io/events/view/${event._id})`;
+			award.qualifies[award.qualifies.indexOf(event._id)] = `[${event.name}](https://robotevents.com/${event._id}.html)`;
 		}
 	});
+	const program = decodeProgram(award.team.prog);
 	const embed = new Discord.MessageEmbed()
 		.setColor('PURPLE')
 		.setAuthor(eventName)
 		.setTitle(award._id.name)
-		.setURL(`https://vexdb.io/events/view/${award._id.event}?t=awards`);
+		.setURL(`https://robotevents.com/${award._id.event}#tab-awards`);
 	if (award.team) {
-		embed.addField('Team', `[${decodeProgram(award.team.prog)} ${award.team.id}](https://vexdb.io/teams/view/${award.team.id})`, true);
+		embed.addField('Team', `[${program} ${award.team.id}](https://robotevents.com/teams/${program}/${award.team.id})`, true);
 	}
 	if (award.qualifies) {
 		embed.addField('Qualifies for', award.qualifies.join('\n'), true);
@@ -166,11 +178,12 @@ const createSkillsEmbed = async skill => {
 	let embed;
 	try {
 		const event = await db.collection('events').findOne({_id: skill._id.event});
+		const program = decodeProgram(skill.team.prog);
 		embed = new Discord.MessageEmbed()
 			.setColor('GOLD')
-			.setAuthor(event.name, null, `https://vexdb.io/events/view/${event._id}?t=skills`)
-			.setTitle(`${decodeProgram(skill.team.prog)} ${skill.team.id}`)
-			.setURL(`https://vexdb.io/teams/view/${skill.team.id}?t=skills`)
+			.setAuthor(event.name, null, `https://robotevents.com/${event._id}.html#tab-results`)
+			.setTitle(`${program} ${skill.team.id}`)
+			.setURL(`https://robotevents.com/teams/${program}/${skill.team.id}`)
 			.addField('Type', decodeSkill(skill._id.type), true)
 			.addField('Rank', skill.rank, true)
 			.addField('Score', skill.score, true)
@@ -236,7 +249,8 @@ const sendToSubscribedChannels = async (content, options, teams, reactions = [])
 
 const escapeMarkdown = string => string ? string.replace(/([*^_`~])/g, '\\$1') : '';
 
-const createTeamChangeEmbed = (program, teamId, field, oldValue, newValue) => {
+const createTeamChangeEmbed = (prog, teamId, field, oldValue, newValue) => {
+	const program = decodeProgram(prog);
 	let change;
 	if (!oldValue) {
 		change = `added their ${field} **"**${escapeMarkdown(he.decode(newValue))}**"**`;
@@ -247,7 +261,7 @@ const createTeamChangeEmbed = (program, teamId, field, oldValue, newValue) => {
 	}
 	return new Discord.MessageEmbed()
 		.setColor('GREEN')
-		.setDescription(`[${decodeProgram(program)} ${teamId}](https://vexdb.io/teams/view/${teamId}) ${change}.`);
+		.setDescription(`[${program} ${teamId}](https://robotevents.com/teams/${program}/${teamId}) ${change}.`);
 };
 
 module.exports = {

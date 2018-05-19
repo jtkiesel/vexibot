@@ -119,7 +119,7 @@ const currentEventsJob = new CronJob('00 */2 * * * *', updateCurrentEvents, null
 
 const update = () => {
 	updateCurrentEvents();
-	//events.updateEvent(1, 115, 'RE-VRC-16-1790');
+	//events.updateEvent(1, 119, 'RE-VRC-17-3805');
 	//updateTeams();
 	//updateEvents();
 	//updateMaxSkills();

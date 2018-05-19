@@ -28,13 +28,14 @@ module.exports = async (message, args) => {
 				try {
 					const maxSkill = await db.collection('maxSkills').findOne({'_id.season': season, 'team.id': teamId});
 					if (maxSkill) {
+						const program = decodeProgram(maxSkill.team.prog);
 						let rank = maxSkill._id.rank;
 						rank = (rank <= 3) ? rankEmojis[rank - 1] : rank;
 
 						const embed = new Discord.MessageEmbed()
 							.setColor('GOLD')
-							.setAuthor(teamId, null, `https://vexdb.io/teams/view/${teamId}?t=skills`)
-							.setTitle(`${decodeProgram(maxSkill.team.prog)} ${decodeSeason(season)}`)
+							.setAuthor(teamId, null, `https://robotevents.com/teams/${program}/${teamId}`)
+							.setTitle(`${program} ${decodeSeason(season)}`)
 							.setURL(decodeSeasonUrl(season))
 							.addField(`${decodeGrade(maxSkill._id.grade)} Rank`, rank, true)
 							.addField('Score', maxSkill.score, true)
