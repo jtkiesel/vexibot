@@ -213,7 +213,7 @@ const subscribedChannels = [
 	//'329477820076130306'  // Dev server.
 ];
 
-const sendToSubscribedChannels = async (content, options, teams, reactions = []) => {
+const sendToSubscribedChannels = async (content, options, teams = [], reactions = []) => {
 	subscribedChannels.forEach(async id => {
 		const channel = client.channels.get(id);
 		if (channel) {

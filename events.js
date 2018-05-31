@@ -558,8 +558,6 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 			const old = res.value;
 			if (!old) {
 				try {
-					console.log('New event');
-					console.log(createEventEmbed(event).fields);
 					await sendToSubscribedChannels('New event', {embed: createEventEmbed(event)});
 					console.log(createEventEmbed(event).fields);
 				} catch (err) {
