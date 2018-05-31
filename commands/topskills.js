@@ -42,17 +42,17 @@ module.exports = async (message, args) => {
 	if (['h', 'hs', 'high', 'highschool'].includes(grade)) {
 		program = 'VRC';
 		grade = 'High School';
-		season = 119;
+		season = 125;
 		limit = 35;
 	} else if (['m', 'ms', 'mid', 'middle', 'middleschool'].includes(grade)) {
 		program = 'VRC';
 		grade = 'Middle School';
-		season = 119;
+		season = 125;
 		limit = 15;
 	} else if (['c', 'u', 'college', 'uni', 'university', 'vexu'].includes(grade)) {
 		program = 'VEXU';
 		grade = 'College';
-		season = 120;
+		season = 126;
 		limit = 5;
 	} else {
 		message.reply('please enter a valid grade, such as **h**, **m**, or **c**.');
@@ -117,7 +117,7 @@ module.exports = async (message, args) => {
 				console.log(err);
 			}
 		} else {
-			message.reply(`no skills scores available for ${program} ${grade} In the Zone.`);
+			message.reply(`no skills scores available for ${program} ${grade} ${decodeSeason(season)}.`);
 		}
 	} catch (err) {
 		console.error(err);

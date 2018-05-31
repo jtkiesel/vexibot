@@ -92,7 +92,7 @@ client.on('message', message => {
 MongoClient.connect(mongodbUri, mongodbOptions).then(mongoClient => {
 	db = mongoClient.db(mongodbUri.match(/\/([^/]+)$/)[1]);
 	module.exports.db = db;
-	
+
 	Object.keys(commandInfo).forEach(name => commands[name] = require('./commands/' + name));
 	Object.entries(commandInfo).forEach(([name, desc]) => helpDescription += `\n\`${prefix}${name}\`: ${desc}`);
 

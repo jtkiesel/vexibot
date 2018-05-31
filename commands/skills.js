@@ -23,7 +23,7 @@ module.exports = async (message, args) => {
 			let team = await getTeam(teamId);
 			team = team[0];
 			if (team) {
-				const season = isNaN(teamId.charAt(0)) ? 120 : 119;
+				const season = isNaN(teamId.charAt(0)) ? 126 : 125;
 				teamId = team._id.id;
 				try {
 					const maxSkill = await db.collection('maxSkills').findOne({'_id.season': season, 'team.id': teamId});

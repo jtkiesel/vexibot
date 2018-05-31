@@ -69,6 +69,7 @@ const createEventEmbed = event => {
 		.setColor('ORANGE')
 		.setAuthor(event.name, null, `https://robotevents.com/${event._id}.html`)
 		.setTitle(`${event.tsa ? 'TSA ' : ''}${decodeProgram(event.prog)} ${decodeSeason(event.season)}`)
+		.setURL(decodeSeasonUrl(event.season))
 		.setDescription(event.type)
 		.setTimestamp(new Date(event.start))
 		.addField('Capacity', `${event.size}/${event.capacity}`)

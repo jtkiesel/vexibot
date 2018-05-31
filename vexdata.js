@@ -28,8 +28,8 @@ const sleep = milliseconds => new Promise(resolve => setTimeout(resolve, millise
 const encodeText = value => he.decode(value.trim().replace(/\s\s*/g, ' '));
 
 const updateTeams = async () => {
-	await updateTeamsForSeason(1, 119);
-	await updateTeamsForSeason(4, 120);
+	await updateTeamsForSeason(1, 125);
+	await updateTeamsForSeason(4, 126);
 };
 
 const updateAllTeams = async () => {
@@ -47,8 +47,8 @@ const updateAllTeams = async () => {
 };
 
 const updateEvents = async () => {
-	await updateEventsForSeason(1, 119);
-	await updateEventsForSeason(4, 120);
+	await updateEventsForSeason(1, 125);
+	await updateEventsForSeason(4, 126);
 };
 
 const updateAllEvents = async () => {
@@ -77,9 +77,9 @@ const updateExistingEvents = async () => {
 };
 
 const updateMaxSkills = async () => {
-	await updateMaxSkillsForSeason(1, 119, 2);
-	await updateMaxSkillsForSeason(1, 119, 3);
-	await updateMaxSkillsForSeason(4, 120, 4);
+	await updateMaxSkillsForSeason(1, 125, 2);
+	await updateMaxSkillsForSeason(1, 125, 3);
+	await updateMaxSkillsForSeason(4, 126, 4);
 };
 
 const updateAllMaxSkills = async () => {
@@ -118,11 +118,11 @@ const skillsJob = new CronJob('00 20 08 * * *', updateMaxSkills, null, true, tim
 const currentEventsJob = new CronJob('00 */2 * * * *', updateCurrentEvents, null, true, timezone);
 
 const update = () => {
-	updateCurrentEvents();
+	//updateCurrentEvents();
 	//events.updateEvent(1, 119, 'RE-VRC-17-3805');
-	//updateTeams();
-	//updateEvents();
-	//updateMaxSkills();
+	updateTeams();
+	updateEvents();
+	updateMaxSkills();
 };
 
 const updateTeamsInGroup = async (program, season, teamGroup, timeout = 1000) => {

@@ -25,7 +25,8 @@ const seasonToId = {
 	'Skyrise': 102,
 	'Nothing But Net': 110,
 	'Starstruck': 115,
-	'In the Zone': 119
+	'In the Zone': 119,
+	'Turning Point': 125
 };
 
 const idToSeason = {
@@ -55,7 +56,10 @@ const idToSeason = {
 	'116': 'Starstruck',
 	'119': 'In the Zone',
 	'120': 'In the Zone',
-	'121': 'Ringmaster'
+	'121': 'Ringmaster',
+	'124': 'Next Level',
+	'125': 'Turning Point',
+	'126': 'Turning Point'
 };
 
 const idToSeasonUrl = {
@@ -83,9 +87,12 @@ const idToSeasonUrl = {
 	'114': 'https://roboticseducation.org/viqc-crossover',
 	'115': 'https://roboticseducation.org/vrc-history-2016-2017-starstruck',
 	'116': 'https://roboticseducation.org/vrc-history-2016-2017-starstruck',
-	'119': 'https://vexrobotics.com/vexedr/competition/vrc-current-game',
-	'120': 'https://vexrobotics.com/vexedr/competition/vrc-current-game',
-	'121': 'https://vexrobotics.com/vexiq/competition/viqc-current-game'
+	'119': 'https://roboticseducation.org/vrc-history-2017-2018-in-the-zone',
+	'120': 'https://roboticseducation.org/vrc-history-2017-2018-in-the-zone',
+	'121': 'https://roboticseducation.org/vex-iq-challenge-history-2017-2018-ringmaster',
+	'124': 'https://vexrobotics.com/vexiq/competition/viqc-current-game',
+	'125': 'https://vexrobotics.com/vexedr/competition/vrc-current-game',
+	'126': 'https://vexrobotics.com/vexedr/competition/vrc-current-game'
 };
 
 const grades = [
