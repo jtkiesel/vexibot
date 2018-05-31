@@ -138,7 +138,7 @@ const updateTeamsInGroup = async (program, season, teamGroup, timeout = 1000) =>
 				const old = result.value;
 				if (!old) {
 					try {
-						if ((await getTeam(teamId)).length !== 1) {
+						if ((await getTeam(teamId)).length === 1) {
 							await sendToSubscribedChannels('New team registered', {embed: createTeamEmbed(team)}, [team._id]);
 						}
 						console.log(createTeamEmbed(team).fields);
