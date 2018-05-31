@@ -70,7 +70,7 @@ const createEventEmbed = event => {
 		.setAuthor(event.name, null, `https://robotevents.com/${event._id}.html`)
 		.setTitle(`${event.tsa ? 'TSA ' : ''}${decodeProgram(event.prog)} ${decodeSeason(event.season)}`)
 		.setDescription(event.type)
-		.setTimestamp(event.start)
+		.setTimestamp(new Date(event.start))
 		.addField('Capacity', `${event.size}/${event.capacity}`)
 		.addField('Price', `$${parseFloat(event.cost / 100).toFixed(2)}`)
 		.addField('Grade', decodeGrade(event.grade))
