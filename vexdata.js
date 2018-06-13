@@ -120,9 +120,9 @@ const currentEventsJob = new CronJob('00 */2 * * * *', updateCurrentEvents, null
 const update = () => {
 	//updateCurrentEvents();
 	//events.updateEvent(1, 119, 'RE-VRC-17-3805');
-	updateTeams();
+	//updateTeams();
 	updateEvents();
-	updateMaxSkills();
+	//updateMaxSkills();
 };
 
 const updateTeamsInGroup = async (program, season, teamGroup, timeout = 1000) => {
@@ -130,7 +130,7 @@ const updateTeamsInGroup = async (program, season, teamGroup, timeout = 1000) =>
 	const lat = teamGroup.position.lat;
 	const lng = teamGroup.position.lng;
 	try {
-		let teams = await request.post({url: url, form: {when: 'past', programs: [program], season_id: season, lat: lat, lng: lng}, json: true});
+		let teams = await request.post({url: url, form: {programs: [program], when: 'past', season_id: season, lat: lat, lng: lng}, json: true});
 		teams.map(team => formatTeam(program, season, lat, lng, team)).forEach(async team => {
 			try {
 				const teamId = team._id.id;
@@ -191,7 +191,8 @@ const updateTeamsInGroup = async (program, season, teamGroup, timeout = 1000) =>
 const updateEventsForSeason = async (program, season) => {
 	const url = 'https://www.robotevents.com/api/events';
 	try {
-		let eventsData = await request.post({url: url, form: {when: 'past', season_id: season}, json: true});
+		let eventsData = await request.post({url: url, form: {programs: [program], when: 'past', season_id: season}, json: true});
+		eventsData = eventsData.concat(await request.post({url: url, form: {programs: [program], when: 'future', season_id: season}, json: true}));
 		eventsData = eventsData.data.filter((event, i, self) => self.findIndex(e => e.sku === event.sku) === i).map(formatEvent);
 		for (let event of eventsData) {
 			try {
@@ -215,7 +216,7 @@ const updateEventsForSeason = async (program, season) => {
 const updateTeamsForSeason = async (program, season) => {
 	const url = 'https://www.robotevents.com/api/teams/latLngGrp';
 	try {
-		const teamGroups = await request.post({url: url, form: {when: 'past', programs: [program], season_id: season}, json: true});
+		const teamGroups = await request.post({url: url, form: {programs: [program], when: 'past', season_id: season}, json: true});
 		for (let teamGroup of teamGroups) {
 			await updateTeamsInGroup(program, season, teamGroup);
 		}
@@ -438,7 +439,7 @@ module.exports = {
 	updateEvents: updateEvents,
 	updateAllTeams: updateAllTeams,
 	updateAllEvents: updateAllEvents,
-	updateExistingEvents,
+	updateExistingEvents: updateExistingEvents,
 	updateAllMaxSkills: updateAllMaxSkills,
 	updateTeamsForSeason: updateTeamsForSeason,
 	updateEventsForSeason: updateEventsForSeason,
