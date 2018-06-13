@@ -121,7 +121,7 @@ const update = () => {
 	//updateCurrentEvents();
 	//events.updateEvent(1, 119, 'RE-VRC-17-3805');
 	//updateTeams();
-	updateEvents();
+	//updateEvents();
 	//updateMaxSkills();
 };
 
