@@ -34,7 +34,7 @@ const guessSeason = async (prog, date) => {
 	if (date < seasonEnd) {
 		year--;
 	}
-	const season = await db.collection('seasons').findOne({prog: prog, years: new RegExp(`^${year}`)});
+	const season = await db.collection('seasons').findOne({prog: prog, start: year});
 	return season ? season._id : 0;
 };
 
