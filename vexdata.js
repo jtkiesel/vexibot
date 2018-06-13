@@ -191,9 +191,9 @@ const updateTeamsInGroup = async (program, season, teamGroup, timeout = 1000) =>
 const updateEventsForSeason = async (program, season) => {
 	const url = 'https://www.robotevents.com/api/events';
 	try {
-		let eventsData = await request.post({url: url, form: {programs: [program], when: 'past', season_id: season}, json: true});
-		eventsData = eventsData.concat(await request.post({url: url, form: {programs: [program], when: 'future', season_id: season}, json: true}));
-		eventsData = eventsData.data.filter((event, i, self) => self.findIndex(e => e.sku === event.sku) === i).map(formatEvent);
+		let eventsData = (await request.post({url: url, form: {programs: [program], when: 'past', season_id: season}, json: true})).data;
+		eventsData = eventsData.concat((await request.post({url: url, form: {programs: [program], when: 'future', season_id: season}, json: true})).data);
+		eventsData = eventsData.filter((event, i, self) => self.findIndex(e => e.sku === event.sku) === i).map(formatEvent);
 		for (let event of eventsData) {
 			try {
 				const result = await db.collection('events').findOneAndUpdate({_id: event._id}, {$set: event}, {upsert: true});
