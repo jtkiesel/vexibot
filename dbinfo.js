@@ -14,6 +14,13 @@ const idToProgram = {
 	41: 'VIQC'
 };
 
+const idToProgramEmoji = {
+	1: '<:vrc:463918918529187840>',
+	4: '<:vexu:463918957217185792>',
+	37: '<:create:463927506286805003>',
+	41: '<:viqc:463918990134214658>'
+}
+
 const seasonToId = {
 	'Bridge Battle': -4,
 	'Elevation': -3,
@@ -146,6 +153,10 @@ const seasons = Object.keys(idToSeason).map(season => parseInt(season));
 
 const seasonToVexu = season => season === -4 ? null : seasons[seasons.indexOf(season) + 1];
 
+const decodeProgramEmoji = id => idToProgramEmoji[id];
+
+const emojiToUrl = emoji => `https://cdn.discordapp.com/emojis/${emoji.match(/([0-9]+)(?!.*[0-9])/)[1]}.png`;
+
 module.exports = {
 	programToId: programToId,
 	idToProgram: idToProgram,
@@ -164,5 +175,7 @@ module.exports = {
 	encodeSkill: encodeSkill,
 	decodeSkill: decodeSkill,
 	roundIndex: roundIndex,
-	seasonToVexu: seasonToVexu
+	seasonToVexu: seasonToVexu,
+	decodeProgramEmoji: decodeProgramEmoji,
+	emojiToUrl: emojiToUrl
 };

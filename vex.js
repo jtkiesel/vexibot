@@ -43,8 +43,8 @@ const createTeamEmbed = team => {
 	const location = getTeamLocation(team);
 	const embed = new Discord.MessageEmbed()
 		.setColor('GREEN')
-		.setAuthor(teamId, null, `https://www.robotevents.com/teams/${program}/${teamId}`)
-		.setTitle(`${program} ${decodeSeason(season)}`)
+		.setAuthor(teamId, dbinfo.emojiToUrl(dbinfo.decodeProgramEmoji(team._id.prog)), `https://www.robotevents.com/teams/${program}/${teamId}`)
+		.setTitle(/*`${dbinfo.idToSeasonEmoji[team._id.season]}*/`${decodeSeason(season)}`)
 		.setURL(decodeSeasonUrl(season));
 	if (team.name) {
 		embed.addField('Team Name', team.name, true);
@@ -67,7 +67,7 @@ const createTeamEmbed = team => {
 const createEventEmbed = event => {
 	const embed = new Discord.MessageEmbed()
 		.setColor('ORANGE')
-		.setAuthor(event.name, null, `https://robotevents.com/${event._id}.html`)
+		.setAuthor(event.name, dbinfo.emojiToUrl(dbinfo.decodeProgramEmoji(event.prog)), `https://robotevents.com/${event._id}.html`)
 		.setTitle(`${event.tsa ? 'TSA ' : ''}${decodeProgram(event.prog)} ${decodeSeason(event.season)}`)
 		.setURL(decodeSeasonUrl(event.season))
 		.setDescription(event.type)

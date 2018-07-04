@@ -10,7 +10,8 @@ const mongodbOptions = {
 	keepAlive: 1,
 	connectTimeoutMS: 30000,
 	reconnectTries: 30,
-	reconnectInterval: 5000
+	reconnectInterval: 5000,
+	useNewUrlParser: true
 };
 const prefix = '^';
 const commandInfo = {
