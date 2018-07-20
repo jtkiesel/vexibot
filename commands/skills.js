@@ -6,21 +6,14 @@ const dbinfo = require('../dbinfo');
 
 const db = app.db;
 const addFooter = app.addFooter;
-const getTeamId = vex.getTeamId;
-const validTeamId = vex.validTeamId;
-const getTeam = vex.getTeam;
-const decodeProgram = dbinfo.decodeProgram;
-const decodeSeason = dbinfo.decodeSeason;
-const decodeSeasonUrl = dbinfo.decodeSeasonUrl;
-const decodeGrade = dbinfo.decodeGrade;
 
 const rankEmojis = ['🥇', '🥈', '🥉'];
 
 module.exports = async (message, args) => {
-	let teamId = getTeamId(message, args);
-	if (validTeamId(teamId)) {
+	let teamId = vex.getTeamId(message, args);
+	if (vex.validTeamId(teamId)) {
 		try {
-			let team = await getTeam(teamId);
+			let team = await vex.getTeam(teamId);
 			team = team[0];
 			if (team) {
 				const season = isNaN(teamId.charAt(0)) ? 126 : 125;
@@ -28,16 +21,16 @@ module.exports = async (message, args) => {
 				try {
 					const maxSkill = await db.collection('maxSkills').findOne({'_id.season': season, 'team.id': teamId});
 					if (maxSkill) {
-						const program = decodeProgram(maxSkill.team.prog);
+						const program = dbinfo.decodeProgram(maxSkill.team.prog);
 						let rank = maxSkill._id.rank;
 						rank = (rank <= 3) ? rankEmojis[rank - 1] : rank;
 
 						const embed = new Discord.MessageEmbed()
 							.setColor('GOLD')
 							.setAuthor(teamId, null, `https://robotevents.com/teams/${program}/${teamId}`)
-							.setTitle(`${program} ${decodeSeason(season)}`)
-							.setURL(decodeSeasonUrl(season))
-							.addField(`${decodeGrade(maxSkill._id.grade)} Rank`, rank, true)
+							.setTitle(`${program} ${dbinfo.decodeSeason(season)}`)
+							.setURL(dbinfo.decodeSeasonUrl(season))
+							.addField(`${dbinfo.decodeGrade(maxSkill._id.grade)} Rank`, rank, true)
 							.addField('Score', maxSkill.score, true)
 							.addField('Programming', maxSkill.prog, true)
 							.addField('Driver', maxSkill.driver, true)

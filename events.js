@@ -7,23 +7,6 @@ const vex = require('./vex');
 const dbinfo = require('./dbinfo');
 
 const db = app.db;
-const validTeamId = vex.validTeamId;
-const getTeam = vex.getTeam;
-const getTeamLocation = vex.getTeamLocation;
-const createTeamEmbed = vex.createTeamEmbed;
-const createTeamChangeEmbed = vex.createTeamChangeEmbed;
-const createEventEmbed = vex.createEventEmbed;
-const createMatchEmbed = vex.createMatchEmbed;
-const createSkillsEmbed = vex.createSkillsEmbed;
-const createAwardEmbed = vex.createAwardEmbed;
-const sendToSubscribedChannels = vex.sendToSubscribedChannels;
-const sendMatchEmbed = vex.sendMatchEmbed;
-const encodeProgram = dbinfo.encodeProgram;
-const encodeGrade = dbinfo.encodeGrade;
-const encodeSkill = dbinfo.encodeSkill;
-const decodeSkill = dbinfo.decodeSkill;
-const roundIndex = dbinfo.roundIndex;
-const seasonToVexu = dbinfo.seasonToVexu;
 
 const sleep = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
 
@@ -90,10 +73,10 @@ const getEvent = (result, sku) => {
 		end: encodeDate(totalDates[2] ? totalDates[2] : totalDates[1]) + 86399999,
 		dates: dates,
 		type: type[1],
-		size: parseInt(capacity[1]),
-		capacity: parseInt(capacity[2]),
+		size: parseInt(capacity[1]) || 0,
+		capacity: parseInt(capacity[2]) || 0,
 		cost: (!cost || cost[1].toLowerCase() === 'free') ? 0 : Math.round(parseFloat(cost[1]) * 100),
-		grade: encodeGrade(grade ? grade[1] : 'All'),
+		grade: dbinfo.encodeGrade(grade ? grade[1] : 'All'),
 		skills: encodeBoolean(skills[1]),
 		tsa: encodeBoolean(tsa[1])
 	},
@@ -130,7 +113,7 @@ const formatMatch = (match, event, division) => {
 const formatRanking = (ranking, event, division, prog, season) => {
 	if (prog == 1 && isNaN(ranking.teamnum.charAt(0))) {
 		prog = 4;
-		season = seasonToVexu(season);
+		season = dbinfo.seasonToVexu(season);
 	}
 	return Object.assign({
 		_id: {
@@ -160,7 +143,7 @@ const formatRanking = (ranking, event, division, prog, season) => {
 const matchCompare = (a, b) => {
 	a = a._id;
 	b = b._id;
-	let sort = roundIndex(a.round) - roundIndex(b.round);
+	let sort = dbinfo.roundIndex(a.round) - dbinfo.roundIndex(b.round);
 	if (sort) {
 		return sort;
 	}
@@ -180,13 +163,13 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 
 		if (foundSeason) {
 			season = parseInt(foundSeason[1]);
-			console.log(`Found season for ${sku}: ${season}`);
+			console.log(`Found season for ${sku}: ${dbinfo.decodeSeason(season)}`);
 		}
 		if (!season) {
 			season = guessedSeason;
-			console.log(`Guessed season for ${sku}: ${season}`);
+			console.log(`Guessed season for ${sku}: ${dbinfo.decodeSeason(season)}`);
 		} else if (season !== guessedSeason) {
-			console.log(`***WARNING***: ${sku} HAS DIFFERENT SEASON (${season}) THAN GUESSED SEASON ${guessedSeason}!!`);
+			console.log(`***WARNING***: ${sku} HAS DIFFERENT SEASON (${dbinfo.decodeSeason(season)}) THAN GUESSED SEASON (${dbinfo.decodeSeason(guessedSeason)})!`);
 		}
 		event.prog = prog;
 		event.season = season;
@@ -203,7 +186,7 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 			let teamProg, teamSeason;
 			if (prog === 1 && isNaN(id.charAt(0))) {
 				teamProg = 4;
-				teamSeason = seasonToVexu(season);
+				teamSeason = dbinfo.seasonToVexu(season);
 			} else {
 				teamProg = prog;
 				teamSeason = season;
@@ -214,7 +197,7 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 				city && {city: encodeText(city)},
 				region && {region: encodeText(region)},
 				country && {country: encodeText(country)},
-				teamProg === encodeProgram('VEXU') && {grade: encodeGrade('College')}));
+				teamProg === dbinfo.encodeProgram('VEXU') && {grade: dbinfo.encodeGrade('College')}));
 		}
 		const awardsRegex = /<tr>\s*<td>\s*([^<>]+?)\s*<\/td>\s*<td>\s*((?:[0-9]{1,5}[A-Z]?)|(?:[A-Z]{2,6}[0-9]{0,2}))\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<td>\s*(.+?)\s*<\/td>\s*<\/tr>/gi;
 		const awards = [];
@@ -226,7 +209,7 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 			let teamProg, teamSeason;
 			if (prog === 1 && isNaN(id.charAt(0))) {
 				teamProg = 4;
-				teamSeason = seasonToVexu(season);
+				teamSeason = dbinfo.seasonToVexu(season);
 			} else {
 				teamProg = prog;
 				teamSeason = season;
@@ -293,7 +276,7 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 					let teamProg, teamSeason;
 					if (prog === 1 && isNaN(teamId.charAt(0))) {
 						teamProg = 4;
-						teamSeason = seasonToVexu(season);
+						teamSeason = dbinfo.seasonToVexu(season);
 					} else {
 						teamProg = prog;
 						teamSeason = season;
@@ -305,7 +288,7 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 				skills.push({
 					_id: {
 						event: sku,
-						type: encodeSkill(skillData.type),
+						type: dbinfo.encodeSkill(skillData.type),
 						index: i
 					},
 					rank: skillData.rank,
@@ -555,19 +538,19 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 						}
 					}
 					if (!old) {
-						await sendMatchEmbed(`New match ${change}`, match, reactions);
-						console.log(createMatchEmbed(match).fields);
+						await vex.sendMatchEmbed(`New match ${change}`, match, reactions);
+						console.log(vex.createMatchEmbed(match).fields);
 					} else {
 						const oldScored = old.hasOwnProperty('redScore');
 						if (!oldScored && scored) {
-							await sendMatchEmbed('Match scored', match, reactions);
-							console.log(createMatchEmbed(match).fields);
+							await vex.sendMatchEmbed('Match scored', match, reactions);
+							console.log(vex.createMatchEmbed(match).fields);
 						} else if (oldScored && !scored) {
-							await sendMatchEmbed('Match score removed', old, reactions);
-							console.log(createMatchEmbed(match).fields);
+							await vex.sendMatchEmbed('Match score removed', old, reactions);
+							console.log(vex.createMatchEmbed(match).fields);
 						} else if (match.redScore !== old.redScore || match.blueScore !== old.blueScore) {
-							await sendMatchEmbed('Match score changed', match, reactions);
-							console.log(createMatchEmbed(match).fields);
+							await vex.sendMatchEmbed('Match score changed', match, reactions);
+							console.log(vex.createMatchEmbed(match).fields);
 						}
 					}
 				} catch (err) {
@@ -585,8 +568,8 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 			const old = res.value;
 			if (!old) {
 				try {
-					await sendToSubscribedChannels('New event', {embed: createEventEmbed(event)});
-					console.log(createEventEmbed(event).fields);
+					await vex.sendToSubscribedChannels('New event', {embed: vex.createEventEmbed(event)});
+					console.log(vex.createEventEmbed(event).fields);
 				} catch (err) {
 					console.error(err);
 				}
@@ -602,10 +585,10 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 				const old = res.value;
 				if (!old) {
 					try {
-						if ((await getTeam(teamId)).length === 1) {
-							await sendToSubscribedChannels('New team registered', {embed: createTeamEmbed(team)}, [{prog: teamProg, id: teamId}]);
+						if ((await vex.getTeam(teamId)).length === 1) {
+							await vex.sendToSubscribedChannels('New team registered', {embed: vex.createTeamEmbed(team)}, [{prog: teamProg, id: teamId}]);
 						}
-						console.log(createTeamEmbed(team).fields);
+						console.log(vex.createTeamEmbed(team).fields);
 					} catch (err) {
 						console.error(err);
 					}
@@ -618,16 +601,16 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 						if (Object.keys(unset).length) {
 							try {
 								const res2 = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$unset: unset});
-								console.log(createTeamChangeEmbed(teamProg, teamId, 'location', getTeamLocation(old), getTeamLocation(team)).description);
+								console.log(vex.createTeamChangeEmbed(teamProg, teamId, 'location', vex.getTeamLocation(old), vex.getTeamLocation(team)).description);
 							} catch (err) {
 								console.error(err);
 							}
 						} else {
-							console.log(createTeamChangeEmbed(teamProg, teamId, 'location', getTeamLocation(old), getTeamLocation(team)).description);
+							console.log(vex.createTeamChangeEmbed(teamProg, teamId, 'location', vex.getTeamLocation(old), vex.getTeamLocation(team)).description);
 						}
 					}
 					if (team.name !== old.name) {
-						console.log(createTeamChangeEmbed(teamProg, teamId, 'team name', old.name, team.name).description);
+						console.log(vex.createTeamChangeEmbed(teamProg, teamId, 'team name', old.name, team.name).description);
 					}
 					if (team.hasOwnProperty('robot') && team.robot !== old.robot) {
 						if (!team.robot) {
@@ -637,7 +620,7 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 								console.error(err);
 							}
 						}
-						console.log(createTeamChangeEmbed(teamProg, teamId, 'robot name', old.robot, team.robot).description);
+						console.log(vex.createTeamChangeEmbed(teamProg, teamId, 'robot name', old.robot, team.robot).description);
 					}
 				}
 			} catch (err) {
@@ -649,8 +632,8 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 				const res = await db.collection('skills').findOneAndUpdate({_id: skill._id}, {$set: skill}, {upsert: true});
 				const old = res.value;
 				if (!old && skill.attempts !== 0 || old && skill.score !== old.score) {
-					const embed = await createSkillsEmbed(skill);
-					await sendToSubscribedChannels(`New ${decodeSkill(skill._id.type)} Skills score`, {embed: embed}, [skill._id.team]);
+					const embed = await vex.createSkillsEmbed(skill);
+					await vex.sendToSubscribedChannels(`New ${dbinfo.decodeSkill(skill._id.type)} Skills score`, {embed: embed}, [skill._id.team]);
 					console.log(embed.fields);
 				}
 			} catch (err) {
@@ -679,11 +662,11 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 						change = 'added';
 						teamArray = [];
 					}
-					const embed = await createAwardEmbed(award);
-					await sendToSubscribedChannels(`Award ${change}`, {embed: embed}, teamArray);
+					const embed = await vex.createAwardEmbed(award);
+					await vex.sendToSubscribedChannels(`Award ${change}`, {embed: embed}, teamArray);
 				} else if (!old.team && award.team) {
-					const embed = await createAwardEmbed(award);
-					await sendToSubscribedChannels('Award won', {embed: embed}, [{prog: award.team.prog, id: award.team.id}]);
+					const embed = await vex.createAwardEmbed(award);
+					await vex.sendToSubscribedChannels('Award won', {embed: embed}, [{prog: award.team.prog, id: award.team.id}]);
 				}
 			} catch (err) {
 				console.error(err);

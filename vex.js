@@ -6,12 +6,6 @@ const dbinfo = require('./dbinfo');
 
 const db = app.db;
 const client = app.client;
-const decodeProgram = dbinfo.decodeProgram;
-const decodeSeason = dbinfo.decodeSeason;
-const decodeSeasonUrl = dbinfo.decodeSeasonUrl;
-const decodeGrade = dbinfo.decodeGrade;
-const decodeRound = dbinfo.decodeRound;
-const decodeSkill = dbinfo.decodeSkill;
 
 const getTeamId = (message, args) => {
 	const arg = args.replace(/\s+/g, '');
@@ -38,14 +32,14 @@ const getTeamLocation = team => {
 
 const createTeamEmbed = team => {
 	const teamId = team._id.id;
-	const program = decodeProgram(team._id.prog);
+	const program = dbinfo.decodeProgram(team._id.prog);
 	const season = team._id.season;
 	const location = getTeamLocation(team);
 	const embed = new Discord.MessageEmbed()
 		.setColor('GREEN')
 		.setAuthor(teamId, dbinfo.emojiToUrl(dbinfo.decodeProgramEmoji(team._id.prog)), `https://www.robotevents.com/teams/${program}/${teamId}`)
-		.setTitle(/*`${dbinfo.idToSeasonEmoji[team._id.season]}*/`${decodeSeason(season)}`)
-		.setURL(decodeSeasonUrl(season));
+		.setTitle(dbinfo.decodeSeason(season))
+		.setURL(dbinfo.decodeSeasonUrl(season));
 	if (team.name) {
 		embed.addField('Team Name', team.name, true);
 	}
@@ -59,7 +53,7 @@ const createTeamEmbed = team => {
 		embed.addField('Location', location, true);
 	}
 	if (team.grade) {
-		embed.addField('Grade', decodeGrade(team.grade), true);
+		embed.addField('Grade', dbinfo.decodeGrade(team.grade), true);
 	}
 	return embed;
 };
@@ -68,20 +62,20 @@ const createEventEmbed = event => {
 	const embed = new Discord.MessageEmbed()
 		.setColor('ORANGE')
 		.setAuthor(event.name, dbinfo.emojiToUrl(dbinfo.decodeProgramEmoji(event.prog)), `https://robotevents.com/${event._id}.html`)
-		.setTitle(`${event.tsa ? 'TSA ' : ''}${decodeProgram(event.prog)} ${decodeSeason(event.season)}`)
-		.setURL(decodeSeasonUrl(event.season))
+		.setTitle(`${event.tsa ? 'TSA ' : ''}${dbinfo.decodeSeason(event.season)}`)
+		.setURL(dbinfo.decodeSeasonUrl(event.season))
 		.setDescription(event.type)
 		.setTimestamp(new Date(event.start))
-		.addField('Capacity', `${event.size}/${event.capacity}`)
-		.addField('Price', `$${parseFloat(event.cost / 100).toFixed(2)}`)
-		.addField('Grade', decodeGrade(event.grade))
-		.addField('Skills Offered?', event.skills ? 'Yes' : 'No');
+		.addField('Capacity', `${event.size}/${event.capacity}`, true)
+		.addField('Price', `$${parseFloat(event.cost / 100).toFixed(2)}`, true)
+		.addField('Grade', dbinfo.decodeGrade(event.grade), true)
+		.addField('Skills Offered?', event.skills ? 'Yes' : 'No', true);
 	return embed;
 };
 
-const maskedTeamUrl = (program, teamId) => `[${teamId}](https://robotevents.com/teams/${program}/${teamId})`;
+const maskedTeamUrl = (program, teamId) => `[${teamId}](https://robotevents.com/teams/${dbinfo.decodeProgram(program)}/${teamId})`;
 
-const createMatchString = (round, instance, number) => `${decodeRound(round)}${round < 3 || round > 8 ? '' : ` ${instance}-`}${number}`;
+const createMatchString = (round, instance, number) => `${dbinfo.decodeRound(round)}${round < 3 || round > 8 ? '' : ` ${instance}-`}${number}`;
 
 const createTeamsString = (prog, teams, teamSit, scored) => {
 	teams = teams.filter(team => team);
@@ -103,7 +97,7 @@ const matchScoredEmojis = ['👍', '👎'];
 
 const matchScoredNotification = match => {
 	const round = match._id.round;
-	const matchString = `${decodeRound(round)}${round < 3 || round > 8 ? '' : `${match._id.instance}-`}${match._id.number}`;
+	const matchString = `${dbinfo.decodeRound(round)}${round < 3 || round > 8 ? '' : `${match._id.instance}-`}${match._id.number}`;
 	const redTeams = [match.red, match.red2, match.red3].filter(team => team && team !== match.redSit);
 	const blueTeams = [match.blue, match.blue2, match.blue3].filter(team => team && team !== match.blueSit);
 	return `${matchString}:**${redTeams[0]}**${redTeams[1] ? redTeams[1] : ''}${matchScheduledEmojis[0]}${match.redScore}-${match.blueScore}${matchScheduledEmojis[1]}${blueTeams[1] ? blueTeams[1] : ''}**${blueTeams[0]}**`
@@ -160,14 +154,13 @@ const createAwardEmbed = async award => {
 			award.qualifies[award.qualifies.indexOf(event._id)] = `[${event.name}](https://robotevents.com/${event._id}.html)`;
 		}
 	});
-	const program = decodeProgram(award.team.prog);
 	const embed = new Discord.MessageEmbed()
 		.setColor('PURPLE')
 		.setAuthor(eventName)
 		.setTitle(award._id.name)
 		.setURL(`https://robotevents.com/${award._id.event}#tab-awards`);
 	if (award.team) {
-		embed.addField('Team', `[${program} ${award.team.id}](https://robotevents.com/teams/${program}/${award.team.id})`, true);
+		embed.addField('Team', `[${dbinfo.decodeProgramEmoji(award.team.prog)} ${award.team.id}](https://robotevents.com/teams/${dbinfo.decodeProgram(award.team.prog)}/${award.team.id})`, true);
 	}
 	if (award.qualifies) {
 		embed.addField('Qualifies for', award.qualifies.join('\n'), true);
@@ -179,13 +172,13 @@ const createSkillsEmbed = async skill => {
 	let embed;
 	try {
 		const event = await db.collection('events').findOne({_id: skill._id.event});
-		const program = decodeProgram(skill.team.prog);
+		const program = dbinfo.decodeProgram(skill.team.prog);
 		embed = new Discord.MessageEmbed()
 			.setColor('GOLD')
 			.setAuthor(event.name, null, `https://robotevents.com/${event._id}.html#tab-results`)
 			.setTitle(`${program} ${skill.team.id}`)
 			.setURL(`https://robotevents.com/teams/${program}/${skill.team.id}`)
-			.addField('Type', decodeSkill(skill._id.type), true)
+			.addField('Type', dbinfo.decodeSkill(skill._id.type), true)
 			.addField('Rank', skill.rank, true)
 			.addField('Score', skill.score, true)
 			.addField('Attempts', skill.attempts, true);
@@ -251,7 +244,7 @@ const sendToSubscribedChannels = async (content, options, teams = [], reactions 
 const escapeMarkdown = string => string ? string.replace(/([*^_`~])/g, '\\$1') : '';
 
 const createTeamChangeEmbed = (prog, teamId, field, oldValue, newValue) => {
-	const program = decodeProgram(prog);
+	const program = dbinfo.decodeProgram(prog);
 	let change;
 	if (!oldValue) {
 		change = `added their ${field} **"**${escapeMarkdown(he.decode(newValue))}**"**`;

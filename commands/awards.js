@@ -7,12 +7,6 @@ const dbinfo = require('../dbinfo');
 
 const db = app.db;
 const addFooter = app.addFooter;
-const getTeamId = vex.getTeamId;
-const validTeamId = vex.validTeamId;
-const getTeam = vex.getTeam;
-const decodeProgram = dbinfo.decodeProgram;
-const decodeSeason = dbinfo.decodeSeason;
-const decodeSeasonUrl = dbinfo.decodeSeasonUrl;
 
 const emojiToRegex = {
 	'🏆': /^(.*World Champion.*)$/i,
@@ -25,10 +19,10 @@ const emojiToRegex = {
 const awardsOmitted = '\n**[Older awards omitted.]**';
 
 module.exports = async (message, args) => {
-	let teamId = getTeamId(message, args);
-	if (validTeamId(teamId)) {
+	let teamId = vex.getTeamId(message, args);
+	if (vex.validTeamId(teamId)) {
 		try {
-			let team = await getTeam(teamId);
+			let team = await vex.getTeam(teamId);
 			team = team[0];
 			if (team) {
 				teamId = team._id.id;
@@ -76,7 +70,7 @@ module.exports = async (message, args) => {
 							event += `\n${awardEmoji}${awardName}`;
 
 							if (award.season !== season) {
-								seasonHeaders[season] = `\n***[${decodeSeason(season)}](${decodeSeasonUrl(season)})*** (${awardCount})`;
+								seasonHeaders[season] = `\n***[${dbinfo.decodeSeason(season)}](${dbinfo.decodeSeasonUrl(season)})*** (${awardCount})`;
 								season = award.season;
 								awardCount = 1;
 							} else {
@@ -88,7 +82,7 @@ module.exports = async (message, args) => {
 						} else {
 							eventsBySeason[season] = [event];
 						}
-						seasonHeaders[season] = `\n***[${decodeSeason(season)}](${decodeSeasonUrl(season)})*** (${awardCount})`;
+						seasonHeaders[season] = `\n***[${dbinfo.decodeSeason(season)}](${dbinfo.decodeSeasonUrl(season)})*** (${awardCount})`;
 
 						let description = descriptionHeader;
 						let atLimit = false;
@@ -115,7 +109,7 @@ module.exports = async (message, args) => {
 								}
 							}
 						}
-						const program = decodeProgram(prog);
+						const program = dbinfo.decodeProgram(prog);
 						const embed = new Discord.MessageEmbed()
 							.setColor('PURPLE')
 							.setTitle(`${program} ${teamId}`)

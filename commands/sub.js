@@ -6,25 +6,20 @@ const dbinfo = require('../dbinfo');
 
 const db = app.db;
 const addFooter = app.addFooter;
-const getTeamId = vex.getTeamId;
-const validTeamId = vex.validTeamId;
-const getTeam = vex.getTeam;
-const createTeamEmbed = vex.createTeamEmbed;
-const decodeProgram = dbinfo.decodeProgram;
 
 const yes = '✅';
 const no = '❎';
 
 module.exports = async (message, args) => {
-	const teamId = getTeamId(message, args);
+	const teamId = vex.getTeamId(message, args);
 	if (message.guild) {
-		if (validTeamId(teamId)) {
+		if (vex.validTeamId(teamId)) {
 			try {
-				let team = await getTeam(teamId);
+				let team = await vex.getTeam(teamId);
 				team = team[0];
 				const prog = team ? team._id.prog : isNaN(teamId.charAt(0)) ? 4 : 1;
 				const id = team ? team._id.id : teamId;
-				const teamString = `${decodeProgram(prog)} ${id}`;
+				const teamString = `${dbinfo.decodeProgram(prog)} ${id}`;
 				const teamSub = {
 					_id: {
 						guild: message.guild.id,
@@ -37,7 +32,7 @@ module.exports = async (message, args) => {
 				const cancel = await db.collection('teamSubs').findOne({_id: teamSub._id, users: message.author.id}) ? `you are already subscribed to updates for ${teamString}, would you like to cancel your subscription?` : '';
 				let reply;
 				if (team) {
-					reply = await message.reply(cancel || `subscribe to updates for ${teamString}?`, {embed: createTeamEmbed(team)});
+					reply = await message.reply(cancel || `subscribe to updates for ${teamString}?`, {embed: vex.createTeamEmbed(team)});
 				} else {
 					reply = await message.reply(cancel || `that team ID has never been registered, are you sure you want to subscribe to updates for ${teamString}?`);
 				}

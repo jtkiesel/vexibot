@@ -5,12 +5,6 @@ const dbinfo = require('../dbinfo');
 
 const client = app.client;
 const db = app.db;
-const addFooter = app.addFooter;
-const encodeGrade = dbinfo.encodeGrade;
-const decodeProgram = dbinfo.decodeProgram;
-const decodeGrade = dbinfo.decodeGrade;
-const decodeSeason = dbinfo.decodeSeason;
-const decodeSeasonUrl = dbinfo.decodeSeasonUrl;
 
 const rankEmojis = ['🥇', '🥈', '🥉'];
 const pageSize = 10;
@@ -27,7 +21,7 @@ const getDescription = (skills, index = 0) => {
 		const prog = String(skill.prog).padStart(3);
 		const driver = String(skill.driver).padStart(3);
 		const team = skill.team.id;
-		description += `${rank}   \`\​${score}\`   \`(\​${prog} / \​${driver})\`   [${team}](https://robotevents.com/teams/${decodeProgram(skill.team.prog)}/${team})\n`;
+		description += `${rank}   \`\​${score}\`   \`(\​${prog} / \​${driver})\`   [${team}](https://robotevents.com/teams/${dbinfo.decodeProgram(skill.team.prog)}/${team})\n`;
 	}
 	return description;
 };
@@ -60,14 +54,14 @@ module.exports = async (message, args) => {
 	}
 	try {
 		const skills = await db.collection('maxSkills')
-			.find({'_id.season': season, '_id.grade': encodeGrade(grade)})
+			.find({'_id.season': season, '_id.grade': dbinfo.encodeGrade(grade)})
 			.sort({'_id.rank': 1}).toArray();
 		if (skills.length) {
 			let index = 0;
-			const prog = decodeProgram(skills[index].team.prog);
-			const grade = decodeGrade(skills[index]._id.grade);
-			const season = decodeSeason(skills[index]._id.season);
-			const seasonUrl = decodeSeasonUrl(skills[index]._id.season);
+			const prog = dbinfo.decodeProgram(skills[index].team.prog);
+			const grade = dbinfo.decodeGrade(skills[index]._id.grade);
+			const season = dbinfo.decodeSeason(skills[index]._id.season);
+			const seasonUrl = dbinfo.decodeSeasonUrl(skills[index]._id.season);
 			const embed = new Discord.MessageEmbed()
 				.setColor('GOLD')
 				.setAuthor(`${grade} World Skills Standings`, null, `https://vexdb.io/skills/${prog}/${season.replace(/ /g, '_')}/Robot`)
@@ -109,7 +103,7 @@ module.exports = async (message, args) => {
 					users.forEach(user => users.remove(user));
 					users = reply.reactions.get(previous).users;
 					users.forEach(user => users.remove(user));
-					addFooter(message, embed, reply);
+					app.addFooter(message, embed, reply);
 				});
 				await reply.react(previous);
 				await reply.react(next);
@@ -117,7 +111,7 @@ module.exports = async (message, args) => {
 				console.log(err);
 			}
 		} else {
-			message.reply(`no skills scores available for ${program} ${grade} ${decodeSeason(season)}.`);
+			message.reply(`no skills scores available for ${program} ${grade} ${dbinfo.decodeSeason(season)}.`);
 		}
 	} catch (err) {
 		console.error(err);

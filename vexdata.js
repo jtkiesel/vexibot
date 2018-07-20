@@ -9,17 +9,6 @@ const events = require('./events');
 
 const CronJob = cron.CronJob;
 const db = app.db;
-const getTeam = vex.getTeam;
-const getTeamLocation = vex.getTeamLocation;
-const createTeamEmbed = vex.createTeamEmbed;
-const createMatchEmbed = vex.createMatchEmbed;
-const createTeamChangeEmbed = vex.createTeamChangeEmbed;
-const sendToSubscribedChannels = vex.sendToSubscribedChannels;
-const sendMatchEmbed = vex.sendMatchEmbed;
-const encodeProgram = dbinfo.encodeProgram;
-const encodeGrade = dbinfo.encodeGrade;
-const decodeGrade = dbinfo.decodeGrade;
-const seasonToVexu = dbinfo.seasonToVexu;
 
 const timezone = 'America/New_York';
 
@@ -138,10 +127,10 @@ const updateTeamsInGroup = async (program, season, teamGroup, timeout = 1000) =>
 				const old = result.value;
 				if (!old) {
 					try {
-						if ((await getTeam(teamId)).length === 1) {
-							await sendToSubscribedChannels('New team registered', {embed: createTeamEmbed(team)}, [team._id]);
+						if ((await vex.getTeam(teamId)).length === 1) {
+							await vex.sendToSubscribedChannels('New team registered', {embed: vex.createTeamEmbed(team)}, [team._id]);
 						}
-						console.log(createTeamEmbed(team).fields);
+						console.log(vex.createTeamEmbed(team).fields);
 					} catch (err) {
 						console.error(err);
 					}
@@ -153,13 +142,13 @@ const updateTeamsInGroup = async (program, season, teamGroup, timeout = 1000) =>
 						}
 						try {
 							result = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$unset: unset});
-							console.log(createTeamChangeEmbed(program, teamId, 'location', getTeamLocation(old), getTeamLocation(team)).description);
+							console.log(vex.createTeamChangeEmbed(program, teamId, 'location', vex.getTeamLocation(old), vex.getTeamLocation(team)).description);
 						} catch (err) {
 							console.error(err);
 						}
 					}
 					if (team.name !== old.name) {
-						console.log(createTeamChangeEmbed(program, teamId, 'team name', old.name, team.name).description);
+						console.log(vex.createTeamChangeEmbed(program, teamId, 'team name', old.name, team.name).description);
 					}
 					if (team.robot !== old.robot) {
 						if (!team.robot) {
@@ -169,7 +158,7 @@ const updateTeamsInGroup = async (program, season, teamGroup, timeout = 1000) =>
 								console.error(err);
 							}
 						}
-						console.log(createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot).description);
+						console.log(vex.createTeamChangeEmbed(program, teamId, 'robot name', old.robot, team.robot).description);
 					}
 				}
 			} catch (err) {
@@ -191,9 +180,7 @@ const updateTeamsInGroup = async (program, season, teamGroup, timeout = 1000) =>
 const updateEventsForSeason = async (program, season) => {
 	const url = 'https://www.robotevents.com/api/events';
 	try {
-		let eventsData = (await request.post({url: url, form: {programs: [program], when: 'past', season_id: season}, json: true})).data;
-		eventsData = eventsData.concat((await request.post({url: url, form: {programs: [program], when: 'future', season_id: season}, json: true})).data);
-		eventsData = eventsData.filter((event, i, self) => self.findIndex(e => e.sku === event.sku) === i).map(formatEvent);
+		const eventsData = (await request.post({url: url, form: {programs: [program], when: 'past', season_id: season}, json: true})).data.map(formatEvent);
 		for (let event of eventsData) {
 			try {
 				console.log(`starting ${event._id}`);
@@ -223,7 +210,7 @@ const updateTeamsForSeason = async (program, season) => {
 const formatTeam = (prog, season, lat, lng, team) => {
 	if (prog === 1 && isNaN(team.team.charAt(0))) {
 		prog = 4;
-		season = seasonToVexu(season);
+		season = dbinfo.seasonToVexu(season);
 	}
 	return Object.assign({
 			_id: {
@@ -238,7 +225,7 @@ const formatTeam = (prog, season, lat, lng, team) => {
 		team.name && {region: encodeText(team.name)},
 		team.team_name && {name: encodeText(team.team_name)},
 		team.robot_name && {robot: encodeText(team.robot_name)},
-		prog === encodeProgram('VEXU') && {grade: encodeGrade('College')});
+		prog === dbinfo.encodeProgram('VEXU') && {grade: dbinfo.encodeGrade('College')});
 };
 
 const formatEvent = event => {
@@ -259,7 +246,7 @@ const formatEvent = event => {
 };
 
 const updateMaxSkillsForSeason = async (program, season, grade) => {
-	const url = `https://www.robotevents.com/api/seasons/${season}/skills?untilSkillsDeadline=0&grade_level=${decodeGrade(grade)}`;
+	const url = `https://www.robotevents.com/api/seasons/${season}/skills?untilSkillsDeadline=0&grade_level=${dbinfo.decodeGrade(grade)}`;
 	try {
 		const maxSkills = await request.get({url: url, json: true});
 		maxSkills.map(maxSkill => formatMaxSkill(maxSkill, program, season, grade)).forEach(async maxSkill => {
@@ -275,7 +262,7 @@ const updateMaxSkillsForSeason = async (program, season, grade) => {
 						if (!old) {
 							console.log(`Insert ${teamId} to teams.`);
 						} else if (old && grade !== old.grade) {
-							console.log(`Update ${teamId} from ${decodeGrade(old.grade)} to ${decodeGrade(grade)}.`);
+							console.log(`Update ${teamId} from ${dbinfo.decodeGrade(old.grade)} to ${dbinfo.decodeGrade(grade)}.`);
 						}
 					} catch (err) {
 						console.error(err);
@@ -423,7 +410,7 @@ const getMatch = async () => {
 		reactions = vex.matchScheduledEmojis;
 		change = 'scheduled';
 	}
-	sendMatchEmbed(`Match ${change}`, match, reactions);
+	vex.sendMatchEmbed(`Match ${change}`, match, reactions);
 };
 
 module.exports = {

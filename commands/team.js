@@ -5,23 +5,19 @@ const vex = require('../vex');
 
 const client = app.client;
 const addFooter = app.addFooter;
-const getTeamId = vex.getTeamId;
-const validTeamId = vex.validTeamId;
-const getTeam = vex.getTeam;
-const createTeamEmbed = vex.createTeamEmbed;
 
 const previous = '\u25C0';
 const next = '\u25B6';
 
 module.exports = async (message, args) => {
 	const arg = args ? args.replace(/\s+/g, '') : '';
-	const teamId = getTeamId(message, arg);
-	if (validTeamId(teamId)) {
+	const teamId = vex.getTeamId(message, arg);
+	if (vex.validTeamId(teamId)) {
 		try {
-			const team = await getTeam(teamId);
+			const team = await vex.getTeam(teamId);
 			if (team.length) {
 				let index = 0;
-				const embed = createTeamEmbed(team[index]);
+				const embed = vex.createTeamEmbed(team[index]);
 
 				try {
 					const reply = await message.channel.send({embed: embed});
@@ -36,7 +32,7 @@ module.exports = async (message, args) => {
 							} else if (index < 0) {
 								index = team.length - 1;
 							}
-							reply.edit({embed: createTeamEmbed(team[index])});
+							reply.edit({embed: vex.createTeamEmbed(team[index])});
 						} else {
 							reaction.users.remove(user);
 						}
@@ -49,7 +45,7 @@ module.exports = async (message, args) => {
 							} else if (index < 0) {
 								index = team.length - 1;
 							}
-							reply.edit({embed: createTeamEmbed(team[index])});
+							reply.edit({embed: vex.createTeamEmbed(team[index])});
 						}
 					});
 					collector.on('end', (collected, reason) => {
