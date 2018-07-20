@@ -58,7 +58,7 @@ const getEvent = (result, sku) => {
 	const name = result.match(/<h3\s+class="panel-title\s+col-sm-6">\s*(.+?)\s*<\/h3>/);
 	const totalDates = result.match(/<span\s+class="pull-right text-right col-sm-6">\s*(.+?)(?: - (.+?))?\s*<\/span>/);
 	const type = result.match(/Type of Event\s*<\/strong>[^A-Z]*(.+?)[^A-Z]*<\/p>/i);
-	const capacity = result.match(/Capacity<\/strong>[^0-9]*(.+?)[^0-9]*(.+?)[^0-9]*<\/p>/);
+	const capacity = result.match(/Capacity<\/strong>[^0-9]*([0-9]*?)[^0-9]*([0-9]*)[^0-9]*<\/p>/);
 	const orgLimit = result.match(/Max Registrations per Organization<\/strong>[^0-9]*(.+?)[^0-9]*<\/p>/);
 	const opens = result.match(/Registration Opens<\/strong>[^0-9A-Z]*(.+?)[^0-9A-Z]*<\/p>/i);
 	const deadline = result.match(/Registration Deadline<\/strong>[^0-9A-Z]*(.+?)[^0-9A-Z]*<\/p>/i);
@@ -387,7 +387,7 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 
 			divisionNumberToName[divisionNumber] = divisionName;
 
-			const played = {};
+			//const played = {};
 			JSON.parse(he.decode(regex[4])).filter(ranking => ranking.division === divisionNumber).map(ranking => formatRanking(ranking, sku, divisionName, prog, season)).forEach(async ranking => {
 				//played[ranking._id.team] = ranking.wins + ranking.losses + ranking.ties;
 				try {
@@ -500,14 +500,41 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 							});
 							const dprVector = math.multiply(manipulatedMatrix, scoreDiffsVector);
 
-							const redOpr = [match.red, match.red2, match.red3].map(team => team ? oprVector[teamsVector.indexOf(team)] : 0);
-							const blueOpr = [match.blue, match.blue2, match.blue3].map(team => team ? oprVector[teamsVector.indexOf(team)] : 0);
+							const redTeams = [match.red, match.red2, match.red3];
+							const blueTeams = [match.blue, match.blue2, match.blue3];
 
-							const redDpr = [match.red, match.red2, match.red3].map(team => team ? dprVector[teamsVector.indexOf(team)] : 0);
-							const blueDpr = [match.blue, match.blue2, match.blue3].map(team => team ? dprVector[teamsVector.indexOf(team)] : 0);
+							const redOpr = redTeams.map(team => team ? oprVector[teamsVector.indexOf(team)] : 0);
+							const blueOpr = blueTeams.map(team => team ? oprVector[teamsVector.indexOf(team)] : 0);
+
+							const redDpr = redTeams.map(team => team ? dprVector[teamsVector.indexOf(team)] : 0);
+							const blueDpr = blueTeams.map(team => team ? dprVector[teamsVector.indexOf(team)] : 0);
 
 							const redCcwm = redOpr.map((opr, index) => opr - redDpr[index]);
 							const blueCcwm = blueOpr.map((opr, index) => opr - blueDpr[index]);
+
+							const teamIds = redTeams.concat(blueTeams);
+							const opr = redOpr.concat(blueOpr);
+							const dpr = redDpr.concat(blueDpr);
+							const ccwm = redCcwm.concat(blueCcwm);
+							for (let i = 0; i < teamIds.length; i++) {
+								const teamId = teamIds[i];
+								if (teamId) {
+									try {
+										const rankingId = {
+											event: sku,
+											division: divisionName,
+											team: {
+												id: teamId,
+												prog: prog,
+												season: season
+											}
+										};
+										await db.collection('rankings').updateOne({_id: rankingId}, {$set: {opr: opr[i], dpr: dpr[i], ccwm: ccwm[i]}}, {upsert: true});
+									} catch (err) {
+										console.error(err);
+									}
+								}
+							}
 
 							const bestRed = redCcwm.sort((a, b) => b - a);
 							const bestBlue = blueCcwm.sort((a, b) => b - a);
