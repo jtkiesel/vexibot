@@ -43,7 +43,7 @@ module.exports = async (message, args) => {
 							console.error(err);
 						}
 					} else {
-						message.reply('that team hasn\'t competed in either skills challenge for In the Zone.')
+						message.reply(`that team hasn\'t competed in either skills challenge for ${dbinfo.decodeSeason(season)}.`);
 					}
 				} catch (err) {
 					console.error(err);

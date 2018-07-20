@@ -111,7 +111,7 @@ module.exports = async (message, args) => {
 				console.log(err);
 			}
 		} else {
-			message.reply(`no skills scores available for ${program} ${grade} ${dbinfo.decodeSeason(season)}.`);
+			message.reply(`no skills scores available for ${grade} ${program} ${dbinfo.decodeSeason(season)}.`);
 		}
 	} catch (err) {
 		console.error(err);
