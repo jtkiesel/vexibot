@@ -160,7 +160,7 @@ const createAwardEmbed = async award => {
 		.setTitle(award._id.name)
 		.setURL(`https://robotevents.com/${award._id.event}#tab-awards`);
 	if (award.team) {
-		embed.addField('Team', `[${dbinfo.decodeProgramEmoji(award.team.prog)} ${award.team.id}](https://robotevents.com/teams/${dbinfo.decodeProgram(award.team.prog)}/${award.team.id})`, true);
+		embed.addField('Team', `${dbinfo.decodeProgramEmoji(award.team.prog)} [${award.team.id}](https://robotevents.com/teams/${dbinfo.decodeProgram(award.team.prog)}/${award.team.id})`, true);
 	}
 	if (award.qualifies) {
 		embed.addField('Qualifies for', award.qualifies.join('\n'), true);
