@@ -80,7 +80,7 @@ const createMatchString = (round, instance, number) => `${dbinfo.decodeRound(rou
 const createTeamsString = (prog, teams, teamSit, scored) => {
 	teams = teams.filter(team => team);
 	return teams.map(team => {
-		const program = (isNaN(team.charAt(0)) ? 4 : prog);
+		const program = isNaN(team.charAt(0)) ? 4 : prog;
 		const teamLink = maskedTeamUrl(program, team);
 		if (!scored) {
 			return teamLink;
