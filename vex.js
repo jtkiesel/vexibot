@@ -100,7 +100,7 @@ const matchScoredNotification = match => {
 	const matchString = `${dbinfo.decodeRound(round)}${round < 3 || round > 8 ? '' : `${match._id.instance}-`}${match._id.number}`;
 	const redTeams = [match.red, match.red2, match.red3].filter(team => team && team !== match.redSit);
 	const blueTeams = [match.blue, match.blue2, match.blue3].filter(team => team && team !== match.blueSit);
-	return `${matchString}:**${redTeams[0]}**${redTeams[1] ? redTeams[1] : ''}${matchScheduledEmojis[0]}${match.redScore}-${match.blueScore}${matchScheduledEmojis[1]}${blueTeams[1] ? blueTeams[1] : ''}**${blueTeams[0]}**`
+	return `${matchString}:**${redTeams[0]}**${redTeams[1] ? redTeams[1] : ''}${matchScheduledEmojis[0]}${match.redScore}-${match.blueScore}${matchScheduledEmojis[1]}${blueTeams[1] ? blueTeams[1] : ''}**${blueTeams[0]}**`;
 };
 
 const createMatchEmbed = match => {
@@ -184,9 +184,8 @@ const createSkillsEmbed = async skill => {
 			.addField('Attempts', skill.attempts, true);
 	} catch (err) {
 		console.error(err);
-	} finally {
-		return embed;
 	}
+	return embed;
 };
 
 const getMatchTeams = match => [match.red, match.red2, match.red3, match.blue, match.blue2, match.red3].filter(team => team).map(team => {
@@ -259,18 +258,18 @@ const createTeamChangeEmbed = (prog, teamId, field, oldValue, newValue) => {
 };
 
 module.exports = {
-	getTeamId: getTeamId,
-	validTeamId: validTeamId,
-	getTeam: getTeam,
-	getTeamLocation: getTeamLocation,
-	createTeamEmbed: createTeamEmbed,
-	createEventEmbed: createEventEmbed,
-	createMatchEmbed: createMatchEmbed,
-	createSkillsEmbed: createSkillsEmbed,
-	createAwardEmbed: createAwardEmbed,
-	createTeamChangeEmbed: createTeamChangeEmbed,
-	sendToSubscribedChannels: sendToSubscribedChannels,
-	sendMatchEmbed: sendMatchEmbed,
-	matchScheduledEmojis: matchScheduledEmojis,
-	matchScoredEmojis: matchScoredEmojis
+	getTeamId,
+	validTeamId,
+	getTeam,
+	getTeamLocation,
+	createTeamEmbed,
+	createEventEmbed,
+	createMatchEmbed,
+	createSkillsEmbed,
+	createAwardEmbed,
+	createTeamChangeEmbed,
+	sendToSubscribedChannels,
+	sendMatchEmbed,
+	matchScheduledEmojis,
+	matchScoredEmojis
 };

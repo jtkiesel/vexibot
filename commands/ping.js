@@ -2,7 +2,7 @@ const Discord = require('discord.js');
 
 const app = require('../app');
 
-module.exports = (message, args) => {
+module.exports = message => {
 	const ping = Date.now();
 	const embed = new Discord.MessageEmbed()
 		.setColor('RANDOM')

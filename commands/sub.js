@@ -1,11 +1,6 @@
-const Discord = require('discord.js');
-
 const app = require('../app');
 const vex = require('../vex');
 const dbinfo = require('../dbinfo');
-
-const db = app.db;
-const addFooter = app.addFooter;
 
 const yes = '✅';
 const no = '❎';
@@ -29,7 +24,7 @@ module.exports = async (message, args) => {
 						}
 					}
 				};
-				const cancel = await db.collection('teamSubs').findOne({_id: teamSub._id, users: message.author.id}) ? `you are already subscribed to updates for ${teamString}, would you like to cancel your subscription?` : '';
+				const cancel = await app.db.collection('teamSubs').findOne({_id: teamSub._id, users: message.author.id}) ? `you are already subscribed to updates for ${teamString}, would you like to cancel your subscription?` : '';
 				let reply;
 				if (team) {
 					reply = await message.reply(cancel || `subscribe to updates for ${teamString}?`, {embed: vex.createTeamEmbed(team)});
@@ -39,15 +34,15 @@ module.exports = async (message, args) => {
 				const collector = reply.createReactionCollector((reaction, user) => {
 					return user.id === message.author.id && (reaction.emoji.name === yes || reaction.emoji.name === no);
 				}, {max: 1, time: 30000});
-				collector.on('end', async (collected, reason) => {
+				collector.on('end', async collected => {
 					let status;
 					if (collected.get(yes)) {
 						if (!cancel) {
 							status = 'are now';
-							await db.collection('teamSubs').findOneAndUpdate({_id: teamSub._id}, {$set: teamSub, $addToSet: {users: message.author.id}}, {upsert: true});
+							await app.db.collection('teamSubs').findOneAndUpdate({_id: teamSub._id}, {$set: teamSub, $addToSet: {users: message.author.id}}, {upsert: true});
 						} else {
 							status = 'are no longer';
-							await db.collection('teamSubs').findOneAndUpdate({_id: teamSub._id}, {$set: teamSub, $pull: {users: message.author.id}});
+							await app.db.collection('teamSubs').findOneAndUpdate({_id: teamSub._id}, {$set: teamSub, $pull: {users: message.author.id}});
 						}
 					} else {
 						status = cancel ? 'are still' : 'have not been';
@@ -56,7 +51,7 @@ module.exports = async (message, args) => {
 					users.forEach(user => users.remove(user));
 					users = reply.reactions.get(no).users;
 					users.forEach(user => users.remove(user));
-					reply.edit(`${message.author}, you ${status} subscribed to updates for ${teamString}.`, {embed: null});
+					reply.edit(`${message.author}, you ${status} subscribed to updates for ${teamString}.`, {embed: null}).catch(console.error);
 				});
 				await reply.react(yes);
 				await reply.react(no);

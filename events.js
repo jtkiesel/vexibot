@@ -29,8 +29,6 @@ const genders = [
 
 const encodeGenders = gender => genders.indexOf(gender);
 
-const decodeGenders = gender => genders[gender];
-
 const encodeDate = date => Date.parse(`${date} EDT`);
 
 const encodeBoolean = value => Boolean(value.toLowerCase() === 'yes');
@@ -59,12 +57,12 @@ const getEvent = (result, sku) => {
 			start: encodeDate(start),
 			end: encodeDate(end ? end : start) + 86399999
 		},
-			venue && {venue: encodeText(venue)},
-			address && {address: encodeText(address)},
-			city && {city: encodeText(city)},
-			region && {region: encodeText(region)},
-			postcode && {postcode: encodeText(postcode)},
-			country && {country: encodeText(country)}));
+		venue && {venue: encodeText(venue)},
+		address && {address: encodeText(address)},
+		city && {city: encodeText(city)},
+		region && {region: encodeText(region)},
+		postcode && {postcode: encodeText(postcode)},
+		country && {country: encodeText(country)}));
 	}
 	return Object.assign({
 		_id: sku,
@@ -80,9 +78,9 @@ const getEvent = (result, sku) => {
 		skills: encodeBoolean(skills[1]),
 		tsa: encodeBoolean(tsa[1])
 	},
-		orgLimit && {orgLimit: parseInt(orgLimit[1])},
-		opens && {opens: Date.parse(opens[1])},
-		deadline && {deadline: Date.parse(deadline[1])});
+	orgLimit && {orgLimit: parseInt(orgLimit[1])},
+	opens && {opens: Date.parse(opens[1])},
+	deadline && {deadline: Date.parse(deadline[1])});
 };
 
 const formatMatch = (match, event, division) => {
@@ -97,17 +95,17 @@ const formatMatch = (match, event, division) => {
 		prog: event.prog,
 		season: event.season
 	},
-		match.timescheduled && {start: Date.parse(match.timescheduled)},
-		match.red1 && {red: match.red1},
-		match.red2 && {red2: match.red2},
-		match.red3 && {red3: match.red3},
-		match.blue1 && {blue: match.blue1},
-		match.blue2 && {blue2: match.blue2},
-		match.blue3 && {blue3: match.blue3},
-		match.redsit && match.red2 && {redSit: match.redsit},
-		match.bluesit && match.blue2 && {blueSit: match.bluesit},
-		match.hasOwnProperty('redscore') && {redScore: match.redscore},
-		match.hasOwnProperty('bluescore') && {blueScore: match.bluescore});
+	match.timescheduled && {start: Date.parse(match.timescheduled)},
+	match.red1 && {red: match.red1},
+	match.red2 && {red2: match.red2},
+	match.red3 && {red3: match.red3},
+	match.blue1 && {blue: match.blue1},
+	match.blue2 && {blue2: match.blue2},
+	match.blue3 && {blue3: match.blue3},
+	match.redsit && match.red2 && {redSit: match.redsit},
+	match.bluesit && match.blue2 && {blueSit: match.bluesit},
+	match.hasOwnProperty('redscore') && {redScore: match.redscore},
+	match.hasOwnProperty('bluescore') && {blueScore: match.bluescore});
 };
 
 const formatRanking = (ranking, event, division, prog, season) => {
@@ -133,11 +131,11 @@ const formatRanking = (ranking, event, division, prog, season) => {
 		ap: ranking.ap,
 		sp: ranking.sp
 	},
-		ranking.numplayed != null && {played: ranking.numplayed},
-		ranking.win_percentage != null && {winPct: ranking.win_percentage},
-		ranking.average_points != null && {avgScore: ranking.average_points},
-		ranking.total_points != null && {totalPoints: ranking.total_points},
-		ranking.high_score != null && {highScore: ranking.high_score});
+	ranking.numplayed != null && {played: ranking.numplayed},
+	ranking.win_percentage != null && {winPct: ranking.win_percentage},
+	ranking.average_points != null && {avgScore: ranking.average_points},
+	ranking.total_points != null && {totalPoints: ranking.total_points},
+	ranking.high_score != null && {highScore: ranking.high_score});
 };
 
 const matchCompare = (a, b) => {
@@ -300,12 +298,12 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 					const team = teams.find(team => team._id.id === _id.id);
 					if (team) {
 						const contact = Object.assign({
-								name: teamReg.contact1_name,
-								phone: teamReg.contact1_phone1,
-								email: teamReg.contact1_email1
-							},
-							teamReg.contact1_phone2 && {phone2: teamReg.contact1_phone2},
-							teamReg.contact1_email2 && {email2: teamReg.contact1_email2});
+							name: teamReg.contact1_name,
+							phone: teamReg.contact1_phone1,
+							email: teamReg.contact1_email1
+						},
+						teamReg.contact1_phone2 && {phone2: teamReg.contact1_phone2},
+						teamReg.contact1_email2 && {email2: teamReg.contact1_email2});
 						const contact2 = Object.assign({},
 							teamReg.contact2_name && {name: teamReg.contact2_name},
 							teamReg.contact2_phone1 && {phone: teamReg.contact2_phone1},
@@ -313,12 +311,12 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 							teamReg.contact2_phone2 && {phone2: teamReg.contact2_phone2},
 							teamReg.contact2_email2 && {email2: teamReg.contact2_email2});
 						const finance = Object.assign({
-								name: teamReg.financial_name,
-								phone: teamReg.financial_phone1,
-								email: teamReg.financial_email1
-							},
-							teamReg.financial_phone2 && {phone2: teamReg.financial_phone2},
-							teamReg.financial_email2 && {email2: teamReg.financial_email2});
+							name: teamReg.financial_name,
+							phone: teamReg.financial_phone1,
+							email: teamReg.financial_email1
+						},
+						teamReg.financial_phone2 && {phone2: teamReg.financial_phone2},
+						teamReg.financial_email2 && {email2: teamReg.financial_email2});
 						const students = teamReg.num_students.match(/([0-9]+)-?(\+|[0-9]*)/);
 						Object.assign(team,
 							{grade: teamReg.grade_level_id},
@@ -370,25 +368,14 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 
 			divisionNumberToName[divisionNumber] = divisionName;
 
-			//const played = {};
 			JSON.parse(he.decode(regex[4])).filter(ranking => ranking.division === divisionNumber).map(ranking => formatRanking(ranking, sku, divisionName, prog, season)).forEach(async ranking => {
-				//played[ranking._id.team] = ranking.wins + ranking.losses + ranking.ties;
 				try {
-					const res = await db.collection('rankings').updateOne({_id: ranking._id}, {$set: ranking}, {upsert: true});
+					await db.collection('rankings').updateOne({_id: ranking._id}, {$set: ranking}, {upsert: true});
 				} catch (err) {
 					console.error(err);
 				}
 			});
 			const matches = JSON.parse(he.decode(regex[3])).filter(match => match.division === divisionNumber).map(match => formatMatch(match, event, divisionName)).sort(matchCompare);
-			/*matches.forEach(match => {
-				if (match._id.round === 2 && (match.redScore || match.blueScore)) {
-					[match.red, match.red2, match.red3, match.blue, match.blue2, match.blue3].forEach(team => {
-						if (team) {
-							played[team]--;
-						}
-					});
-				}
-			});*/
 			matches.forEach(match => {
 				[match.red, match.red2, match.red3, match.blue, match.blue2, match.blue3].forEach(team => {
 					if (team && !teamsVector.includes(team)) {
@@ -399,7 +386,6 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 			for (let i = 0; i < matches.length; i++) {
 				const match = matches[i];
 				const nextMatch = matches[i + 1];
-				//const nextRound = match._id.round === 6 ? 3 : match._id.round + (match._id.round > 6 ? -1 : 1);
 				const unset = {};
 				let scored = true;
 				if (match.redScore === 0 && match.blueScore === 0) {
@@ -407,10 +393,6 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 						if (matches.slice(i + 1).every(otherMatch => otherMatch.redScore === 0 && otherMatch.blueScore === 0)) {
 							scored = false;
 						}
-					/*} else if (match._id.round === 2) {  // Qualification.
-						if ([match.red, match.red2, match.red3, match.blue, match.blue2, match.blue3].every(team => !team || --played[team] < 0)) {
-							scored = false;
-						}*/
 					} else {  // Elimination.
 						if (match.red3) {
 							if (!match.redSit) {
@@ -418,9 +400,7 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 							}
 						} else if (!nextMatch || nextMatch._id.round !== match._id.round || nextMatch._id.instance !== match._id.instance) {
 							scored = false;
-						} /*else if (matches._id.round !== 5 && matches.some(otherMatch => otherMatch._id.round === nextRound)) {
-							scored = false;
-						}*/
+						}
 					}
 				}
 				let change, reactions;
@@ -438,7 +418,7 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 				try {
 					let res;
 					if (!Object.keys(unset).length) {
-					 	res = await db.collection('matches').findOneAndUpdate({_id: match._id}, {$set: match}, {upsert: true});
+						res = await db.collection('matches').findOneAndUpdate({_id: match._id}, {$set: match}, {upsert: true});
 					} else {
 						res = await db.collection('matches').findOneAndUpdate({_id: match._id}, {$set: match, $unset: unset}, {upsert: true});
 					}
@@ -502,16 +482,16 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 							for (let i = 0; i < teamIds.length; i++) {
 								const teamId = teamIds[i];
 								if (teamId) {
+									const rankingId = {
+										event: sku,
+										division: divisionName,
+										team: {
+											id: teamId,
+											prog: prog,
+											season: season
+										}
+									};
 									try {
-										const rankingId = {
-											event: sku,
-											division: divisionName,
-											team: {
-												id: teamId,
-												prog: prog,
-												season: season
-											}
-										};
 										await db.collection('rankings').updateOne({_id: rankingId}, {$set: {opr: opr[i], dpr: dpr[i], ccwm: ccwm[i]}}, {upsert: true});
 									} catch (err) {
 										console.error(err);
@@ -600,7 +580,7 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 							!team.country && {country: ''});
 						if (Object.keys(unset).length) {
 							try {
-								const res2 = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$unset: unset});
+								await db.collection('teams').findOneAndUpdate({_id: team._id}, {$unset: unset});
 								console.log(vex.createTeamChangeEmbed(teamProg, teamId, 'location', vex.getTeamLocation(old), vex.getTeamLocation(team)).description);
 							} catch (err) {
 								console.error(err);
@@ -615,7 +595,7 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 					if (team.hasOwnProperty('robot') && team.robot !== old.robot) {
 						if (!team.robot) {
 							try {
-								const res2 = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$unset: {robot: ''}});
+								await db.collection('teams').findOneAndUpdate({_id: team._id}, {$unset: {robot: ''}});
 							} catch (err) {
 								console.error(err);
 							}
@@ -689,5 +669,5 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 };
 
 module.exports = {
-	updateEvent: updateEvent
+	updateEvent
 };

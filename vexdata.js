@@ -7,9 +7,6 @@ const vex = require('./vex');
 const dbinfo = require('./dbinfo');
 const events = require('./events');
 
-const CronJob = cron.CronJob;
-const db = app.db;
-
 const timezone = 'America/New_York';
 
 const sleep = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
@@ -22,7 +19,7 @@ const updateTeams = async () => {
 };
 
 const updateAllTeams = async () => {
-	const programs = await db.collection('programs').find().project({_id: 1, seasons: 1}).toArray();
+	const programs = await app.db.collection('programs').find().project({_id: 1, seasons: 1}).toArray();
 	for (let program of programs) {
 		const seasons = program.seasons.sort((a, b) => a - b);
 		for (let season of seasons) {
@@ -41,7 +38,7 @@ const updateEvents = async () => {
 };
 
 const updateAllEvents = async () => {
-	const programs = await db.collection('programs').find().project({_id: 1, seasons: 1}).toArray();
+	const programs = await app.db.collection('programs').find().project({_id: 1, seasons: 1}).toArray();
 	for (let program of programs) {
 		const seasons = program.seasons.sort((a, b) => a - b);
 		for (let season of seasons) {
@@ -55,7 +52,7 @@ const updateAllEvents = async () => {
 };
 
 const updateExistingEvents = async () => {
-	const eventArray = await db.collection('events').find().project({_id: 1, prog: 1, season: 1}).toArray();
+	const eventArray = await app.db.collection('events').find().project({_id: 1, prog: 1, season: 1}).toArray();
 	for (let event of eventArray) {
 		try {
 			await events.updateEvent(event.prog, event.season, event._id);
@@ -72,12 +69,12 @@ const updateMaxSkills = async () => {
 };
 
 const updateAllMaxSkills = async () => {
-	const programs = await db.collection('programs').find().project({_id: 1, seasons: 1}).toArray();
+	const programs = await app.db.collection('programs').find().project({_id: 1, seasons: 1}).toArray();
 	for (let program of programs) {
 		const seasons = program.seasons.sort((a, b) => a - b);
 		for (let season of seasons) {
 			try {
-				await updateMaxSkillsForSeason(program._id, season)
+				await updateMaxSkillsForSeason(program._id, season);
 			} catch (err) {
 				console.error(err);
 			}
@@ -88,7 +85,7 @@ const updateAllMaxSkills = async () => {
 const updateCurrentEvents = async () => {
 	const now = Date.now();
 	try {
-		const documents = await db.collection('events').find({dates: {$elemMatch: {end: {$gt: now}, start: {$lt: now}}}}).project({_id: 1, prog: 1, season: 1}).toArray();
+		const documents = await app.db.collection('events').find({dates: {$elemMatch: {end: {$gt: now}, start: {$lt: now}}}}).project({_id: 1, prog: 1, season: 1}).toArray();
 		for (let event of documents) {
 			try {
 				await events.updateEvent(event.prog, event.season, event._id);
@@ -101,10 +98,10 @@ const updateCurrentEvents = async () => {
 	}
 };
 
-const eventsJob = new CronJob('00 00 08 * * *', updateEvents, null, true, timezone);
-const teamsJob = new CronJob('00 10 08 * * *', updateTeams, null, true, timezone);
-const skillsJob = new CronJob('00 20 08 * * *', updateMaxSkills, null, true, timezone);
-const currentEventsJob = new CronJob('00 */2 * * * *', updateCurrentEvents, null, true, timezone);
+new cron.CronJob('00 00 08 * * *', updateEvents, null, true, timezone);
+new cron.CronJob('00 10 08 * * *', updateTeams, null, true, timezone);
+new cron.CronJob('00 20 08 * * *', updateMaxSkills, null, true, timezone);
+new cron.CronJob('00 */2 * * * *', updateCurrentEvents, null, true, timezone);
 
 const update = () => {
 	//updateCurrentEvents();
@@ -122,7 +119,7 @@ const updateTeamsInGroup = async (program, season, teamGroup, timeout = 1000) =>
 		teams.map(team => formatTeam(program, season, lat, lng, team)).forEach(async team => {
 			try {
 				const teamId = team._id.id;
-				let result = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$set: team}, {upsert: true});
+				let result = await app.db.collection('teams').findOneAndUpdate({_id: team._id}, {$set: team}, {upsert: true});
 				const old = result.value;
 				if (!old) {
 					try {
@@ -140,7 +137,7 @@ const updateTeamsInGroup = async (program, season, teamGroup, timeout = 1000) =>
 							unset.region = '';
 						}
 						try {
-							result = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$unset: unset});
+							result = await app.db.collection('teams').findOneAndUpdate({_id: team._id}, {$unset: unset});
 							console.log(vex.createTeamChangeEmbed(program, teamId, 'location', vex.getTeamLocation(old), vex.getTeamLocation(team)).description);
 						} catch (err) {
 							console.error(err);
@@ -152,7 +149,7 @@ const updateTeamsInGroup = async (program, season, teamGroup, timeout = 1000) =>
 					if (team.robot !== old.robot) {
 						if (!team.robot) {
 							try {
-								result = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$unset: {robot: ''}});
+								result = await app.db.collection('teams').findOneAndUpdate({_id: team._id}, {$unset: {robot: ''}});
 							} catch (err) {
 								console.error(err);
 							}
@@ -212,36 +209,36 @@ const formatTeam = (prog, season, lat, lng, team) => {
 		season = dbinfo.seasonToVexu(season);
 	}
 	return Object.assign({
-			_id: {
-				id: team.team,
-				prog: prog,
-				season: season
-			},
-			lat: lat,
-			lng: lng,
-			city: encodeText(team.city)
+		_id: {
+			id: team.team,
+			prog: prog,
+			season: season
 		},
-		team.name && {region: encodeText(team.name)},
-		team.team_name && {name: encodeText(team.team_name)},
-		team.robot_name && {robot: encodeText(team.robot_name)},
-		prog === dbinfo.encodeProgram('VEXU') && {grade: dbinfo.encodeGrade('College')});
+		lat: lat,
+		lng: lng,
+		city: encodeText(team.city)
+	},
+	team.name && {region: encodeText(team.name)},
+	team.team_name && {name: encodeText(team.team_name)},
+	team.robot_name && {robot: encodeText(team.robot_name)},
+	prog === dbinfo.encodeProgram('VEXU') && {grade: dbinfo.encodeGrade('College')});
 };
 
 const formatEvent = event => {
 	const dates = event.date.match(/^(.+?)(?: - (.+))?$/);
 	return Object.assign({
-			_id: event.sku,
-			prog: event.program_id,
-			season: event.season_id,
-			name: encodeText(event.name),
-			start: encodeDate(dates[1]),
-			end: encodeDate(dates[2] ? dates[2] : dates[1]),
-			lat: event.lat,
-			lng: event.lng
-		},
-		event.email && {email: event.email},
-		event.phone && {phone: event.phone},
-		event.webcast_link && {webcast: event.webcast_link});
+		_id: event.sku,
+		prog: event.program_id,
+		season: event.season_id,
+		name: encodeText(event.name),
+		start: encodeDate(dates[1]),
+		end: encodeDate(dates[2] ? dates[2] : dates[1]),
+		lat: event.lat,
+		lng: event.lng
+	},
+	event.email && {email: event.email},
+	event.phone && {phone: event.phone},
+	event.webcast_link && {webcast: event.webcast_link});
 };
 
 const updateMaxSkillsForSeason = async (program, season, grade) => {
@@ -250,13 +247,13 @@ const updateMaxSkillsForSeason = async (program, season, grade) => {
 		const maxSkills = await request.get({url: url, json: true});
 		maxSkills.map(maxSkill => formatMaxSkill(maxSkill, program, season, grade)).forEach(async maxSkill => {
 			try {
-				let result = await db.collection('maxSkills').findOneAndUpdate({_id: maxSkill._id}, {$set: maxSkill}, {upsert: true});
+				let result = await app.db.collection('maxSkills').findOneAndUpdate({_id: maxSkill._id}, {$set: maxSkill}, {upsert: true});
 				let old = result.value;
 				if (!old) {
 					console.log(`Insert ${JSON.stringify(maxSkill)} to maxSkills.`);
 					const teamId = maxSkill.team.id;
 					try {
-						result = await db.collection('teams').findOneAndUpdate({_id: {id: teamId, prog: program, season: season}}, {$set: {grade: grade}}, {upsert: true});
+						result = await app.db.collection('teams').findOneAndUpdate({_id: {id: teamId, prog: program, season: season}}, {$set: {grade: grade}}, {upsert: true});
 						old = result.value;
 						if (!old) {
 							console.log(`Insert ${teamId} to teams.`);
@@ -272,7 +269,7 @@ const updateMaxSkillsForSeason = async (program, season, grade) => {
 			}
 		});
 		if (maxSkills.length) {
-			await db.collection('maxSkills').deleteMany({'_id.season': season, '_id.grade': grade, '_id.rank': {$gt: maxSkills.length}});
+			await app.db.collection('maxSkills').deleteMany({'_id.season': season, '_id.grade': grade, '_id.rank': {$gt: maxSkills.length}});
 		}
 	} catch (err) {
 		console.error(err);
@@ -319,7 +316,7 @@ const updateProgramsAndSeasons = async () => {
 
 			delete program.seasons;
 			try {
-				let result = await db.collection('programs').updateOne(
+				let result = await app.db.collection('programs').updateOne(
 					{_id: program._id},
 					{$set: program, $addToSet: {seasons: {$each: seasonIds}}},
 					{upsert: true}
@@ -331,7 +328,7 @@ const updateProgramsAndSeasons = async () => {
 				}
 				seasons.forEach(async season => {
 					try {
-						result = await db.collection('seasons').updateOne({_id: season._id}, {$set: season}, {upsert: true});
+						result = await app.db.collection('seasons').updateOne({_id: season._id}, {$set: season}, {upsert: true});
 						if (result.upsertedCount) {
 							console.log(`Insert to seasons: ${JSON.stringify(season)}`);
 						} else if (result.modifiedCount) {
@@ -358,7 +355,7 @@ const formatProgram = program => {
 		slug: program.slug,
 		active: program.active,
 		sortOrder: program.sort_order
-	}
+	};
 	if (program.description) {
 		document.description = program.description;
 	}
@@ -399,8 +396,8 @@ const encodeSeasonName = name => name.match(/^(?:.+: )?(.+?)(?: [0-9]{4}-[0-9]{4
 const encodeDate = date => Date.parse(date);
 
 const getMatch = async () => {
-	const count = await db.collection('matches').count({});
-	const match = await db.collection('matches').find({}).skip(Math.floor(Math.random() * count)).next();
+	const count = await app.db.collection('matches').count({});
+	const match = await app.db.collection('matches').find({}).skip(Math.floor(Math.random() * count)).next();
 	let reactions, change;
 	if (match.hasOwnProperty('redScore')) {
 		reactions = vex.matchScoredEmojis;
@@ -413,17 +410,17 @@ const getMatch = async () => {
 };
 
 module.exports = {
-	update: update,
-	updateProgramsAndSeasons: updateProgramsAndSeasons,
-	updateMaxSkills: updateMaxSkills,
-	updateTeams: updateTeams,
-	updateEvents: updateEvents,
-	updateAllTeams: updateAllTeams,
-	updateAllEvents: updateAllEvents,
-	updateExistingEvents: updateExistingEvents,
-	updateAllMaxSkills: updateAllMaxSkills,
-	updateTeamsForSeason: updateTeamsForSeason,
-	updateEventsForSeason: updateEventsForSeason,
-	updateMaxSkillsForSeason: updateMaxSkillsForSeason,
-	getMatch: getMatch
+	update,
+	updateProgramsAndSeasons,
+	updateMaxSkills,
+	updateTeams,
+	updateEvents,
+	updateAllTeams,
+	updateAllEvents,
+	updateExistingEvents,
+	updateAllMaxSkills,
+	updateTeamsForSeason,
+	updateEventsForSeason,
+	updateMaxSkillsForSeason,
+	getMatch
 };

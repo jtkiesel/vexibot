@@ -2,26 +2,25 @@ const Discord = require('discord.js');
 
 const app = require('../app');
 
-const clockEmojis = ['🕛', '🕧', '🕐', '🕜', '🕑', '🕝', '🕒', '🕞', '🕓', '🕟', '🕔', '🕠', '🕕',
-		'🕡', '🕖', '🕢', '🕗', '🕣', '🕘', '🕤', '🕙', '🕥', '🕚', '🕦'];
+const clockEmojis = ['🕛', '🕧', '🕐', '🕜', '🕑', '🕝', '🕒', '🕞', '🕓', '🕟', '🕔', '🕠', '🕕', '🕡', '🕖', '🕢', '🕗', '🕣', '🕘', '🕤', '🕙', '🕥', '🕚', '🕦'];
 
 const formatTime = (time, unit) => `${time} ${unit}${(time == 1) ? '' : 's'}`;
 
 const getUptime = () => {
-		let seconds = Math.floor(new Date(app.client.uptime) / 1000);
-		let minutes = Math.floor(seconds / 60);
-		seconds %= 60;
-		let hours = Math.floor(minutes / 60);
-		minutes %= 60;
-		let days = Math.floor(hours / 24);
-		hours %= 24;
+	let seconds = Math.floor(new Date(app.client.uptime) / 1000);
+	let minutes = Math.floor(seconds / 60);
+	seconds %= 60;
+	let hours = Math.floor(minutes / 60);
+	minutes %= 60;
+	let days = Math.floor(hours / 24);
+	hours %= 24;
 
-		return [days, hours, minutes, seconds];
+	return [days, hours, minutes, seconds];
 };
 
-module.exports = (message, args) => {
-	const [days, hours, minutes, seconds] = getUptime();
+module.exports = (message) => {
 	const uptime = [];
+	let [days, hours, minutes, seconds] = getUptime();
 
 	if (days) {
 		uptime.push(formatTime(days, 'day'));
