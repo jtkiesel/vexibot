@@ -1,9 +1,8 @@
-const Discord = require('discord.js');
-const mongodb = require('mongodb');
-const util = require('util');
+const { Client, MessageEmbed } = require('discord.js');
+const { MongoClient } = require('mongodb');
+const { inspect } = require('util');
 
-const client = new Discord.Client();
-const MongoClient = mongodb.MongoClient;
+const client = new Client();
 const token = process.env.VEXIBOT_TOKEN;
 const mongodbUri = process.env.VEXIBOT_DB;
 const mongodbOptions = {
@@ -25,8 +24,6 @@ const commandInfo = {
 };
 const commands = {};
 
-let db, vexdata;
-
 let helpDescription = `\`${prefix}help\`: Provides information about all commands.`;
 
 const clean = text => {
@@ -44,12 +41,12 @@ const handleCommand = async message => {
 	if (commands.hasOwnProperty(cmd)) {
 		commands[cmd](message, args);
 	} else if (cmd === 'help') {
-		const embed = new Discord.MessageEmbed()
+		const embed = new MessageEmbed()
 			.setColor('RANDOM')
 			.setTitle('Commands')
 			.setDescription(helpDescription);
 		message.channel.send({embed})
-			.then(reply => addFooter(message, embed, reply))
+			.then(reply => addFooter(message, reply))
 			.catch(console.error);
 	} else if (cmd === 'eval') {
 		if (message.author.id === '197781934116569088') {
@@ -57,7 +54,7 @@ const handleCommand = async message => {
 				const match = args.match(/^\s*await\s+(.*)$/);
 				let evaled = match ? (await eval(match[1])) : eval(args);
 				if (typeof evaled !== 'string') {
-					evaled = util.inspect(evaled);
+					evaled = inspect(evaled);
 				}
 				message.channel.send(clean(evaled), {code: 'xl'}).catch(console.error);
 			} catch (error) {
@@ -69,18 +66,16 @@ const handleCommand = async message => {
 	}
 };
 
-const addFooter = (message, embed, reply) => {
+const addFooter = (message, reply) => {
 	const author = message.member ? message.member.displayName : message.author.username;
-
-	embed.setFooter(`Triggered by ${author}`, message.author.displayAvatarURL)
+	const embed = reply.embeds[0].setFooter(`Triggered by ${author}`, message.author.displayAvatarURL())
 		.setTimestamp(message.createdAt);
 	reply.edit({embed});
 };
 
 client.on('ready', () => {
-	console.log('Ready!');
+	console.log(`Logged in as ${client.user.tag}`);
 	client.user.setPresence({status: 'online', activity: {name: `${prefix}help`, type: 'STREAMING', url: 'https://github.com/jtkiesel/vexibot'}});
-	vexdata.update();
 });
 
 client.on('error', console.error);
@@ -92,15 +87,15 @@ client.on('message', message => {
 });
 
 MongoClient.connect(mongodbUri, mongodbOptions).then(mongoClient => {
-	db = mongoClient.db(mongodbUri.match(/\/([^/]+)$/)[1]);
-	module.exports.db = db;
+	module.exports.db = mongoClient.db(mongodbUri.match(/\/([^/]+)$/)[1]);
 
 	Object.keys(commandInfo).forEach(name => commands[name] = require('./commands/' + name));
 	Object.entries(commandInfo).forEach(([name, desc]) => helpDescription += `\n\`${prefix}${name}\`: ${desc}`);
 
-	vexdata = require('./vexdata');
 	client.login(token).catch(console.error);
 }).catch(console.error);
 
-module.exports.client = client;
-module.exports.addFooter = addFooter;
+module.exports = {
+	client,
+	addFooter
+};

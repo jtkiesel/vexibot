@@ -122,7 +122,7 @@ module.exports = async (message, args) => {
 					.setDescription(description);
 				try {
 					const reply = await message.channel.send({embed});
-					app.addFooter(message, embed, reply);
+					app.addFooter(message, reply);
 				} catch (err) {
 					console.error(err);
 				}

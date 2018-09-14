@@ -43,7 +43,7 @@ module.exports = async (message, args) => {
 					.addField('Max Driver', maxSkill.maxDriver, true);
 				try {
 					const reply = await message.channel.send({embed});
-					app.addFooter(message, embed, reply);
+					app.addFooter(message, reply);
 				} catch (err) {
 					console.error(err);
 				}

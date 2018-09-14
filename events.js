@@ -1,12 +1,10 @@
 const request = require('request-promise-native');
-const he = require('he');
+const { decode } = require('he');
 const math = require('mathjs');
 
-const app = require('./app');
+const { db } = require('./app');
 const vex = require('./vex');
 const dbinfo = require('./dbinfo');
-
-const db = app.db;
 
 const sleep = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
 
@@ -33,7 +31,7 @@ const encodeDate = date => Date.parse(`${date} EDT`);
 
 const encodeBoolean = value => Boolean(value.toLowerCase() === 'yes');
 
-const encodeText = value => he.decode(value.trim().replace(/\s\s*/g, ' '));
+const encodeText = value => decode(value.trim().replace(/\s\s*/g, ' '));
 
 const getEvent = (result, sku) => {
 	const name = result.match(/<h3\s+class="panel-title\s+col-sm-6">\s*(.+?)\s*<\/h3>/);
@@ -43,7 +41,7 @@ const getEvent = (result, sku) => {
 	const orgLimit = result.match(/Max Registrations per Organization<\/strong>[^0-9]*(.+?)[^0-9]*<\/p>/);
 	const opens = result.match(/Registration Opens<\/strong>[^0-9A-Z]*(.+?)[^0-9A-Z]*<\/p>/i);
 	const deadline = result.match(/Registration Deadline<\/strong>[^0-9A-Z]*(.+?)[^0-9A-Z]*<\/p>/i);
-	const cost = result.match(/Price<\/strong>[^0-9A-Z]*(.+?)[^0-9A-Z]*<\/p>/i);
+	const cost = result.match(/Price<\/strong>.*?([.0-9]+).*?<\/p>/i);
 	const grade = result.match(/Grade Level[^A-Z]*(.+?)[^A-Z]*<\/p>/i);
 	const skills = result.match(/Robot Skills Challenge Offered[^A-Z]*(.+?)[^A-Z]*<\/p>/i);
 	const tsa = result.match(/TSA Event[^A-Z]*(.+?)[^A-Z]*<\/p>/i);
@@ -73,7 +71,7 @@ const getEvent = (result, sku) => {
 		type: type[1],
 		size: parseInt(capacity[1]) || 0,
 		capacity: parseInt(capacity[2]) || 0,
-		cost: (!cost || cost[1].toLowerCase() === 'free') ? 0 : Math.round(parseFloat(cost[1]) * 100),
+		cost: cost ? Math.round(parseFloat(cost[1]) * 100) : 0,
 		grade: dbinfo.encodeGrade(grade ? grade[1] : 'All'),
 		skills: encodeBoolean(skills[1]),
 		tsa: encodeBoolean(tsa[1])
@@ -253,12 +251,12 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 		const skills = [];
 		let skillsData = result.match(/<skills\s+event=".+?"\s+data="(.+?)"/);
 		if (skillsData) {
-			skillsData = JSON.parse(he.decode(skillsData[1]));
+			skillsData = JSON.parse(decode(skillsData[1]));
 		} else {
 			skillsData = [];
 			const skillsRegex = /<re-legacy-skills\s+type=".+?"\s+event=".+?"\s+data="(.+?)"/g;
 			while (regex = skillsRegex.exec(result)) {
-				skillsData = skillsData.concat(JSON.parse(he.decode(regex[1])));
+				skillsData = skillsData.concat(JSON.parse(decode(regex[1])));
 			}
 		}
 		if (skillsData) {
@@ -357,7 +355,7 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 		const divisionsRegex = /<a\s+href="#(.+?)"\s+role="tab"\s+data-toggle="tab">\s*(.+?)\s*</g;
 		const divisionIdToName = {};
 		while (regex = divisionsRegex.exec(result)) {
-			divisionIdToName[regex[1]] = he.decode(regex[2]);
+			divisionIdToName[regex[1]] = decode(regex[2]);
 		}
 		const resultsRegex = /id="(.+?)">\s*<div\s+class="row">\s*<div\s+class="col-md-8">\s*<h4>Match Results<\/h4>\s*<results\s+program=".+?"\s+division="([0-9]+)"\s+event=".+?"\s+data="(.+?)"(?:\s|.)*?data="(.+?)"/g;
 		const divisionNumberToName = {};
@@ -368,14 +366,14 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 
 			divisionNumberToName[divisionNumber] = divisionName;
 
-			JSON.parse(he.decode(regex[4])).filter(ranking => ranking.division === divisionNumber).map(ranking => formatRanking(ranking, sku, divisionName, prog, season)).forEach(async ranking => {
+			JSON.parse(decode(regex[4])).filter(ranking => ranking.division === divisionNumber).map(ranking => formatRanking(ranking, sku, divisionName, prog, season)).forEach(async ranking => {
 				try {
 					await db.collection('rankings').updateOne({_id: ranking._id}, {$set: ranking}, {upsert: true});
 				} catch (err) {
 					console.error(err);
 				}
 			});
-			const matches = JSON.parse(he.decode(regex[3])).filter(match => match.division === divisionNumber).map(match => formatMatch(match, event, divisionName)).sort(matchCompare);
+			const matches = JSON.parse(decode(regex[3])).filter(match => match.division === divisionNumber).map(match => formatMatch(match, event, divisionName)).sort(matchCompare);
 			matches.forEach(match => {
 				[match.red, match.red2, match.red3, match.blue, match.blue2, match.blue3].forEach(team => {
 					if (team && !teamsVector.includes(team)) {

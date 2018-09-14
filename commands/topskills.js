@@ -1,4 +1,4 @@
-const Discord = require('discord.js');
+const { MessageEmbed } = require('discord.js');
 
 const app = require('../app');
 const dbinfo = require('../dbinfo');
@@ -7,6 +7,8 @@ const rankEmojis = ['🥇', '🥈', '🥉'];
 const pageSize = 10;
 const previous = '🔺';
 const next = '🔻';
+
+const emojis = [previous, next];
 
 const getDescription = (skills, index = 0) => {
 	let description = '';
@@ -59,7 +61,7 @@ module.exports = async (message, args) => {
 		const grade = dbinfo.decodeGrade(skills[index]._id.grade);
 		const season = dbinfo.decodeSeason(skills[index]._id.season);
 		const seasonUrl = dbinfo.decodeSeasonUrl(skills[index]._id.season);
-		const embed = new Discord.MessageEmbed()
+		const embed = new MessageEmbed()
 			.setColor('GOLD')
 			.setAuthor(`${grade} World Skills Standings`, null, `https://vexdb.io/skills/${prog}/${season.replace(/ /g, '_')}/Robot`)
 			.setTitle(`${prog} ${season}`)
@@ -67,43 +69,37 @@ module.exports = async (message, args) => {
 			.setDescription(getDescription(skills));
 
 		try {
-			const reply = await message.channel.send({embed: embed});
+			const reply = await message.channel.send({embed});
 			const collector = reply.createReactionCollector((reaction, user) => {
-				return user.id !== app.client.user.id && (reaction.emoji.name === previous || reaction.emoji.name === next);
+				return (user.id === message.author.id) && emojis.includes(reaction.emoji.name);
 			}, {time: 30000, dispose: true});
-			collector.on('collect', (reaction, user) => {
-				if (user.id === message.author.id) {
-					index += (reaction.emoji.name === next ? 1 : -1) * pageSize;
-					if (index >= skills.length) {
-						index = 0;
-					} else if (index < 0) {
-						index = Math.max(skills.length - pageSize, 0);
-					}
-					reply.edit({embed: embed.setDescription(getDescription(skills, index))});
-				} else {
-					reaction.users.remove(user);
+			const lastPage = Math.max(skills.length - pageSize, 0);
+			collector.on('collect', reaction => {
+				index += ((reaction.emoji.name === next) ? 1 : -1) * pageSize;
+				if (index >= skills.length) {
+					index = 0;
+				} else if (index < 0) {
+					index = lastPage;
 				}
+				embed.setDescription(getDescription(skills, index));
+				reply.edit({embed});
 			});
-			collector.on('remove', (reaction, user) => {
-				if (user.id === message.author.id) {
-					index += (reaction.emoji.name === next ? 1 : -1) * pageSize;
-					if (index >= skills.length) {
-						index = 0;
-					} else if (index < 0) {
-						index = Math.max(skills.length - pageSize, 0);
-					}
-					reply.edit({embed: embed.setDescription(getDescription(skills, index))});
+			collector.on('remove', reaction => {
+				index += (reaction.emoji.name === next ? 1 : -1) * pageSize;
+				if (index >= skills.length) {
+					index = 0;
+				} else if (index < 0) {
+					index = lastPage;
 				}
+				embed.setDescription(getDescription(skills, index));
+				reply.edit({embed});
 			});
 			collector.on('end', () => {
-				let users = reply.reactions.get(next).users;
-				users.forEach(user => users.remove(user));
-				users = reply.reactions.get(previous).users;
-				users.forEach(user => users.remove(user));
-				app.addFooter(message, embed, reply);
+				reply.reactions.removeAll();
+				app.addFooter(message, reply);
 			});
 			await reply.react(previous);
-			await reply.react(next);
+			reply.react(next);
 		} catch (err) {
 			console.log(err);
 		}

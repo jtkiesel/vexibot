@@ -4,6 +4,8 @@ const vex = require('../vex');
 const previous = '\u25C0';
 const next = '\u25B6';
 
+const emojis = [previous, next];
+
 module.exports = async (message, args) => {
 	const arg = args ? args.replace(/\s+/g, '') : '';
 	const teamId = vex.getTeamId(message, arg);
@@ -21,44 +23,32 @@ module.exports = async (message, args) => {
 			try {
 				const reply = await message.channel.send({embed: embed});
 				const collector = reply.createReactionCollector((reaction, user) => {
-					return user.id !== app.client.user.id && (reaction.emoji.name === previous || reaction.emoji.name === next);
+					return (user.id === message.author.id) && emojis.includes(reaction.emoji.name);
 				}, {time: 30000, dispose: true});
-				collector.on('collect', (reaction, user) => {
-					if (user.id === message.author.id) {
-						index += (reaction.emoji.name === next) ? -1 : 1;
-						if (index >= team.length) {
-							index = 0;
-						} else if (index < 0) {
-							index = team.length - 1;
-						}
-						reply.edit({embed: vex.createTeamEmbed(team[index])});
-					} else {
-						reaction.users.remove(user);
+				collector.on('collect', reaction => {
+					index += (reaction.emoji.name === next) ? -1 : 1;
+					if (index >= team.length) {
+						index = 0;
+					} else if (index < 0) {
+						index = team.length - 1;
 					}
+					reply.edit({embed: vex.createTeamEmbed(team[index])});
 				});
-				collector.on('remove', (reaction, user) => {
-					if (user.id === message.author.id) {
-						index += (reaction.emoji.name === next) ? -1 : 1;
-						if (index >= team.length) {
-							index = 0;
-						} else if (index < 0) {
-							index = team.length - 1;
-						}
-						reply.edit({embed: vex.createTeamEmbed(team[index])});
+				collector.on('remove', reaction => {
+					index += (reaction.emoji.name === next) ? -1 : 1;
+					if (index >= team.length) {
+						index = 0;
+					} else if (index < 0) {
+						index = team.length - 1;
 					}
+					reply.edit({embed: vex.createTeamEmbed(team[index])});
 				});
 				collector.on('end', () => {
-					[previous, next].forEach(emoji => {
-						const reaction = reply.reactions.get(emoji);
-						if (reaction) {
-							const users = reaction.users;
-							users.forEach(user => users.remove(user));
-						}
-					});
-					app.addFooter(message, embed, reply);
+					reply.reactions.removeAll();
+					app.addFooter(message, reply);
 				});
 				await reply.react(previous);
-				await reply.react(next);
+				reply.react(next);
 			} catch (err) {
 				console.log(err);
 			}
