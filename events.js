@@ -407,7 +407,7 @@ const updateEvent = async (prog, season, sku, timeout = 1000) => {
 					reactions = vex.matchScoredEmojis;
 				} else {
 					change = 'scheduled';
-					reactions = vex.matchScheduledEmojis;
+					reactions = vex.allianceEmojis;
 					delete match.redScore;
 					delete match.blueScore;
 					unset.redScore = '';

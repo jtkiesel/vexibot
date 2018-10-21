@@ -1,6 +1,9 @@
 const { Client, MessageEmbed } = require('discord.js');
 const { MongoClient } = require('mongodb');
 const { inspect } = require('util');
+const { CronJob } = require('cron');
+
+const { updateEvents, updateTeams, updateMaxSkills, updateCurrentEvents } = require('./vexdata');
 
 const client = new Client();
 const token = process.env.VEXIBOT_TOKEN;
@@ -93,6 +96,12 @@ MongoClient.connect(mongodbUri, mongodbOptions).then(mongoClient => {
 	Object.entries(commandInfo).forEach(([name, desc]) => helpDescription += `\n\`${prefix}${name}\`: ${desc}`);
 
 	client.login(token).catch(console.error);
+
+	const timezone = 'America/New_York';
+	new CronJob('00 00 08 * * *', updateEvents, null, true, timezone);
+	new CronJob('00 10 08 * * *', updateTeams, null, true, timezone);
+	new CronJob('00 20 08 * * *', updateMaxSkills, null, true, timezone);
+	new CronJob('00 */2 * * * *', updateCurrentEvents, null, true, timezone);
 }).catch(console.error);
 
 module.exports = {

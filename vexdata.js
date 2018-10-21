@@ -1,13 +1,10 @@
 const request = require('request-promise-native');
-const cron = require('cron');
 const he = require('he');
 
 const { db } = require('./app');
 const vex = require('./vex');
 const dbinfo = require('./dbinfo');
 const { updateEvent } = require('./events');
-
-const timezone = 'America/New_York';
 
 const sleep = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
 
@@ -98,11 +95,6 @@ const updateCurrentEvents = async () => {
 	}
 };
 
-new cron.CronJob('00 00 08 * * *', updateEvents, null, true, timezone);
-new cron.CronJob('00 10 08 * * *', updateTeams, null, true, timezone);
-new cron.CronJob('00 20 08 * * *', updateMaxSkills, null, true, timezone);
-new cron.CronJob('00 */2 * * * *', updateCurrentEvents, null, true, timezone);
-
 const updateTeamsInGroup = async (program, season, teamGroup, timeout = 1000) => {
 	const url = 'https://www.robotevents.com/api/teams/getTeamsForLatLng';
 	const lat = teamGroup.position.lat;
@@ -112,6 +104,7 @@ const updateTeamsInGroup = async (program, season, teamGroup, timeout = 1000) =>
 		teams.map(team => formatTeam(program, season, lat, lng, team)).forEach(async team => {
 			try {
 				const teamId = team._id.id;
+				console.log(teamId);
 				let result = await db.collection('teams').findOneAndUpdate({_id: team._id}, {$set: team}, {upsert: true});
 				const old = result.value;
 				if (!old) {
@@ -396,7 +389,7 @@ const getMatch = async () => {
 		reactions = vex.matchScoredEmojis;
 		change = 'scored';
 	} else {
-		reactions = vex.matchScheduledEmojis;
+		reactions = vex.allianceEmojis;
 		change = 'scheduled';
 	}
 	vex.sendMatchEmbed(`Match ${change}`, match, reactions);

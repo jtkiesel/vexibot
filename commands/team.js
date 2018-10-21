@@ -44,7 +44,9 @@ module.exports = async (message, args) => {
 					reply.edit({embed: vex.createTeamEmbed(team[index])});
 				});
 				collector.on('end', () => {
-					reply.reactions.removeAll();
+					if (message.channel.type === 'text') {
+						reply.reactions.removeAll().catch(console.error);
+					}
 					app.addFooter(message, reply);
 				});
 				await reply.react(previous);

@@ -1,11 +1,8 @@
-const Discord = require('discord.js');
-const he = require('he');
+const { MessageEmbed } = require('discord.js');
+const { decode } = require('he');
 
-const app = require('./app');
+const { client, db } = require('./app');
 const dbinfo = require('./dbinfo');
-
-const db = app.db;
-const client = app.client;
 
 const getTeamId = (message, args) => {
 	const arg = args.replace(/\s+/g, '');
@@ -15,7 +12,7 @@ const getTeamId = (message, args) => {
 	return (message.member ? message.member.displayName : message.author.username).split(' | ', 2)[1];
 };
 
-const validTeamId = teamId => /^([0-9]{1,5}[A-Z]?|[A-Z]{2,6}[0-9]{0,2})$/i.test(teamId);
+const validTeamId = teamId => /^([0-9]{1,5}[A-Z]?|[A-Z]{2,5}[0-9]{0,2})$/i.test(teamId);
 
 const getTeam = teamId => db.collection('teams').find({'_id.id': new RegExp(`^${teamId}$`, 'i'), '_id.prog': (isNaN(teamId.charAt(0)) ? 4 : 1)}).sort({'_id.season': -1}).toArray();
 
@@ -35,9 +32,9 @@ const createTeamEmbed = team => {
 	const program = dbinfo.decodeProgram(team._id.prog);
 	const season = team._id.season;
 	const location = getTeamLocation(team);
-	const embed = new Discord.MessageEmbed()
+	const embed = new MessageEmbed()
 		.setColor('GREEN')
-		.setAuthor(teamId, dbinfo.emojiToUrl(dbinfo.decodeProgramEmoji(team._id.prog)), `https://www.robotevents.com/teams/${program}/${teamId}`)
+		.setAuthor(teamId, dbinfo.emojiToUrl(dbinfo.decodeProgramEmoji(team._id.prog)), `https://robotevents.com/teams/${program}/${teamId}`)
 		.setTitle(dbinfo.decodeSeason(season))
 		.setURL(dbinfo.decodeSeasonUrl(season));
 	if (team.name) {
@@ -59,7 +56,7 @@ const createTeamEmbed = team => {
 };
 
 const createEventEmbed = event => {
-	const embed = new Discord.MessageEmbed()
+	const embed = new MessageEmbed()
 		.setColor('ORANGE')
 		.setAuthor(event.name, dbinfo.emojiToUrl(dbinfo.decodeProgramEmoji(event.prog)), `https://robotevents.com/${event._id}.html`)
 		.setTitle(`${event.tsa ? 'TSA ' : ''}${dbinfo.decodeSeason(event.season)}`)
@@ -92,15 +89,14 @@ const createTeamsString = (prog, teams, teamSit, scored) => {
 	}).join(' ');
 };
 
-const matchScheduledEmojis = ['🔴', '🔵'];
+const allianceEmojis = ['🔴', '🔵'];
 const matchScoredEmojis = ['👍', '👎'];
 
 const matchScoredNotification = match => {
-	const round = match._id.round;
-	const matchString = `${dbinfo.decodeRound(round)}${round < 3 || round > 8 ? '' : `${match._id.instance}-`}${match._id.number}`;
+	const matchString = createMatchString(match._id.round, match._id.instance, match._id.number);
 	const redTeams = [match.red, match.red2, match.red3].filter(team => team && team !== match.redSit);
 	const blueTeams = [match.blue, match.blue2, match.blue3].filter(team => team && team !== match.blueSit);
-	return `${matchString}:**${redTeams[0]}**${redTeams[1] ? redTeams[1] : ''}${matchScheduledEmojis[0]}${match.redScore}-${match.blueScore}${matchScheduledEmojis[1]}${blueTeams[1] ? blueTeams[1] : ''}**${blueTeams[0]}**`;
+	return `${matchString} ${redTeams[0]}${redTeams[1] ? `${redTeams[1]}` : ''}${allianceEmojis[0]}${match.redScore}-${match.blueScore}${allianceEmojis[1]}${blueTeams[1] ? `${blueTeams[1]} ` : ''}${blueTeams[0]}`;
 };
 
 const createMatchEmbed = match => {
@@ -114,8 +110,8 @@ const createMatchEmbed = match => {
 	} else {
 		color = (match.redScore > match.blueScore) ? 'RED' : 'BLUE';
 	}
-	let red = `${matchScheduledEmojis[0]} Red`;
-	let blue = `${matchScheduledEmojis[1]} Blue`;
+	let red = `${allianceEmojis[0]} Red`;
+	let blue = `${allianceEmojis[1]} Blue`;
 	if (match.hasOwnProperty('redScore') || match.hasOwnProperty('redScorePred')) {
 		red += ':';
 		blue += ':';
@@ -128,7 +124,7 @@ const createMatchEmbed = match => {
 			blue += ` (${match.blueScorePred} predicted)`;
 		}
 	}
-	const embed = new Discord.MessageEmbed()
+	const embed = new MessageEmbed()
 		.setColor(color)
 		.setAuthor(match._id.event.name, null, `https://robotevents.com/${match._id.event._id}.html`)
 		.setTitle(match._id.division)
@@ -154,7 +150,7 @@ const createAwardEmbed = async award => {
 			award.qualifies[award.qualifies.indexOf(event._id)] = `[${event.name}](https://robotevents.com/${event._id}.html)`;
 		}
 	});
-	const embed = new Discord.MessageEmbed()
+	const embed = new MessageEmbed()
 		.setColor('PURPLE')
 		.setAuthor(eventName)
 		.setTitle(award._id.name)
@@ -173,7 +169,7 @@ const createSkillsEmbed = async skill => {
 	try {
 		const event = await db.collection('events').findOne({_id: skill._id.event});
 		const program = dbinfo.decodeProgram(skill.team.prog);
-		embed = new Discord.MessageEmbed()
+		embed = new MessageEmbed()
 			.setColor('GOLD')
 			.setAuthor(event.name, null, `https://robotevents.com/${event._id}.html#tab-results`)
 			.setTitle(`${program} ${skill.team.id}`)
@@ -246,13 +242,13 @@ const createTeamChangeEmbed = (prog, teamId, field, oldValue, newValue) => {
 	const program = dbinfo.decodeProgram(prog);
 	let change;
 	if (!oldValue) {
-		change = `added their ${field} **"**${escapeMarkdown(he.decode(newValue))}**"**`;
+		change = `added their ${field} **"**${escapeMarkdown(decode(newValue))}**"**`;
 	} else if (!newValue) {
-		change = `removed their ${field} **"**${escapeMarkdown(he.decode(oldValue))}**"**`;
+		change = `removed their ${field} **"**${escapeMarkdown(decode(oldValue))}**"**`;
 	} else {
-		change = `changed their ${field} from **"**${escapeMarkdown(he.decode(oldValue))}**"** to **"**${escapeMarkdown(he.decode(newValue))}**"**`;
+		change = `changed their ${field} from **"**${escapeMarkdown(decode(oldValue))}**"** to **"**${escapeMarkdown(decode(newValue))}**"**`;
 	}
-	return new Discord.MessageEmbed()
+	return new MessageEmbed()
 		.setColor('GREEN')
 		.setDescription(`[${program} ${teamId}](https://robotevents.com/teams/${program}/${teamId}) ${change}.`);
 };
@@ -270,6 +266,6 @@ module.exports = {
 	createTeamChangeEmbed,
 	sendToSubscribedChannels,
 	sendMatchEmbed,
-	matchScheduledEmojis,
+	allianceEmojis,
 	matchScoredEmojis
 };
