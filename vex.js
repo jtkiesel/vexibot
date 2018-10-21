@@ -96,7 +96,7 @@ const matchScoredNotification = match => {
 	const matchString = createMatchString(match._id.round, match._id.instance, match._id.number);
 	const redTeams = [match.red, match.red2, match.red3].filter(team => team && team !== match.redSit);
 	const blueTeams = [match.blue, match.blue2, match.blue3].filter(team => team && team !== match.blueSit);
-	return `${matchString} ${redTeams[0]}${redTeams[1] ? `${redTeams[1]}` : ''}${allianceEmojis[0]}${match.redScore}-${match.blueScore}${allianceEmojis[1]}${blueTeams[1] ? `${blueTeams[1]} ` : ''}${blueTeams[0]}`;
+	return `${matchString} ${redTeams[0]}${redTeams[1] ? ` ${redTeams[1]}` : ''}${allianceEmojis[0]}${match.redScore}-${match.blueScore}${allianceEmojis[1]}${blueTeams[1] ? `${blueTeams[1]} ` : ''}${blueTeams[0]}`;
 };
 
 const createMatchEmbed = match => {

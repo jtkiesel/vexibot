@@ -51,7 +51,9 @@ module.exports = async (message, args) => {
 					} else {
 						status = unsub ? 'are still' : 'have not been';
 					}
-					reply.reactions.removeAll().catch(console.error);
+					if (message.channel.type === 'text') {
+						reply.reactions.removeAll().catch(console.error);
+					}
 					reply.edit(`${message.author}, you ${status} subscribed to updates for ${teamString}.`, {embed: null}).catch(console.error);
 				});
 				await reply.react(yes);
