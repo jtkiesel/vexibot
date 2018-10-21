@@ -26,6 +26,7 @@ const commandInfo = {
 const commands = {};
 
 let helpDescription = `\`${prefix}help\`: Provides information about all commands.`;
+let vexdata;
 
 const clean = text => {
 	if (typeof text === 'string') {
@@ -95,7 +96,8 @@ MongoClient.connect(mongodbUri, mongodbOptions).then(mongoClient => {
 
 	client.login(token).catch(console.error);
 
-	const { updateEvents, updateTeams, updateMaxSkills, updateCurrentEvents } = require('./vexdata');
+	vexdata = require('./vexdata');
+	const { updateEvents, updateTeams, updateMaxSkills, updateCurrentEvents } = vexdata;
 	const timezone = 'America/New_York';
 	new CronJob('00 00 08 * * *', updateEvents, null, true, timezone);
 	new CronJob('00 10 08 * * *', updateTeams, null, true, timezone);

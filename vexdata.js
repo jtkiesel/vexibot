@@ -402,6 +402,7 @@ module.exports = {
 	updateEvents,
 	updateAllTeams,
 	updateAllEvents,
+	updateCurrentEvents,
 	updateExistingEvents,
 	updateAllMaxSkills,
 	updateTeamsForSeason,
