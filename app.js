@@ -76,6 +76,7 @@ const addFooter = (message, reply) => {
 
 client.on('ready', () => {
 	console.log(`Logged in as ${client.user.tag}`);
+	client.user.setPresence({status: 'online', activity: {name: `${prefix}help`, type: 'PLAYING'}});
 });
 
 client.on('error', console.error);
@@ -92,7 +93,6 @@ MongoClient.connect(mongodbUri, mongodbOptions).then(mongoClient => {
 	Object.keys(commandInfo).forEach(name => commands[name] = require('./commands/' + name));
 	Object.entries(commandInfo).forEach(([name, desc]) => helpDescription += `\n\`${prefix}${name}\`: ${desc}`);
 
-	client.user.setPresence({status: 'online', activity: {name: `${prefix}help`, type: 'PLAYING'}});
 	client.login(token).catch(console.error);
 
 	const { updateEvents, updateTeams, updateMaxSkills, updateCurrentEvents } = require('./vexdata');
