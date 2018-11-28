@@ -26,7 +26,7 @@ const commandInfo = {
 const commands = {};
 
 let helpDescription = `\`${prefix}help\`: Provides information about all commands.`;
-let vexdata;
+let db, vexdata;
 
 const clean = text => {
 	if (typeof text === 'string') {
@@ -89,7 +89,8 @@ client.on('message', message => {
 });
 
 MongoClient.connect(mongodbUri, mongodbOptions).then(mongoClient => {
-	module.exports.db = mongoClient.db(mongodbUri.match(/\/([^/]+)$/)[1]);
+	db = mongoClient.db(mongodbUri.match(/\/([^/]+)$/)[1]);
+	module.exports.db = db;
 
 	Object.keys(commandInfo).forEach(name => commands[name] = require('./commands/' + name));
 	Object.entries(commandInfo).forEach(([name, desc]) => helpDescription += `\n\`${prefix}${name}\`: ${desc}`);
