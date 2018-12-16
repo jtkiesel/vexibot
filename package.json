@@ -26,16 +26,16 @@
 		"start": "node app.js"
 	},
 	"dependencies": {
-		"cron": "^1.4.1",
+		"cron": "^1.6.0",
 		"discord.js": "github:hydrabolt/discord.js",
-		"he": "^1.1.1",
-		"mathjs": "^5.1.2",
-		"mongodb": "^3.1.4",
+		"he": "^1.2.0",
+		"mathjs": "^5.4.0",
+		"mongodb": "^3.1.10",
 		"parse5": "^5.1.0",
 		"request": "^2.88.0",
 		"request-promise-native": "^1.0.5"
 	},
 	"engines": {
-		"node": "^10.10.0"
+		"node": "^11.4.0"
 	}
 }

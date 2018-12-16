@@ -154,7 +154,7 @@ const createAwardEmbed = async award => {
 		.setColor('PURPLE')
 		.setAuthor(eventName)
 		.setTitle(award._id.name)
-		.setURL(`https://robotevents.com/${award._id.event}#tab-awards`);
+		.setURL(`https://robotevents.com/${award._id.event}.html#tab-awards`);
 	if (award.team) {
 		embed.addField('Team', `${dbinfo.decodeProgramEmoji(award.team.prog)} [${award.team.id}](https://robotevents.com/teams/${dbinfo.decodeProgram(award.team.prog)}/${award.team.id})`, true);
 	}
