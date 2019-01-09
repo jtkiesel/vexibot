@@ -14,7 +14,18 @@ const getTeamId = (message, args) => {
 
 const validTeamId = teamId => /^([0-9]{1,5}[A-Z]?|[A-Z]{2,5}[0-9]{0,2})$/i.test(teamId);
 
-const getTeam = teamId => db.collection('teams').find({'_id.id': new RegExp(`^${teamId}$`, 'i'), '_id.prog': (isNaN(teamId.charAt(0)) ? 4 : 1)}).sort({'_id.season': -1}).toArray();
+const getTeam = (teamId, season) => {
+	let query = {
+		'_id.id': new RegExp(`^${teamId}$`, 'i'),
+		'_id.prog': (isNaN(teamId.charAt(0)) ? 4 : 1)
+	};
+	const teams = db.collection('teams');
+	if (season != null) {
+		query['_id.season'] = season;
+		return teams.findOne(query);
+	}
+	return teams.find(query).sort({'_id.season': -1}).toArray();
+};
 
 const getTeamLocation = team => {
 	let location = [team.city];

@@ -8,9 +8,6 @@ const token = process.env.VEXIBOT_TOKEN;
 const mongodbUri = process.env.VEXIBOT_DB;
 const mongodbOptions = {
 	keepAlive: 1,
-	connectTimeoutMS: 30000,
-	reconnectTries: 30,
-	reconnectInterval: 5000,
 	useNewUrlParser: true
 };
 const prefix = '^';
@@ -21,7 +18,8 @@ const commandInfo = {
 	team: 'General information about a team.',
 	awards: 'Awards earned by a team.',
 	skills: 'Skills scores achieved by a team.',
-	topskills: 'Official Robot Skills rankings for a grade.'
+	topskills: 'Official Robot Skills rankings for a grade.',
+	predict: 'Predict a theoretical match outcome.'
 };
 const commands = {};
 
