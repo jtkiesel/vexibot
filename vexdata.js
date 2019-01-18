@@ -31,7 +31,9 @@ const updateAllTeams = async () => {
 
 const updateEvents = async () => {
 	await updateEventsForSeason(1, 125);
+	await updateEventsForSeason(1, 125, 'future');
 	await updateEventsForSeason(4, 126);
+	await updateEventsForSeason(4, 126, 'future');
 };
 
 const updateAllEvents = async () => {
@@ -159,10 +161,10 @@ const updateTeamsInGroup = async (program, season, teamGroup, timeout = 1000) =>
 	}
 };
 
-const updateEventsForSeason = async (program, season) => {
+const updateEventsForSeason = async (program, season, when = 'past') => {
 	const url = 'https://www.robotevents.com/api/events';
 	try {
-		const eventsData = (await request.post({url: url, form: {programs: [program], when: 'past', season_id: season}, json: true})).data.map(formatEvent);
+		const eventsData = (await request.post({url: url, form: {programs: [program], when, season_id: season}, json: true})).data.map(formatEvent);
 		for (let event of eventsData) {
 			try {
 				console.log(`starting ${event._id}`);
