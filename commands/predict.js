@@ -11,10 +11,11 @@ module.exports = async (message, args) => {
 				const team = (await vex.getTeam(teamId))[0];
 				if (team) {
 					const ranking = (await db.collection('rankings').aggregate()
-						.match({'_id.team': team._id})
+						.match({'_id.team': team._id, opr: {$exists: true}})
 						.lookup({from: 'events', localField: '_id.event', foreignField: '_id', as: 'events'})
 						.project({opr: 1, dpr: 1, event: {$arrayElemAt: ['$events', 0]}})
 						.sort({'event.end': -1, '_id.event': -1})
+						.limit(1)
 						.project({opr: 1, dpr: 1}).toArray())[0];
 					console.log(ranking);
 					team.opr = ranking.opr;
