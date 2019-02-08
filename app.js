@@ -5,9 +5,10 @@ const { CronJob } = require('cron');
 
 const client = new Client();
 const token = process.env.VEXIBOT_TOKEN;
-const mongodbUri = process.env.VEXIBOT_DB;
-const mongodbOptions = {
-	keepAlive: 1,
+const dbUri = process.env.VEXIBOT_DB;
+const mongoOptions = {
+	reconnectTries: Number.MAX_VALUE,
+	keepAlive: true,
 	useNewUrlParser: true
 };
 const prefix = '^';
@@ -86,8 +87,8 @@ client.on('message', message => {
 	}
 });
 
-MongoClient.connect(mongodbUri, mongodbOptions).then(mongoClient => {
-	db = mongoClient.db(mongodbUri.match(/\/([^/]+)$/)[1]);
+MongoClient.connect(dbUri, mongoOptions).then(mongoClient => {
+	db = mongoClient.db(dbUri.match(/\/([^/]+)$/)[1]);
 	module.exports.db = db;
 
 	Object.keys(commandInfo).forEach(name => commands[name] = require('./commands/' + name));
