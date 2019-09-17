@@ -1,41 +1,55 @@
 {
-	"name": "vexibot",
-	"version": "1.0.0",
-	"description": "Provides services related to the VEX Robotics Competition, primarily providing statistics related to the competition.",
-	"keywords": [
-		"Discord",
-		"bot",
-		"VEX",
-		"robotics",
-		"competition"
-	],
-	"homepage": "https://github.com/jtkiesel/vexibot#readme",
-	"bugs": {
-		"url": "https://github.com/jtkiesel/vexibot/issues"
-	},
-	"license": "MIT",
-	"author": {
-		"name": "Jordan T Kiesel"
-	},
-	"main": "app.js",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/jtkiesel/vexibot.git"
-	},
-	"scripts": {
-		"start": "node app.js"
-	},
-	"dependencies": {
-		"cron": "^1.6.0",
-		"discord.js": "github:hydrabolt/discord.js",
-		"he": "^1.2.0",
-		"mathjs": "^5.4.0",
-		"mongodb": "^3.1.10",
-		"parse5": "^5.1.0",
-		"request": "^2.88.0",
-		"request-promise-native": "^1.0.5"
-	},
-	"engines": {
-		"node": "^11.4.0"
-	}
+  "name": "vexibot",
+  "version": "1.0.0",
+  "description": "Discord bot that provides services related to the VEX Robotics Competition, primarily providing information and statistics related to the competition.",
+  "keywords": [
+    "Discord",
+    "bot",
+    "VEX",
+    "robotics",
+    "competition"
+  ],
+  "homepage": "https://github.com/jtkiesel/vexibot#readme",
+  "bugs": {
+    "url": "https://github.com/jtkiesel/vexibot/issues"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Jordan T Kiesel"
+  },
+  "main": "build/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jtkiesel/vexibot.git"
+  },
+  "scripts": {
+    "dev": "nodemon --inspect --exec babel-node src",
+    "heroku-postbuild": "npm run build",
+    "start": "node build/index.js",
+    "build": "babel src -d build"
+  },
+  "dependencies": {
+    "axios": "^0.19.0",
+    "cheerio": "^1.0.0-rc.3",
+    "cron": "^1.7.2",
+    "discord.js": "github:hydrabolt/discord.js",
+    "he": "^1.2.0",
+    "mathjs": "^6.2.1",
+    "ml-matrix": "^6.4.0",
+    "moment-timezone": "^0.5.26",
+    "mongodb": "^3.3.2",
+    "tz-lookup": "^6.1.24"
+  },
+  "engines": {
+    "node": "^12.10.0",
+    "npm": "^6.10.3"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.6.0",
+    "@babel/core": "^7.6.0",
+    "@babel/node": "^7.6.1",
+    "@babel/preset-env": "^7.6.0",
+    "nodemon": "^1.19.2"
+  },
+  "browserslist": "maintained node versions"
 }
