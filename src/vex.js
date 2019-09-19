@@ -2,7 +2,7 @@ import { MessageEmbed } from 'discord.js';
 import { decode } from 'he';
 
 import { client, db } from '.';
-import { decodeProgram, emojiToUrl, decodeProgramEmoji, decodeSeason, decodeSeasonUrl, decodeGrade, decodeRound, decodeSkill } from './dbinfo';
+import { decodeEvent, decodeGrade, decodeProgram, decodeProgramEmoji, decodeRound, decodeSeason, decodeSeasonUrl, decodeSkill, emojiToUrl } from './dbinfo';
 
 const getTeamId = (message, args) => {
   const arg = args.replace(/\s+/g, '');
@@ -72,10 +72,10 @@ const createEventEmbed = event => {
     .setAuthor(event.name, emojiToUrl(decodeProgramEmoji(event.program)), `https://robotevents.com/${event._id}.html`)
     .setTitle(`${event.tsa ? 'TSA ' : ''}${decodeSeason(event.season)}`)
     .setURL(decodeSeasonUrl(event.season))
-    .setDescription(event.type)
+    .setDescription(decodeEvent(event.type))
     .setTimestamp(new Date(event.start))
-    .addField('Capacity', `${event.size}/${event.capacity}`, true)
-    .addField('Price', `$${parseFloat(event.cost / 100).toFixed(2)}`, true)
+    .addField('Spots Open', `${event.spots}/${event.capacity}`, true)
+    .addField('Price', `${event.cost}`, true)
     .addField('Grade', decodeGrade(event.grade), true)
     .addField('Skills Offered?', event.skills ? 'Yes' : 'No', true);
   return embed;

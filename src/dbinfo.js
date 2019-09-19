@@ -17,8 +17,8 @@ const idToProgram = {
 const idToProgramEmoji = {
   1: '<:vrc:464676956428828682>',
   4: '<:vexu:464677474509389831>',
-  37: '<:create:464677535461146624>',
-  41: '<:viqc:464677640415084546>'
+  37: '<:create:464677640415084546>',
+  41: '<:viqc:464677535461146624>'
 };
 
 const seasonToId = {
@@ -144,6 +144,8 @@ const encodeSkills = ['programming', 'driver'];
 
 const decodeSkills = ['Programming', 'Driver'];
 
+const seasons = Object.keys(idToSeason).map(season => parseInt(season));
+
 const encodeProgram = program => programToId[program];
 
 const decodeProgram = program => idToProgram[program];
@@ -167,8 +169,6 @@ const roundIndex = round => roundKeys.indexOf(round);
 const encodeSkill = type => encodeSkills.indexOf(type);
 
 const decodeSkill = type => decodeSkills[type];
-
-const seasons = Object.keys(idToSeason).map(season => parseInt(season));
 
 const seasonToVexu = season => (season === -4) ? null : seasons[seasons.indexOf(season) + 1];
 

@@ -9,7 +9,8 @@ const dbUri = process.env.VEXIBOT_DB;
 const mongoOptions = {
   retryWrites: true,
   reconnectTries: Number.MAX_VALUE,
-  useNewUrlParser: true
+  useNewUrlParser: true,
+  useUnifiedTopology: true
 };
 const prefix = '^';
 const commandInfo = {
