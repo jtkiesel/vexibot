@@ -75,7 +75,7 @@ const createEventEmbed = event => {
     .setDescription(decodeEvent(event.type))
     .setTimestamp(new Date(event.start))
     .addField('Spots Open', `${event.spots}/${event.capacity}`, true)
-    .addField('Price', `${event.cost}`, true)
+    .addField('Price', `$${event.price}`, true)
     .addField('Grade', decodeGrade(event.grade), true)
     .addField('Skills Offered?', event.skills ? 'Yes' : 'No', true);
   return embed;
