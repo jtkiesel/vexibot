@@ -339,7 +339,7 @@ const updateMatchesAndRankings = async (matches, rankings, event) => {
           }
         }
       }
-      let change, reactions;
+      let change;
       const unset = {};
       if (scored) {
         match.teams.forEach(team1 => {
@@ -367,7 +367,6 @@ const updateMatchesAndRankings = async (matches, rankings, event) => {
           scoresVector[index1] += match.score;
         });
         change = 'scored';
-        reactions = vex.matchScoredEmojis;
       } else {
         change = 'scheduled';
         delete match.score;
@@ -393,14 +392,14 @@ const updateMatchesAndRankings = async (matches, rankings, event) => {
         if (old) {
           const oldScored = old.hasOwnProperty('score');
           if (!oldScored && scored) {
-            await vex.sendMatchEmbed('Match scored', match, event, reactions);
+            await vex.sendMatchEmbed('Match scored', match, event);
           } else if (oldScored && !scored) {
-            await vex.sendMatchEmbed('Match score removed', old, event, reactions);
+            await vex.sendMatchEmbed('Match score removed', old, event);
           } else if (match.score !== old.score) {
-            await vex.sendMatchEmbed('Match score changed', match, event, reactions);
+            await vex.sendMatchEmbed('Match score changed', match, event);
           }
         } else {
-          await vex.sendMatchEmbed(`New match ${change}`, match, event, reactions);
+          await vex.sendMatchEmbed(`New match ${change}`, match, event);
         }
       } catch (err) {
         console.error(err);
@@ -428,7 +427,7 @@ const updateMatchesAndRankings = async (matches, rankings, event) => {
           }
         }
       }
-      let change, reactions;
+      let change;
       const unset = {};
       if (scored) {
         const red = {teams: match.red.filter(team => team && team !== match.redSit), score: match.redScore, opponentScore: match.blueScore};
@@ -463,10 +462,8 @@ const updateMatchesAndRankings = async (matches, rankings, event) => {
           });
         });
         change = 'scored';
-        reactions = vex.matchScoredEmojis;
       } else {
         change = 'scheduled';
-        reactions = vex.allianceEmojis;
         delete match.redScore;
         delete match.blueScore;
         unset.redScore = '';
@@ -495,14 +492,14 @@ const updateMatchesAndRankings = async (matches, rankings, event) => {
         if (old) {
           const oldScored = old.hasOwnProperty('redScore');
           if (!oldScored && scored) {
-            await vex.sendMatchEmbed('Match scored', match, event, reactions);
+            await vex.sendMatchEmbed('Match scored', match, event);
           } else if (oldScored && !scored) {
-            await vex.sendMatchEmbed('Match score removed', old, event, reactions);
+            await vex.sendMatchEmbed('Match score removed', old, event);
           } else if (match.redScore !== old.redScore || match.blueScore !== old.blueScore) {
-            await vex.sendMatchEmbed('Match score changed', match, event, reactions);
+            await vex.sendMatchEmbed('Match score changed', match, event);
           }
         } else {
-          await vex.sendMatchEmbed(`New match ${change}`, match, event, reactions);
+          await vex.sendMatchEmbed(`New match ${change}`, match, event);
         }
       } catch (err) {
         console.error(err);

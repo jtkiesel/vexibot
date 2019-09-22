@@ -53,7 +53,7 @@ export default async (message, args) => {
         blue: blue.map(team => team._id.id),
         redScore,
         blueScore,
-        start: message.createdAt
+        started: message.createdAt
       };
       message.channel.send({embed: createMatchEmbed(match)}).catch(console.error);
     } else {

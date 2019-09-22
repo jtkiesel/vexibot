@@ -4,7 +4,6 @@ import { tz } from 'moment-timezone';
 import tzlookup from 'tz-lookup';
 
 import { db } from '.';
-import { matchScoredEmojis, allianceEmojis, sendMatchEmbed } from './vex';
 import { decodeGrade, decodeProgram, decodeSeason, encodeProgram, encodeGrade } from './dbinfo';
 import { updateEvent } from './events';
 
@@ -396,20 +395,6 @@ const encodeSeasonName = name => name.match(/^(?:.+: )?(.+?)(?: [0-9]{4}-[0-9]{4
 
 const encodeDate = date => new Date(date);
 
-const getMatch = async () => {
-  const count = await db.collection('matches').count({});
-  const match = await db.collection('matches').find({}).skip(Math.floor(Math.random() * count)).next();
-  let reactions, change;
-  if (match.hasOwnProperty('redScore')) {
-    reactions = matchScoredEmojis;
-    change = 'scored';
-  } else {
-    reactions = allianceEmojis;
-    change = 'scheduled';
-  }
-  sendMatchEmbed(`Match ${change}`, match, reactions);
-};
-
 export {
   updateProgramsAndSeasons,
   updateMaxSkills,
@@ -422,6 +407,5 @@ export {
   updateAllMaxSkills,
   updateTeamsForSeason,
   updateEventsForSeason,
-  updateMaxSkillsForSeason,
-  getMatch
+  updateMaxSkillsForSeason
 };

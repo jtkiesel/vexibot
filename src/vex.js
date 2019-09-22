@@ -100,7 +100,6 @@ const createTeamsString = (program, teams, teamSit, scored) => {
 };
 
 const allianceEmojis = ['🔴', '🔵'];
-const matchScoredEmojis = ['👍', '👎'];
 
 const matchScoredNotification = match => {
   const matchString = createMatchString(match._id.round, match._id.instance, match._id.number);
@@ -145,7 +144,7 @@ const createMatchEmbed = (match, event) => {
   }
   const embed = new MessageEmbed()
     .setColor(color)
-    .setAuthor(event.name, null, `https://robotevents.com/${match._id.event}.html`)
+    .setAuthor(event.name, emojiToUrl(decodeProgramEmoji(match.program)), `https://robotevents.com/${match._id.event}.html`)
     .setTitle(event.divisions[match._id.division])
     .setURL(`https://robotevents.com/${match._id.event}.html#tab-results`)
     .setDescription(createMatchString(match._id.round, match._id.instance, match._id.number));
@@ -161,8 +160,10 @@ const createMatchEmbed = (match, event) => {
       embed.addField(blue, createTeamsString(match.program, match.blue, match.blueSit), true);
     }
   }
-  if (match.hasOwnProperty('start')) {
-    embed.setTimestamp(new Date(match.start));
+  if (match.hasOwnProperty('started')) {
+    embed.setTimestamp(new Date(match.started));
+  } else if (match.hasOwnProperty('scheduled')) {
+    embed.setTimestamp(new Date(match.scheduled));
   }
   return embed;
 };
@@ -212,7 +213,6 @@ const getMatchTeams = match => (match.teams || match.red.concat(match.blue)).fil
 
 const sendMatchEmbed = async (content, match, event, reactions) => {
   try {
-    match._id.event = await db.collection('events').findOne({_id: match._id.event});
     await sendToSubscribedChannels((match.hasOwnProperty('redScore') ? `${matchScoredNotification(match)}\n${content}` : content), {embed: createMatchEmbed(match, event)}, getMatchTeams(match), reactions);
   } catch (err) {
     console.error(err);
@@ -221,7 +221,7 @@ const sendMatchEmbed = async (content, match, event, reactions) => {
 
 const subscribedChannels = [
   '352003193666011138',
-  //'329477820076130306'  // Dev server.
+  '329477820076130306'  // Dev server.
 ];
 
 const sendToSubscribedChannels = async (content, options, teams = [], reactions = []) => {
@@ -287,7 +287,5 @@ export {
   createAwardEmbed,
   createTeamChangeEmbed,
   sendToSubscribedChannels,
-  sendMatchEmbed,
-  allianceEmojis,
-  matchScoredEmojis
+  sendMatchEmbed
 };
