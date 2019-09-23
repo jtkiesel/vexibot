@@ -1,6 +1,5 @@
 import { get } from 'axios';
 import { load } from 'cheerio';
-import { decode } from 'he';
 import { matrix, multiply } from 'mathjs';
 import { CholeskyDecomposition, Matrix, pseudoInverse } from 'ml-matrix';
 import { tz } from 'moment-timezone';
@@ -32,8 +31,6 @@ const genders = [
 const encodeGenders = gender => genders.indexOf(gender);
 
 const encodeBoolean = value => Boolean(value.toLowerCase() === 'yes');
-
-const encodeText = value => decode(value.trim().replace(/\s\s*/g, ' '));
 
 const getTeam_id = (id, {season, program}) => {
   if (program === 1 && isNaN(id.charAt(0))) {
@@ -234,15 +231,15 @@ const updateSkillsAndTeams = async (skills, event) => {
       const team = Object.assign(
         {
           grade: teamReg.grade_level_id,
-          name: encodeText(teamReg.team_name),
-          org: encodeText(teamReg.organization)
+          name: teamReg.team_name,
+          org: teamReg.organization
         },
-        teamReg.robot_name && {robot: encodeText(teamReg.robot_name)},
+        teamReg.robot_name && {robot: teamReg.robot_name},
         teamReg.lat && {lat: teamReg.lat},
         teamReg.lng && {lng: teamReg.lng},
-        teamReg.address && {address: encodeText(teamReg.address)},
-        teamReg.city && {city: encodeText(teamReg.city)},
-        teamReg.postcode && {postcode: encodeText(teamReg.postcode)},
+        teamReg.address && {address: teamReg.address},
+        teamReg.city && {city: teamReg.city},
+        teamReg.postcode && {postcode: teamReg.postcode},
         teamReg.emergency_phone && {emergPhone: teamReg.emergency_phone},
         Object.keys(contact).length && {contact: contact},
         Object.keys(contact2).length && {contact2: contact2},
@@ -521,6 +518,41 @@ const updateMatchesAndRankings = async (matches, rankings, event) => {
   }
 };
 
+const getDates = ($, timezone) => {
+  const locations = $('.tab-pane.active .panel:contains(Event Dates) .panel-body p:contains(Venue/Location)').toArray();
+  if (locations.length) {
+    return locations.map(element => {
+      const location = $(element);
+      const [start, end] = location.prev('p:contains(Date)').text().trim().match(/Date[^0-9A-Z]*(.*)/i)[1].split('-').map(date => tz(date, 'MM/DD/YYYY', timezone));
+      const [, venue, address, city, region, postcode, country] = location.next('.well').text().match(/\s*(.+?)\s*\n\s*(?:(.+?)\s*\n\s*)?(.+?)\s*,\s*\n\s*(?:(.*?)\s*\n\s*)??(?:(.+?)\s*\n\s*)?(.+?)\s*\n\s*$/);
+      return Object.assign({
+        start: start.toDate(),
+        end: (end || start).endOf('day').toDate()
+      },
+      venue && {venue},
+      address && {address},
+      city && {city},
+      region && {region},
+      postcode && {postcode},
+      country && {country});
+    });
+  }
+  return $('.tab-pane .row div:contains(Date:)').toArray().map(element => {
+    const [, dates, venue, address, city, region, postcode, country] = $(element).text().match(/Date[^0-9A-Z]*(.*)\n\s*(.+?)\s*\n\s*(?:(.+?)\s*\n\s*)?(.+?)\s*,\s*\n\s*(?:(.*?)\s*\n\s*)??(?:(.+?)\s*\n\s*)?(.+?)\s*\n\s*$/i);
+    const [start, end] = dates.split('-').map(date => tz(date, 'MM/DD/YYYY', timezone));
+    return Object.assign({
+      start: start.toDate(),
+      end: (end || start).endOf('day').toDate()
+    },
+    venue && {venue},
+    address && {address},
+    city && {city},
+    region && {region},
+    postcode && {postcode},
+    country && {country});
+  });
+};
+
 const getEventData = async event => {
   const $ = load((await get(`https://www.robotevents.com/${event._id}.html`)).data);
   const {lat, lng} = event;
@@ -571,6 +603,7 @@ const getEventData = async event => {
   const divisions = getDivisions($);
   const matches = getMatches($, event);
   const rankings = getRankings($, event);
+  const dates = getDates($, timezone);
 
   const mainBody = $('#front-app .panel .panel-body').first();
   const type = mainBody.find('p:contains(Type of Event)').first().text().trim().match(/Type of Event:\s*(.+)/i)[1];
@@ -580,24 +613,7 @@ const getEventData = async event => {
   const deadline = mainBody.find('p:contains(Registration Deadline)').first().text().trim().match(/Registration Deadline[^0-9A-Z]*(.+)/i);
   const price = mainBody.find('p:contains(Price)').first().text().trim().match(/Price[^.0-9]*([.0-9]+)/i);
 
-  const general = $('.tab-pane.active');
-  const datesPanel = general.find('.panel:contains(Event Dates)');
-  const datesBody = datesPanel.find('.panel-body');
-  const dates = datesBody.find('p:contains(Venue/Location)').toArray().map(element => {
-    const location = $(element);
-    const [start, end] = location.prev('p:contains(Date)').text().trim().match(/Date[^0-9A-Z]*(.*)/i)[1].split('-').map(date => tz(date, 'MM/DD/YYYY', timezone));
-    const [, venue, address, city, region, postcode, country] = location.next('.well').text().match(/\s*(.+?)\s*\n\s*(?:(.+?)\s*\n\s*)?(.+?)\s*,\s*\n\s*(?:(.*?)\s*\n\s*)??(?:(.+?)\s*\n\s*)?(.+?)\s*\n\s*$/);
-    return Object.assign({
-      start: start.toDate(),
-      end: (end || start).endOf('day').toDate()
-    },
-    venue && {venue},
-    address && {address},
-    city && {city},
-    region && {region},
-    postcode && {postcode},
-    country && {country});
-  });
+  const general = $('.tab-pane.active').first();
   const grade = general.find('p:contains(Grade Level)').first().text().match(/Grade Level[^A-Z]*(.+)/i);
   const skills = general.find('p:contains(Robot Skills Challenge Offered)').first().text().match(/Robot Skills Challenge Offered[^A-Z]*(.+)/i);
   const tsa = general.find('p:contains(TSA Event)').first().text().match(/TSA Event[^A-Z]*(.+)/i);
@@ -608,12 +624,12 @@ const getEventData = async event => {
       capacity,
       spots,
       price: price ? Number(price[1]) : 0,
-      dates,
       grade: grade ? encodeGrade(grade[1]) : 0
     },
     regPerOrg && {regPerOrg: Number(regPerOrg[0])},
     opens && {opens: new Date(opens[1])},
     deadline && {deadline: new Date(deadline[1])},
+    dates.length && {dates},
     skills && {skills: encodeBoolean(skills[1])},
     tsa && {tsa: encodeBoolean(tsa[1])},
     teams.length && {teams},
