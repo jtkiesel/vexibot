@@ -296,7 +296,7 @@ const getDivisions = $ => {
 };
 
 const getMatches = ($, event) => {
-  return JSON.parse($('#results-content results').first().attr('data')).map(match => formatMatch(match, event)).sort(matchCompare);
+  return JSON.parse($('#results-content results').first().attr('data')).map(match => formatMatch(match, event));
 };
 
 const getRankings = ($, event) => {
@@ -601,7 +601,7 @@ const getEventData = async event => {
   }
 
   const divisions = getDivisions($);
-  const matches = getMatches($, event);
+  const matches = getMatches($, event).filter(match => divisions.hasOwnProperty(match._id.division)).sort(matchCompare);
   const rankings = getRankings($, event);
   const dates = getDates($, timezone);
 
