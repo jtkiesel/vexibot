@@ -38,7 +38,7 @@ const getTeam_id = (id, {season, program}) => {
     program = 4;
     season = seasonToVexu(season);
   }
-  return {id, season, program};
+  return {id, program, season};
 };
 
 const formatMatch = (match, event) => {

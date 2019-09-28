@@ -348,8 +348,8 @@ const formatEvent = event => {
 
   return Object.assign({
     _id: sku,
-    season: season_id,
     program: program_id,
+    season: season_id,
     name,
     start: moments[0].toDate(),
     end: ((moments.length == 1) ? moments[0] : moments[1]).endOf('day').toDate(),
