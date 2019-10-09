@@ -25,7 +25,7 @@
   "scripts": {
     "dev": "nodemon --inspect --exec babel-node src",
     "heroku-postbuild": "npm run build",
-    "start": "node build/index.js",
+    "start": "NODE_ENV=production node build/index.js",
     "build": "babel src -d build"
   },
   "dependencies": {

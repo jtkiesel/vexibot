@@ -102,11 +102,13 @@ MongoClient.connect(dbUri, mongoOptions).then(mongoClient => {
   vexdata = require('./vexdata');
   const { updateEvents, updateTeams, updateMaxSkills, updateCurrentEvents, updateProgramsAndSeasons } = vexdata;
   updateProgramsAndSeasons();
-  const timezone = 'America/New_York';
-  new CronJob('00 00 08 * * *', updateEvents, null, true, timezone);
-  new CronJob('00 10 08 * * *', updateTeams, null, true, timezone);
-  new CronJob('00 20 08 * * *', updateMaxSkills, null, true, timezone);
-  new CronJob('00 */2 * * * *', updateCurrentEvents, null, true, timezone);
+  if (process.env.NODE_ENV === 'production') {
+    const timezone = 'America/New_York';
+    new CronJob('00 00 08 * * *', updateEvents, null, true, timezone);
+    new CronJob('00 10 08 * * *', updateTeams, null, true, timezone);
+    new CronJob('00 20 08 * * *', updateMaxSkills, null, true, timezone);
+    new CronJob('00 */2 * * * *', updateCurrentEvents, null, true, timezone);
+  }
 }).catch(console.error);
 
 export {
