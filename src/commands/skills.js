@@ -32,7 +32,7 @@ export default async (message, args) => {
 
         const embed = new MessageEmbed()
           .setColor('GOLD')
-          .setAuthor(teamId, null, `https://robotevents.com/teams/${program}/${teamId}`)
+          .setAuthor(teamId, null, `https://www.robotevents.com/teams/${program}/${teamId}`)
           .setTitle(`${program} ${decodeSeason(season)}`)
           .setURL(decodeSeasonUrl(season))
           .addField(`${decodeGrade(maxSkill._id.grade)} Rank`, rank, true)

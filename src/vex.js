@@ -45,7 +45,7 @@ const createTeamEmbed = team => {
   const location = getTeamLocation(team);
   const embed = new MessageEmbed()
     .setColor('GREEN')
-    .setAuthor(teamId, emojiToUrl(decodeProgramEmoji(team._id.program)), `https://robotevents.com/teams/${program}/${teamId}`)
+    .setAuthor(teamId, emojiToUrl(decodeProgramEmoji(team._id.program)), `https://www.robotevents.com/teams/${program}/${teamId}`)
     .setTitle(decodeSeason(season))
     .setURL(decodeSeasonUrl(season));
   if (team.name) {
@@ -69,7 +69,7 @@ const createTeamEmbed = team => {
 const createEventEmbed = event => {
   const embed = new MessageEmbed()
     .setColor('ORANGE')
-    .setAuthor(event.name, emojiToUrl(decodeProgramEmoji(event.program)), `https://robotevents.com/${event._id}.html`)
+    .setAuthor(event.name, emojiToUrl(decodeProgramEmoji(event.program)), `https://www.robotevents.com/${event._id}.html`)
     .setTitle(`${event.tsa ? 'TSA ' : ''}${decodeSeason(event.season)}`)
     .setURL(decodeSeasonUrl(event.season))
     .setDescription(decodeEvent(event.type))
@@ -81,7 +81,7 @@ const createEventEmbed = event => {
   return embed;
 };
 
-const maskedTeamUrl = (program, teamId) => `[${teamId}](https://robotevents.com/teams/${decodeProgram(program)}/${teamId})`;
+const maskedTeamUrl = (program, teamId) => `[${teamId}](https://www.robotevents.com/teams/${decodeProgram(program)}/${teamId})`;
 
 const createMatchString = (round, instance, number) => `${decodeRound(round)}${round < 3 || round > 8 ? '' : ` ${instance}-`}${number}`;
 
@@ -144,9 +144,9 @@ const createMatchEmbed = (match, event) => {
   }
   const embed = new MessageEmbed()
     .setColor(color)
-    .setAuthor(event.name, emojiToUrl(decodeProgramEmoji(match.program)), `https://robotevents.com/${match._id.event}.html`)
+    .setAuthor(event.name, emojiToUrl(decodeProgramEmoji(match.program)), `https://www.robotevents.com/${match._id.event}.html`)
     .setTitle(event.divisions[match._id.division])
-    .setURL(`https://robotevents.com/${match._id.event}.html#tab-results`)
+    .setURL(`https://www.robotevents.com/${match._id.event}.html#tab-results`)
     .setDescription(createMatchString(match._id.round, match._id.instance, match._id.number));
   if (match.program === 41) {
     if (match.teams.length) {
@@ -177,16 +177,16 @@ const createAwardEmbed = async award => {
     if (event._id === award._id.event) {
       eventName = event.name;
     } else {
-      award.qualifies[award.qualifies.indexOf(event._id)] = `[${event.name}](https://robotevents.com/${event._id}.html)`;
+      award.qualifies[award.qualifies.indexOf(event._id)] = `[${event.name}](https://www.robotevents.com/${event._id}.html)`;
     }
   });
   const embed = new MessageEmbed()
     .setColor('PURPLE')
     .setAuthor(eventName)
     .setTitle(award._id.name)
-    .setURL(`https://robotevents.com/${award._id.event}.html#tab-awards`);
+    .setURL(`https://www.robotevents.com/${award._id.event}.html#tab-awards`);
   if (award.team) {
-    embed.addField('Team', `${decodeProgramEmoji(award.team.program)} [${award.team.id}](https://robotevents.com/teams/${decodeProgram(award.team.program)}/${award.team.id})`, true);
+    embed.addField('Team', `${decodeProgramEmoji(award.team.program)} [${award.team.id}](https://www.robotevents.com/teams/${decodeProgram(award.team.program)}/${award.team.id})`, true);
   }
   if (award.qualifies) {
     embed.addField('Qualifies for', award.qualifies.join('\n'), true);
@@ -198,9 +198,9 @@ const createSkillsEmbed = (skill, event) => {
   const program = decodeProgram(skill.team.program);
   return new MessageEmbed()
     .setColor('GOLD')
-    .setAuthor(event.name, null, `https://robotevents.com/${event._id}.html#tab-results`)
+    .setAuthor(event.name, null, `https://www.robotevents.com/${event._id}.html#tab-results`)
     .setTitle(`${program} ${skill.team.id}`)
-    .setURL(`https://robotevents.com/teams/${program}/${skill.team.id}`)
+    .setURL(`https://www.robotevents.com/teams/${program}/${skill.team.id}`)
     .addField('Type', decodeSkill(skill._id.type), true)
     .addField('Rank', skill.rank, true)
     .addField('Score', skill.score, true)
@@ -272,7 +272,7 @@ const createTeamChangeEmbed = (program, teamId, field, oldValue, newValue) => {
   }
   return new MessageEmbed()
     .setColor('GREEN')
-    .setDescription(`[${program} ${teamId}](https://robotevents.com/teams/${program}/${teamId}) ${change}.`);
+    .setDescription(`[${program} ${teamId}](https://www.robotevents.com/teams/${program}/${teamId}) ${change}.`);
 };
 
 export {

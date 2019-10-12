@@ -57,7 +57,7 @@ export default async (message, args) => {
                 eventsBySeason[season] = [event];
               }
             }
-            event = `\n[${decode(award.event)}](https://robotevents.com/${award._id.event}.html#tab-awards)`;
+            event = `\n[${decode(award.event)}](https://www.robotevents.com/${award._id.event}.html#tab-awards)`;
             sku = award._id.event;
           }
           let awardEmoji = '🏅';
@@ -117,7 +117,7 @@ export default async (message, args) => {
         const embed = new MessageEmbed()
           .setColor('PURPLE')
           .setTitle(`${program} ${teamId}`)
-          .setURL(`https://robotevents.com/teams/${program}/${teamId}`)
+          .setURL(`https://www.robotevents.com/teams/${program}/${teamId}`)
           .setDescription(description);
         try {
           const reply = await message.channel.send({embed});

@@ -20,7 +20,7 @@ const getDescription = (skills, index = 0) => {
     const programming = String(skill.programming).padStart(3);
     const driver = String(skill.driver).padStart(3);
     const team = skill.team.id;
-    description += `${rank}   \`\u200B${score}\`   \`(\u200B${programming} / \u200B${driver})\`   [${team}](https://robotevents.com/teams/${decodeProgram(skill.team.program)}/${team})\n`;
+    description += `${rank}   \`\u200B${score}\`   \`(\u200B${programming} / \u200B${driver})\`   [${team}](https://www.robotevents.com/teams/${decodeProgram(skill.team.program)}/${team})\n`;
   }
   return description;
 };
@@ -63,7 +63,7 @@ export default async (message, args) => {
     const seasonUrl = decodeSeasonUrl(skills[index]._id.season);
     const embed = new MessageEmbed()
       .setColor('GOLD')
-      .setAuthor(`${grade} World Skills Standings`, null, `https://vexdb.io/skills/${program}/${season.replace(/ /g, '_')}/Robot`)
+      .setAuthor(`${grade} World Skills Standings`, null, `https://www.vexdb.io/skills/${program}/${season.replace(/ /g, '_')}/Robot`)
       .setTitle(`${program} ${season}`)
       .setURL(seasonUrl)
       .setDescription(getDescription(skills));
