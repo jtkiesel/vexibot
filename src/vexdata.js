@@ -93,7 +93,7 @@ const updateExistingEvents = async () => {
 };
 
 const updateCurrentEvents = async () => {
-  const now = Date.now();
+  const now = new Date();
   try {
     const documents = await db.collection('events').find({dates: {$elemMatch: {end: {$gt: now}, start: {$lt: now}}}}).toArray();
     for (const event of documents) {
