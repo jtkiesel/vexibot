@@ -74,18 +74,37 @@ const addFooter = (message, reply) => {
   reply.edit({embed});
 };
 
+const login = () => client.login(token).catch(console.error);
+
+const restart = () => {
+  client.destroy();
+  login();
+};
+
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}`);
   client.user.setPresence({status: 'online', activity: {name: `${prefix}help`, type: 'PLAYING'}});
 });
 
-client.on('error', console.error);
+client.on('resume', () => console.log('Resume.'));
 
 client.on('message', message => {
   if (message.content.startsWith(prefix)) {
     handleCommand(message);
   }
 });
+
+client.on('disconnect', event => {
+  console.error('Disconnect.');
+  console.error(JSON.stringify(event));
+  restart();
+});
+
+client.on('reconnecting', () => console.log('Reconnecting.'));
+
+client.on('error', console.error);
+
+client.on('warn', console.warn);
 
 MongoClient.connect(dbUri, mongoOptions).then(mongoClient => {
   db = mongoClient.db('vexdata');
@@ -96,10 +115,11 @@ MongoClient.connect(dbUri, mongoOptions).then(mongoClient => {
   Object.keys(commandInfo).forEach(name => commands[name] = require('./commands/' + name).default);
   Object.entries(commandInfo).forEach(([name, desc]) => helpDescription += `\n\`${prefix}${name}\`: ${desc}`);
 
-  client.login(token).catch(console.error);
-
   events = require('./events');
   vexdata = require('./vexdata');
+
+  login();
+
   const { updateEvents, updateTeams, updateMaxSkills, updateCurrentEvents, updateProgramsAndSeasons } = vexdata;
   updateProgramsAndSeasons();
   if (process.env.NODE_ENV === 'production') {
