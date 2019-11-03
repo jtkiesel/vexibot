@@ -51,7 +51,7 @@ export default async (message, args) => {
           const award = awards[i];
           if (award._id.event !== sku) {
             if (event) {
-              if (eventsBySeason.hasOwnProperty(season)) {
+              if (eventsBySeason.season !== undefined) {
                 eventsBySeason[season].push(event);
               } else {
                 eventsBySeason[season] = [event];
@@ -81,7 +81,7 @@ export default async (message, args) => {
             awardCount++;
           }
         }
-        if (eventsBySeason.hasOwnProperty(season)) {
+        if (eventsBySeason.season !== undefined) {
           eventsBySeason[season].push(event);
         } else {
           eventsBySeason[season] = [event];
@@ -91,7 +91,7 @@ export default async (message, args) => {
         let description = descriptionHeader;
         let atLimit = false;
         let linesRemaining = 30 - (3 + Object.keys(seasonHeaders).length);
-        let charsRemaining = 2048 - (descriptionHeader.length + awardsOmitted);
+        let charsRemaining = 2048 - (descriptionHeader.length + awardsOmitted.length);
         Object.values(seasonHeaders).forEach(header => charsRemaining -= header.length);
 
         for (let [season, header] of Object.entries(seasonHeaders).sort((a, b) => parseInt(b[0]) - parseInt(a[0]))) {

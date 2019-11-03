@@ -24,8 +24,9 @@
   },
   "scripts": {
     "dev": "nodemon --inspect --exec babel-node src",
+    "prod": "npm run build && npm run start",
     "heroku-postbuild": "npm run build",
-    "start": "NODE_ENV=production node build/index.js",
+    "start": "NODE_ENV=production node build",
     "build": "babel src -d build"
   },
   "dependencies": {
@@ -34,22 +35,22 @@
     "cron": "^1.7.2",
     "discord.js": "github:discordjs/discord.js",
     "he": "^1.2.0",
-    "mathjs": "^6.2.1",
-    "ml-matrix": "^6.4.0",
-    "moment-timezone": "^0.5.26",
-    "mongodb": "^3.3.2",
+    "mathjs": "^6.2.3",
+    "ml-matrix": "^6.4.1",
+    "moment-timezone": "^0.5.27",
+    "mongodb": "^3.3.3",
     "tz-lookup": "^6.1.24"
   },
   "engines": {
-    "node": "^12.10.0",
+    "node": "^12.12.0",
     "npm": "^6.11.3"
   },
   "devDependencies": {
-    "@babel/cli": "^7.6.0",
-    "@babel/core": "^7.6.0",
-    "@babel/node": "^7.6.1",
-    "@babel/preset-env": "^7.6.0",
-    "nodemon": "^1.19.2"
+    "@babel/cli": "^7.6.4",
+    "@babel/core": "^7.6.4",
+    "@babel/node": "^7.6.3",
+    "@babel/preset-env": "^7.6.3",
+    "nodemon": "^1.19.4"
   },
   "browserslist": "maintained node versions"
 }
