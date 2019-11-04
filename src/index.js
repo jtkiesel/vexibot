@@ -40,7 +40,7 @@ const handleCommand = async message => {
   const cmd = message.content.slice(prefix.length, (slice < 0) ? message.content.length : slice);
   let args = (slice < 0) ? '' : message.content.slice(slice);
 
-  if (commands.hasOwnProperty(cmd)) {
+  if (commands[cmd]) {
     commands[cmd](message, args);
   } else if (cmd === 'help') {
     const embed = new MessageEmbed()

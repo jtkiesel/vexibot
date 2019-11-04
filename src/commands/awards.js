@@ -51,7 +51,7 @@ export default async (message, args) => {
           const award = awards[i];
           if (award._id.event !== sku) {
             if (event) {
-              if (eventsBySeason.season !== undefined) {
+              if (eventsBySeason[season] !== undefined) {
                 eventsBySeason[season].push(event);
               } else {
                 eventsBySeason[season] = [event];
@@ -81,7 +81,7 @@ export default async (message, args) => {
             awardCount++;
           }
         }
-        if (eventsBySeason.season !== undefined) {
+        if (eventsBySeason[season] !== undefined) {
           eventsBySeason[season].push(event);
         } else {
           eventsBySeason[season] = [event];

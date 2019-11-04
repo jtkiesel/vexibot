@@ -57,7 +57,7 @@ const formatMatch = (match, event) => {
     },
     match.timescheduled && {scheduled: new Date(match.timescheduled)},
     match.timestarted && {started: new Date(match.timestarted)},
-    match.hasOwnProperty('redscore') && {score: match.redscore});
+    match.redscore !== undefined && {score: match.redscore});
   }
   return Object.assign(
     {
@@ -77,7 +77,7 @@ const formatMatch = (match, event) => {
     match.timestarted && {started: new Date(match.timestarted)},
     match.redsit && match.red2 && {redSit: match.redsit},
     match.bluesit && match.blue2 && {blueSit: match.bluesit},
-    match.hasOwnProperty('redscore') && {
+    match.redscore !== undefined && {
       redScore: match.redscore,
       blueScore: match.bluescore
     }
@@ -341,7 +341,7 @@ const updateMatchesAndRankings = async (matches, rankings, event) => {
       if (scored) {
         match.teams.forEach(team1 => {
           let index1;
-          if (teamIndexes.hasOwnProperty(team1)) {
+          if (teamIndexes[team1]) {
             index1 = teamIndexes[team1];
           } else {
             index1 = numTeams++;
@@ -351,7 +351,7 @@ const updateMatchesAndRankings = async (matches, rankings, event) => {
           }
           match.teams.forEach(team2 => {
             let index2;
-            if (teamIndexes.hasOwnProperty(team2)) {
+            if (teamIndexes[team2]) {
               index2 = teamIndexes[team2];
             } else {
               index2 = numTeams++;
@@ -387,10 +387,9 @@ const updateMatchesAndRankings = async (matches, rankings, event) => {
       const old = res.value;
       try {
         if (old) {
-          const oldScored = old.hasOwnProperty('score');
-          if (!oldScored && scored) {
+          if (old.score === undefined && scored) {
             await vex.sendMatchEmbed('Match scored', match, event);
-          } else if (oldScored && !scored) {
+          } else if (old.score !== undefined && !scored) {
             await vex.sendMatchEmbed('Match score removed', old, event);
           } else if (match.score !== old.score) {
             await vex.sendMatchEmbed('Match score changed', match, event);
@@ -432,7 +431,7 @@ const updateMatchesAndRankings = async (matches, rankings, event) => {
         [red, blue].forEach(alliance => {
           alliance.teams.forEach(team1 => {
             let index1;
-            if (teamIndexes.hasOwnProperty(team1)) {
+            if (teamIndexes[team1] !== undefined) {
               index1 = teamIndexes[team1];
             } else {
               index1 = numTeams++;
@@ -443,7 +442,7 @@ const updateMatchesAndRankings = async (matches, rankings, event) => {
             }
             alliance.teams.forEach(team2 => {
               let index2;
-              if (teamIndexes.hasOwnProperty(team2)) {
+              if (teamIndexes[team2] !== undefined) {
                 index2 = teamIndexes[team2];
               } else {
                 index2 = numTeams++;
@@ -487,12 +486,11 @@ const updateMatchesAndRankings = async (matches, rankings, event) => {
       const old = res.value;
       try {
         if (old) {
-          const oldScored = old.hasOwnProperty('redScore');
-          if (!oldScored && scored) {
+          if (old.redScore === undefined && scored) {
             await vex.sendMatchEmbed('Match scored', match, event);
-          } else if (oldScored && !scored) {
+          } else if (old.redScore !== undefined && !scored) {
             await vex.sendMatchEmbed('Match score removed', old, event);
-          } else if (match.redScore !== old.redScore || match.blueScore !== old.blueScore) {
+          } else if (old.redScore !== match.redScore || old.blueScore !== match.blueScore) {
             await vex.sendMatchEmbed('Match score changed', match, event);
           }
         } else {
@@ -601,7 +599,7 @@ const getEventData = async event => {
   }
 
   const divisions = getDivisions($);
-  const matches = getMatches($, event).filter(match => divisions.hasOwnProperty(match._id.division)).sort(matchCompare);
+  const matches = getMatches($, event).filter(match => divisions[match._id.division]).sort(matchCompare);
   const rankings = getRankings($, event);
   const dates = getDates($, timezone);
 
@@ -618,7 +616,7 @@ const getEventData = async event => {
   const skills = general.find('p:contains(Robot Skills Challenge Offered)').first().text().match(/Robot Skills Challenge Offered[^A-Z]*(.+)/i);
   const tsa = general.find('p:contains(TSA Event)').first().text().match(/TSA Event[^A-Z]*(.+)/i);
 
-  event = Object.assign(event,
+  const eventObject = Object.assign(event,
     {
       type: encodeEvent(type),
       capacity,
@@ -636,7 +634,7 @@ const getEventData = async event => {
     Object.keys(divisions).length && {divisions}
   );
   return {
-    event,
+    event: eventObject,
     matches,
     rankings
   };

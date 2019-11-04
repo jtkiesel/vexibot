@@ -110,7 +110,7 @@ const matchScoredNotification = match => {
 
 const createMatchEmbed = (match, event) => {
   let color;
-  if (!match.hasOwnProperty('redScore')) {
+  if (match.redScore !== undefined) {
     color = 0xffffff;
   } else if (match.program === 41) {
     color = 'BLUE';
@@ -122,23 +122,23 @@ const createMatchEmbed = (match, event) => {
   let red = `${allianceEmojis[0]} Red`;
   let blue = `${allianceEmojis[1]} Blue`;
   let alliance = allianceEmojis[1];
-  if (match.hasOwnProperty('redScore') || match.hasOwnProperty('redScorePred')) {
+  if (match.redScore !== undefined || match.redScorePred !== undefined) {
     red += ':';
     blue += ':';
-    if (match.hasOwnProperty('redScore')) {
+    if (match.redScore !== undefined) {
       red += ` ${match.redScore}`;
       blue += ` ${match.blueScore}`;
     }
-    if (match.hasOwnProperty('redScorePred')) {
+    if (match.redScorePred !== undefined) {
       red += ` (${match.redScorePred} predicted)`;
       blue += ` (${match.blueScorePred} predicted)`;
     }
-  } else if (match.hasOwnProperty('score') || match.hasOwnProperty('scorePred')) {
+  } else if (match.score !== undefined || match.scorePred !== undefined) {
     alliance += ' Score:';
-    if (match.hasOwnProperty('score')) {
+    if (match.score !== undefined) {
       alliance += ` ${match.score}`;
     }
-    if (match.hasOwnProperty('scorePred')) {
+    if (match.scorePred !== undefined) {
       alliance += ` (${match.scorePred} predicted)`;
     }
   }
@@ -160,9 +160,9 @@ const createMatchEmbed = (match, event) => {
       embed.addField(blue, createTeamsString(match.program, match.blue, match.blueSit), true);
     }
   }
-  if (match.hasOwnProperty('started')) {
+  if (match.started !== undefined) {
     embed.setTimestamp(new Date(match.started));
-  } else if (match.hasOwnProperty('scheduled')) {
+  } else if (match.scheduled !== undefined) {
     embed.setTimestamp(new Date(match.scheduled));
   }
   return embed;
@@ -213,7 +213,7 @@ const getMatchTeams = match => (match.teams || match.red.concat(match.blue)).fil
 
 const sendMatchEmbed = async (content, match, event, reactions) => {
   try {
-    await sendToSubscribedChannels((match.hasOwnProperty('redScore') ? `${matchScoredNotification(match)}\n${content}` : content), {embed: createMatchEmbed(match, event)}, getMatchTeams(match), reactions);
+    await sendToSubscribedChannels((match.redScore !== undefined ? `${matchScoredNotification(match)}\n${content}` : content), {embed: createMatchEmbed(match, event)}, getMatchTeams(match), reactions);
   } catch (err) {
     console.error(err);
   }
