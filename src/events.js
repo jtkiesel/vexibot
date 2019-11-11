@@ -341,7 +341,7 @@ const updateMatchesAndRankings = async (matches, rankings, event) => {
       if (scored) {
         match.teams.forEach(team1 => {
           let index1;
-          if (teamIndexes[team1]) {
+          if (teamIndexes[team1] !== undefined) {
             index1 = teamIndexes[team1];
           } else {
             index1 = numTeams++;
@@ -351,7 +351,7 @@ const updateMatchesAndRankings = async (matches, rankings, event) => {
           }
           match.teams.forEach(team2 => {
             let index2;
-            if (teamIndexes[team2]) {
+            if (teamIndexes[team2] !== undefined) {
               index2 = teamIndexes[team2];
             } else {
               index2 = numTeams++;
