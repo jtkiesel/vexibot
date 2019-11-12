@@ -51,7 +51,7 @@ const createTeamEmbed = team => {
   if (location && location.trim()) {
     embed.addField('Location', location, true);
   }
-  if (team.grade && team.grade.trim()) {
+  if (team.grade) {
     embed.addField('Grade', decodeGrade(team.grade), true);
   }
   return embed;
