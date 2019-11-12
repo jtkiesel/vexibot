@@ -27,16 +27,7 @@ const getTeam = (teamId, season) => {
   return teams.find(query).sort({'_id.season': -1}).toArray();
 };
 
-const getTeamLocation = team => {
-  let location = [team.city];
-  if (team.region) {
-    location.push(team.region);
-  }
-  if (team.country) {
-    location.push(team.country);
-  }
-  return location.join(', ');
-};
+const getTeamLocation = team => [team.city, team.region, team.country].filter(l => l && l.trim()).join(', ');
 
 const createTeamEmbed = team => {
   const teamId = team._id.id;
@@ -48,19 +39,19 @@ const createTeamEmbed = team => {
     .setAuthor(teamId, emojiToUrl(decodeProgramEmoji(team._id.program)), `https://www.robotevents.com/teams/${program}/${teamId}`)
     .setTitle(decodeSeason(season))
     .setURL(decodeSeasonUrl(season));
-  if (team.name) {
+  if (team.name && team.name.trim()) {
     embed.addField('Team Name', team.name, true);
   }
-  if (team.robot) {
+  if (team.robot && team.robot.trim()) {
     embed.addField('Robot Name', team.robot, true);
   }
-  if (team.org) {
+  if (team.org && team.org.trim()) {
     embed.addField('Organization', team.org, true);
   }
-  if (location) {
+  if (location && location.trim()) {
     embed.addField('Location', location, true);
   }
-  if (team.grade) {
+  if (team.grade && team.grade.trim()) {
     embed.addField('Grade', decodeGrade(team.grade), true);
   }
   return embed;
