@@ -110,7 +110,7 @@ const matchScoredNotification = match => {
 
 const createMatchEmbed = (match, event) => {
   let color;
-  if (match.redScore === undefined) {
+  if (match.redScore === undefined && match.score === undefined) {
     color = 0xffffff;
   } else if (match.program === 41) {
     color = 'BLUE';
