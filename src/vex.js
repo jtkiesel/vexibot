@@ -186,12 +186,11 @@ const createAwardEmbed = async award => {
 };
 
 const createSkillsEmbed = (skill, event) => {
-  const program = decodeProgram(skill.team.program);
   return new MessageEmbed()
     .setColor('GOLD')
-    .setAuthor(event.name, null, `https://www.robotevents.com/${event._id}.html#tab-results`)
-    .setTitle(`${program} ${skill.team.id}`)
-    .setURL(`https://www.robotevents.com/teams/${program}/${skill.team.id}`)
+    .setAuthor(event.name, emojiToUrl(decodeProgramEmoji(skill.team.program)), `https://www.robotevents.com/${event._id}.html#tab-results`)
+    .setTitle(skill.team.id)
+    .setURL(`https://www.robotevents.com/teams/${decodeProgram(skill.team.program)}/${skill.team.id}`)
     .addField('Type', decodeSkill(skill._id.type), true)
     .addField('Rank', skill.rank, true)
     .addField('Score', skill.score, true)
