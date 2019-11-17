@@ -4,7 +4,7 @@ import { tz } from 'moment-timezone';
 import tzlookup from 'tz-lookup';
 
 import { db } from '.';
-import { decodeGrade, decodeProgram, decodeSeason, encodeProgram, encodeGrade } from './dbinfo';
+import { decodeProgram, decodeSeason, encodeProgram, encodeGrade } from './dbinfo';
 import { updateEvent } from './events';
 
 const sleep = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
@@ -188,36 +188,26 @@ const updateEventsForSeason = async (program, season, when = 'past') => {
 
 const updateMaxSkillsForSeason = async (program, season) => {
   try {
-    const maxRanks = {};
+    const ranks = {};
     const maxSkills = (await get(`https://www.robotevents.com/api/seasons/${season}/skills?untilSkillsDeadline=0&grade_level=All`))
-      .data.map(maxSkill => formatMaxSkill(maxSkill, program, season));
+      .data.map(maxSkill => formatMaxSkill(maxSkill, program, season)).sort((a, b) => a._id.rank - b._id.rank);
     for (const maxSkill of maxSkills) {
+      const {grade} = maxSkill._id;
+      const rank = (ranks[grade] || 0) + 1;
+      maxSkill._id.rank = rank;
+      ranks[grade] = rank;
+      if (rank === 7) {
+        console.log(maxSkill);
+      }
       try {
-        let old = (await db.collection('maxSkills').findOneAndUpdate({_id: maxSkill._id}, {$set: maxSkill}, {upsert: true})).value;
-        if (!old) {
-          const id = maxSkill.team.id;
-          const grade = maxSkill._id.grade;
-          const rank = maxSkill._id.rank;
-          if (maxRanks[grade] < rank) {
-            maxRanks[grade] = rank;
-          }
-          try {
-            old = (await db.collection('teams').findOneAndUpdate({_id: {id, program, season}}, {$set: {grade}}, {upsert: true})).value;
-            if (!old) {
-              console.log(`Insert ${decodeProgram(program)} ${id} to teams.`);
-            } else if (old && grade !== old.grade) {
-              console.log(`Update ${decodeProgram(program)} ${id} from ${decodeGrade(old.grade)} to ${decodeGrade(grade)}.`);
-            }
-          } catch (err) {
-            console.error(err);
-          }
-        }
+        await db.collection('maxSkills').updateOne({_id: maxSkill._id}, {$set: maxSkill}, {upsert: true});
       } catch (err) {
         console.error(err);
       }
+      db.collection('teams').updateOne({_id: {id: maxSkill.team.id, program, season}}, {$set: {grade}}, {upsert: true}).catch(console.error);
     }
-    for (const grade of Object.keys(maxRanks)) {
-      await db.collection('maxSkills').deleteMany({'_id.season': season, '_id.grade': grade, '_id.rank': {$gt: maxRanks[grade]}});
+    for (const grade of Object.keys(ranks)) {
+      await db.collection('maxSkills').deleteMany({'_id.season': season, '_id.grade': grade, '_id.rank': {$gt: ranks[grade]}});
     }
   } catch (err) {
     if (err.response && err.response.status === 404) {
@@ -378,7 +368,7 @@ const formatMaxSkill = (maxSkill, program, season) => {
     },
     event: {
       sku,
-      start: encodeDate(startDate)
+      start: new Date(startDate)
     },
     score,
     programming,
@@ -392,8 +382,6 @@ const formatMaxSkill = (maxSkill, program, season) => {
 };
 
 const encodeSeasonName = name => name.match(/^(?:.+: )?(.+?)(?: [0-9]{4}-[0-9]{4})?$/)[1];
-
-const encodeDate = date => new Date(date);
 
 export {
   updateProgramsAndSeasons,

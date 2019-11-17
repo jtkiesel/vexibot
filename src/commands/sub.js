@@ -8,8 +8,8 @@ const no = '❎';
 const emojis = [yes, no];
 
 export default async (message, args) => {
-  const teamId = getTeamId(message, args);
   if (message.guild) {
+    const teamId = getTeamId(message, args);
     if (validTeamId(teamId)) {
       try {
         const team = (await getTeam(teamId))[0];

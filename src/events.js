@@ -675,6 +675,7 @@ const updateEvent = async (eventObject, timeout = 1000) => {
   } catch (err) {
     if (err.response && err.response.status === 404) {
       console.log(`${eventObject._id} is not an event.`);
+      db.collection('events').deleteOne({_id: eventObject._id});
     } else {
       console.error(`${eventObject._id} failed to update:`);
       console.error(err);
