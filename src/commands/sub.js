@@ -7,7 +7,7 @@ const no = '❎';
 const emojis = [yes, no];
 
 export default async (message, args) => {
-  if (message.guild) {
+  if (!message.guild) {
     return;
   }
   const teamId = getTeamId(message, args);
