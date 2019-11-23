@@ -4,6 +4,9 @@ import { decode } from 'he';
 import { client, db } from '.';
 import { decodeEvent, decodeGrade, decodeProgram, decodeProgramEmoji, decodeRound, decodeSeason, decodeSeasonUrl, decodeSkill, emojiToUrl } from './dbinfo';
 
+const allianceEmojis = ['🔴', '🔵'];
+const subscribedChannels = {};
+
 const getTeamId = (message, args) => {
   const arg = args.replace(/\s+/g, '');
   if (arg) {
@@ -89,8 +92,6 @@ const createTeamsString = (program, teams, teamSit, scored) => {
     return `**${teamLink}**`;
   }).join(' ');
 };
-
-const allianceEmojis = ['🔴', '🔵'];
 
 const matchScoredNotification = match => {
   const matchString = createMatchString(match._id.round, match._id.instance, match._id.number);
@@ -198,52 +199,46 @@ const createSkillsEmbed = (skill, event) => {
 };
 
 const getMatchTeams = match => (match.teams || match.red.concat(match.blue)).filter(team => team).map(team => {
-  return {program: (isNaN(team.charAt(0)) ? 4 : match.program), id: team};
+  return {id: team, program: (isNaN(team.charAt(0)) ? 4 : match.program)};
 });
 
-const sendMatchEmbed = async (content, match, event, reactions) => {
+const sendMatchEmbed = async (content, match, event) => {
   try {
-    await sendToSubscribedChannels((match.redScore !== undefined ? `${matchScoredNotification(match)}\n${content}` : content), {embed: createMatchEmbed(match, event)}, getMatchTeams(match), reactions);
+    await sendToSubscribedChannels((match.redScore !== undefined ? `${matchScoredNotification(match)}\n${content}` : content), {embed: createMatchEmbed(match, event)}, getMatchTeams(match));
   } catch (err) {
     console.error(err);
   }
 };
 
-const subscribedChannels = [
-  '352003193666011138',
-  '329477820076130306'  // Dev server.
-];
-
-const sendToSubscribedChannels = async (content, options, teams = [], reactions = []) => {
-  subscribedChannels.forEach(async id => {
+const sendToSubscribedChannels = async (content, options, teams = []) => {
+  const settings = await db.collection('settings').find({updatesChannel: {$exists: true}, $or: [{updatesFilter: {$exists: false}}, {updatesFilter: {$size: 0}}, {updatesFilter: {$in: teams}}]}).toArray();
+  settings.map(setting => setting.updatesChannel).forEach(async id => {
     const channel = client.channels.get(id);
-    if (channel) {
-      try {
-        let subscribers = [];
-        for (let team of teams) {
-          const teamSubs = await db.collection('teamSubs').find({_id: {guild: channel.guild.id, team: team}}).toArray();
-          for (let teamSub of teamSubs) {
-            for (let user of teamSub.users) {
-              if (subscribers.indexOf(user) < 0) {
-                subscribers.push(user);
-              }
+    if (!channel) {
+      return;
+    }
+    try {
+      let subscribers = [];
+      for (const team of teams) {
+        const teamSubs = await db.collection('teamSubs').find({_id: {guild: channel.guild.id, team}}).toArray();
+        for (const teamSub of teamSubs) {
+          for (const user of teamSub.users) {
+            if (!subscribers.includes(user)) {
+              subscribers.push(user);
             }
           }
         }
-        let text;
-        if (subscribers.length) {
-          text = subscribers.map(subscriber => `<@${subscriber}>`).join('');
-        }
-        if (content) {
-          text = text ? `${content}\n${text}` : content;
-        }
-        const message = await channel.send(text ? text : undefined, options).catch(console.error);
-        for (let reaction of reactions) {
-          await message.react(reaction);
-        }
-      } catch (err) {
-        console.error(err);
       }
+      let text;
+      if (subscribers.length) {
+        text = subscribers.map(subscriber => `<@${subscriber}>`).join('');
+      }
+      if (content) {
+        text = text ? `${content}\n${text}` : content;
+      }
+      await channel.send(text || undefined, options).catch(console.error);
+    } catch (err) {
+      console.error(err);
     }
   });
 };
@@ -277,5 +272,6 @@ export {
   createAwardEmbed,
   createTeamChangeEmbed,
   sendToSubscribedChannels,
-  sendMatchEmbed
+  sendMatchEmbed,
+  subscribedChannels
 };

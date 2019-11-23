@@ -1,11 +1,16 @@
 import { CronJob } from 'cron';
-import { Client, MessageEmbed } from 'discord.js';
+import { Client, MessageEmbed, Permissions } from 'discord.js';
 import { MongoClient } from 'mongodb';
 import { inspect } from 'util';
 
+import updatesChannel from './adminCommands/updatesChannel';
+import updatesFilter from './adminCommands/updatesFilter';
+
 const client = new Client();
+const production = process.env.NODE_ENV === 'production';
 const token = process.env.VEXIBOT_TOKEN;
-const dbUri = process.env.VEXIBOT_DB;
+const dbUri = production ? process.env.VEXIBOT_DB : process.env.VEXIBOT_DEV_DB;
+const ownerId = process.env.DISCORD_ID;
 const mongoOptions = {
   retryWrites: true,
   reconnectTries: Number.MAX_VALUE,
@@ -26,7 +31,7 @@ const commandInfo = {
 const commands = {};
 
 let helpDescription = `\`${prefix}help\`: Provides information about all commands.`;
-let db, events, vexdata;
+let db, events, vex, vexdata;
 
 const clean = text => {
   if (typeof text === 'string') {
@@ -37,8 +42,8 @@ const clean = text => {
 
 const handleCommand = async message => {
   const slice = message.content.indexOf(' ');
-  const cmd = message.content.slice(prefix.length, (slice < 0) ? message.content.length : slice);
-  let args = (slice < 0) ? '' : message.content.slice(slice);
+  const cmd = message.content.slice(prefix.length, (slice < 0) ? message.content.length : slice).toLowerCase();
+  const args = (slice < 0) ? '' : message.content.slice(slice);
 
   if (commands[cmd]) {
     commands[cmd](message, args);
@@ -50,19 +55,23 @@ const handleCommand = async message => {
     message.channel.send({embed})
       .then(reply => addFooter(message, reply))
       .catch(console.error);
-  } else if (cmd === 'eval') {
-    if (message.author.id === '197781934116569088') {
-      try {
-        let evaled = /\s*await\s+/.test(args) ? (await eval(`const f = async () => {\n${args}\n};\nf();`)) : eval(args);
-        if (typeof evaled !== 'string') {
-          evaled = inspect(evaled);
+  } else if (message.member && message.member.hasPermission(Permissions.FLAGS.ADMINISTRATOR) || message.author.id === ownerId) {
+    if (cmd === 'updatesfilter') {
+      updatesFilter(message, args);
+    } else if (cmd === 'updateschannel') {
+      updatesChannel(message, args);
+    } else if (message.author.id === ownerId) {
+      if (cmd === 'eval') {
+        try {
+          let evaled = /\s*await\s+/.test(args) ? (await eval(`const f = async () => {\n${args}\n};\nf();`)) : eval(args);
+          if (typeof evaled !== 'string') {
+            evaled = inspect(evaled);
+          }
+          message.channel.send(clean(evaled), {code: 'xl'}).catch(console.error);
+        } catch (error) {
+          message.channel.send(`\`ERROR\` \`\`\`xl\n${clean(error)}\`\`\``).catch(console.error);
         }
-        message.channel.send(clean(evaled), {code: 'xl'}).catch(console.error);
-      } catch (error) {
-        message.channel.send(`\`ERROR\` \`\`\`xl\n${clean(error)}\`\`\``).catch(console.error);
       }
-    } else {
-      message.reply(`you don't have permission to run ${cmd}.`).catch(console.error);
     }
   }
 };
@@ -106,32 +115,36 @@ client.on('error', console.error);
 
 client.on('warn', console.warn);
 
-MongoClient.connect(dbUri, mongoOptions).then(mongoClient => {
+MongoClient.connect(dbUri, mongoOptions).then(async mongoClient => {
   db = mongoClient.db('vexdata');
   module.exports.db = db;
 
   db.collection('teams').createIndex({'_id.id': 'text'}).catch(console.error);
 
-  Object.keys(commandInfo).forEach(name => commands[name] = require('./commands/' + name).default);
+  Object.keys(commandInfo).forEach(name => commands[name.toLowerCase()] = require('./commands/' + name).default);
   Object.entries(commandInfo).forEach(([name, desc]) => helpDescription += `\n\`${prefix}${name}\`: ${desc}`);
 
   events = require('./events');
+  vex = require('./vex');
   vexdata = require('./vexdata');
+
+  (await db.collection('settings').find({updatesChannel: {$exists: true}}).toArray())
+    .forEach(settings => vex.subscribedChannels[settings._id] = settings.updatesChannel);
 
   login();
 
   const { updateEvents, updateTeams, updateMaxSkills, updateCurrentEvents, updateProgramsAndSeasons } = vexdata;
   updateProgramsAndSeasons();
-  if (process.env.NODE_ENV === 'production') {
-    const timezone = 'America/New_York';
-    new CronJob('00 00 08 * * *', updateEvents, null, true, timezone);
-    new CronJob('00 10 08 * * *', updateTeams, null, true, timezone);
-    new CronJob('00 20 08 * * *', updateMaxSkills, null, true, timezone);
-    new CronJob('00 */2 * * * *', updateCurrentEvents, null, true, timezone);
-  }
+
+  const timezone = 'America/New_York';
+  new CronJob('00 00 08 * * *', updateEvents, null, true, timezone);
+  new CronJob('00 10 08 * * *', updateTeams, null, true, timezone);
+  new CronJob('00 20 08 * * *', updateMaxSkills, null, true, timezone);
+  new CronJob('00 */2 * * * *', updateCurrentEvents, null, true, timezone);
 }).catch(console.error);
 
 export {
+  addFooter,
   client,
-  addFooter
+  prefix
 };
