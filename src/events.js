@@ -594,9 +594,11 @@ const getEventData = async event => {
 
   await updateSkillsAndTeams(getSkills($, event), event);
 
-  for (const award of getAwards($, event)) {
-    await db.collection('awards').updateOne({_id: award._id}, {$set: award}, {upsert: true});
+  const awards = getAwards($, event);
+  for (const award of awards) {
+    await db.collection('awards').replaceOne({_id: award._id}, award, {upsert: true});
   }
+  await db.collection('awards').deleteMany({'_id.event': event._id, '_id.index': {$gte: awards.length}});
 
   const divisions = getDivisions($);
   const matches = getMatches($, event).filter(match => divisions[match._id.division]).sort(matchCompare);

@@ -8,17 +8,11 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Prerequisites
 
-* [Git](https://git-scm.com)
 * [Node.js](https://nodejs.org)
 
 ### Installing
 
-Clone this repository
-
-```
-git clone https://github.com/jtkiesel/vexibot.git
-cd vexibot
-```
+Clone or download this repository, then open your terminal application and navigate to the repository directory to run the following commands:
 
 Install dependencies
 
@@ -33,6 +27,8 @@ npm run dev
 ```
 
 ## Deployment
+
+Open your terminal application and navigate to the repository directory to run the following commands:
 
 Create production build
 
