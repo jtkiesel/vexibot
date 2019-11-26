@@ -11,10 +11,15 @@ export default async (message, args) => {
     return;
   }
   const teamId = args.trim().split(' ')[0];
-  if (!validTeamId(teamId)) {
-    return message.reply('please provide a valid team ID, such as `24B` or `BNS`.').catch(console.error);
-  }
   try {
+    if (!teamId.length) {
+      const settings = await db.collection('settings').findOne({_id: message.guild.id});
+      const teams = settings.updatesFilter.map(team => `\`${team.id}\``);
+      return message.reply(`Currently filtering updates for: ${teams.join(' ')}`);
+    }
+    if (!validTeamId(teamId)) {
+      return message.reply('please provide a valid team ID, such as `24B` or `BNS`.').catch(console.error);
+    }
     const team = (await getTeam(teamId))[0];
     let id, program, unfilter, reply;
     if (team) {
