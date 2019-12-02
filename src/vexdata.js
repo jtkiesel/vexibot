@@ -47,9 +47,8 @@ const updateAllEvents = async () => {
   try {
     const programs = await db.collection('programs').find().project({seasons: 1}).toArray();
     for (const program of programs) {
-      const seasons = program.seasons.sort(season => season._id);
       let season;
-      for (season of seasons) {
+      for (season of program.seasons) {
         try {
           await updateEventsForSeason(program._id, season);
         } catch (err) {
@@ -196,9 +195,6 @@ const updateMaxSkillsForSeason = async (program, season) => {
       const rank = (ranks[grade] || 0) + 1;
       maxSkill._id.rank = rank;
       ranks[grade] = rank;
-      if (rank === 7) {
-        console.log(maxSkill);
-      }
       try {
         await db.collection('maxSkills').updateOne({_id: maxSkill._id}, {$set: maxSkill}, {upsert: true});
       } catch (err) {

@@ -91,9 +91,9 @@ const formatRanking = (ranking, event) => {
     _id: {
       event: event._id,
       division,
-      team: getTeam_id(ranking.teamnum, event)
+      rank
     },
-    rank,
+    team: getTeam_id(ranking.teamnum, event),
     played
   },
   event.program !== 41 && {
@@ -111,7 +111,9 @@ const formatRanking = (ranking, event) => {
     avgScore: total_points / played,
     totalScore: total_points
   },
-  high_score != null && {highScore: high_score});
+  high_score != null && {
+    highScore: high_score
+  });
 };
 
 const getAwards = ($, event) => {
@@ -501,18 +503,25 @@ const updateMatchesAndRankings = async (matches, rankings, event) => {
       }
     }
   }
+  const maxRanks = {};
   for (const ranking of rankings) {
-    const index = teamIndexes[ranking._id.team.id];
-    if (index != undefined) {
+    if (ranking._id.rank > maxRanks[ranking._id.division]) {
+      maxRanks[ranking._id.division] = ranking._id.rank;
+    }
+    const index = teamIndexes[ranking.team.id];
+    if (index !== undefined) {
       const opr = oprVector[index] || 0;
       ranking.opr = opr;
-      if (ranking._id.team.program !== 41) {
+      if (ranking.team.program !== 41) {
         const dpr = dprVector[index] || 0;
         ranking.dpr = dpr;
         ranking.ccwm = opr - dpr;
       }
     }
-    await db.collection('rankings').updateOne({_id: ranking._id}, {$set: ranking}, {upsert: true});
+    await db.collection('rankings').replaceOne({_id: ranking._id}, ranking, {upsert: true});
+  }
+  for (const division of Object.keys(maxRanks)) {
+    await db.collection('rankings').deleteMany({'_id.event': event._id, '_id.division': division, '_id.rank': {$gt: maxRanks[division]}});
   }
 };
 
