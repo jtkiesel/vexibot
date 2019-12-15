@@ -605,7 +605,26 @@ const getEventData = async event => {
 
   const awards = getAwards($, event);
   for (const award of awards) {
-    await db.collection('awards').replaceOne({_id: award._id}, award, {upsert: true});
+    try {
+      const result = await db.collection('awards').findOneAndReplace({_id: award._id}, award, {upsert: true});
+      const oldAward = result.value;
+      let change, teams;
+      if (!oldAward && !award.team) {
+        change = 'created';
+      } else if (award.team) {
+        if (!oldAward.team || !oldAward) {
+          change = 'won';
+        } else if (oldAward.team != award.team) {
+          change = 'changed';
+        }
+        teams = [award.team];
+      }
+      if (change) {
+        await vex.sendToSubscribedChannels(`Award ${change}`, {embed: await vex.createAwardEmbed(award)}, teams);
+      }
+    } catch (err) {
+      console.error(err);
+    }
   }
   await db.collection('awards').deleteMany({'_id.event': event._id, '_id.index': {$gte: awards.length}});
 
