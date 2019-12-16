@@ -160,12 +160,15 @@ const createMatchEmbed = (match, event) => {
   return embed;
 };
 
-const createAwardEmbed = async (award, event) => {
+const createAwardEmbed = (award, event) => {
   const embed = new MessageEmbed()
     .setColor('PURPLE')
     .setAuthor(event.name)
     .setTitle(award.name)
     .setURL(`https://www.robotevents.com/${award._id.event}.html#tab-awards`);
+  if (award.division) {
+    embed.addField('Division', award.division);
+  }
   if (award.team) {
     embed.addField('Team', `${decodeProgramEmoji(award.team.program)} [${award.team.id}](https://www.robotevents.com/teams/${decodeProgram(award.team.program)}/${award.team.id})`, true);
   }
