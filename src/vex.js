@@ -160,8 +160,7 @@ const createMatchEmbed = (match, event) => {
   return embed;
 };
 
-const createAwardEmbed = async award => {
-  const event = await db.collection('events').findOne({_id: award._id.event});
+const createAwardEmbed = async (award, event) => {
   const embed = new MessageEmbed()
     .setColor('PURPLE')
     .setAuthor(event.name)

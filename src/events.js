@@ -620,7 +620,7 @@ const getEventData = async event => {
         teams = [award.team];
       }
       if (change) {
-        await vex.sendToSubscribedChannels(`Award ${change}`, {embed: await vex.createAwardEmbed(award)}, teams);
+        await vex.sendToSubscribedChannels(`Award ${change}`, {embed: await vex.createAwardEmbed(award, event)}, teams);
       }
     } catch (err) {
       console.error(err);
