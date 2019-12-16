@@ -163,9 +163,9 @@ const createMatchEmbed = (match, event) => {
 const createAwardEmbed = (award, event) => {
   const embed = new MessageEmbed()
     .setColor('PURPLE')
-    .setAuthor(event.name)
+    .setAuthor(event.name, emojiToUrl(decodeProgramEmoji(event.program)), `https://www.robotevents.com/${event._id}.html`)
     .setTitle(award.name)
-    .setURL(`https://www.robotevents.com/${award._id.event}.html#tab-awards`);
+    .setURL(`https://www.robotevents.com/${event._id}.html#tab-awards`);
   if (award.division) {
     embed.addField('Division', award.division);
   }
