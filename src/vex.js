@@ -161,20 +161,10 @@ const createMatchEmbed = (match, event) => {
 };
 
 const createAwardEmbed = async award => {
-  const skus = award.qualifies ? award.qualifies.slice() : [];
-  skus.unshift(award._id.event);
-  const events = await db.collection('events').find({_id: {$in: skus}}).project({_id: 1, name: 1}).toArray();
-  let eventName;
-  events.forEach(event => {
-    if (event._id === award._id.event) {
-      eventName = event.name;
-    } else {
-      award.qualifies[award.qualifies.indexOf(event._id)] = `[${event.name}](https://www.robotevents.com/${event._id}.html)`;
-    }
-  });
+  const event = await db.collection('events').findOne({_id: award._id.event});
   const embed = new MessageEmbed()
     .setColor('PURPLE')
-    .setAuthor(eventName)
+    .setAuthor(event.name)
     .setTitle(award._id.name)
     .setURL(`https://www.robotevents.com/${award._id.event}.html#tab-awards`);
   if (award.team) {

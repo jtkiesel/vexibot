@@ -612,9 +612,9 @@ const getEventData = async event => {
       if (!oldAward && !award.team) {
         change = 'created';
       } else if (award.team) {
-        if (!oldAward.team || !oldAward) {
+        if (!oldAward || !oldAward.team) {
           change = 'won';
-        } else if (oldAward.team != award.team) {
+        } else if (oldAward && (oldAward.team != award.team)) {
           change = 'changed';
         }
         teams = [award.team];

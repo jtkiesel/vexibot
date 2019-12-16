@@ -5,8 +5,6 @@ import { inspect } from 'util';
 
 import updatesChannel from './adminCommands/updatesChannel';
 import updatesFilter from './adminCommands/updatesFilter';
-import { updateEvent } from './events';
-import { updateAllEvents } from './vexdata';
 
 const client = new Client();
 const production = process.env.NODE_ENV === 'production';
@@ -15,7 +13,6 @@ const dbUri = production ? process.env.VEXIBOT_DB : process.env.VEXIBOT_DEV_DB;
 const ownerId = process.env.DISCORD_ID;
 const mongoOptions = {
   retryWrites: true,
-  reconnectTries: Number.MAX_VALUE,
   useNewUrlParser: true,
   useUnifiedTopology: true
 };
