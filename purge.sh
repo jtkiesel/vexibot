@@ -1,1 +1,0 @@
-rm -rf build node_modules
