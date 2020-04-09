@@ -15,12 +15,12 @@ const getDescription = (skills, index = 0) => {
   for (let i = index; i < skills.length && i < (index + pageSize); i++) {
     const skill = skills[i];
     let rank = skill._id.rank;
-    rank = (rank < 4) ? `${rankEmojis[rank - 1]}  ` : `**\`#${String(rank).padEnd(3)}\u200B\`**`;
+    rank = (rank < 4) ? `\u200B ${rankEmojis[rank - 1]} \u200B \u200B \u200B \u200B` : `**\`#${String(rank).padEnd(3)}\`**`;
     const score = String(skill.score).padStart(3);
     const programming = String(skill.programming).padStart(3);
     const driver = String(skill.driver).padStart(3);
     const team = skill.team.id;
-    description += `${rank}   \`\u200B${score}\`   \`(\u200B${programming} / \u200B${driver})\`   [${team}](https://www.robotevents.com/teams/${decodeProgram(skill.team.program)}/${team})\n`;
+    description += `${rank} \u200B \u200B \`${score}\` \u200B \u200B \`(${programming} / ${driver})\` \u200B \u200B [${team}](https://www.robotevents.com/teams/${decodeProgram(skill.team.program)}/${team})\n`;
   }
   return description;
 };

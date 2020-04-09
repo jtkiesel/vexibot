@@ -138,7 +138,7 @@ const rounds = {
   15: 'F'
 };
 
-const roundKeys = [1, 2, 9, 8, 7, 6, 3, 4, 5, 15];
+const roundKeys = [1, 2, 16, 9, 8, 7, 6, 3, 4, 5, 15];
 
 const encodeSkills = ['programming', 'driver'];
 
