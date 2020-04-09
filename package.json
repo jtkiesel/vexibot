@@ -30,27 +30,27 @@
     "build": "babel src -d build"
   },
   "dependencies": {
-    "axios": "^0.19.0",
+    "axios": "^0.19.2",
     "cheerio": "^1.0.0-rc.3",
-    "cron": "^1.7.2",
-    "discord.js": "github:discordjs/discord.js",
+    "cron": "^1.8.2",
+    "discord.js": "^12.1.1",
     "he": "^1.2.0",
-    "mathjs": "^6.2.5",
+    "mathjs": "^6.6.2",
     "ml-matrix": "^6.4.1",
-    "moment-timezone": "^0.5.27",
-    "mongodb": "^3.4.0",
+    "moment-timezone": "^0.5.28",
+    "mongodb": "^3.5.5",
     "tz-lookup": "^6.1.25"
   },
   "engines": {
-    "node": "^12.13.1",
-    "npm": "^6.13.4"
+    "node": "^13.11.0",
+    "npm": "^6.13.7"
   },
   "devDependencies": {
-    "@babel/cli": "^7.7.5",
-    "@babel/core": "^7.7.5",
-    "@babel/node": "^7.7.4",
-    "@babel/preset-env": "^7.7.6",
-    "nodemon": "^2.0.2"
+    "@babel/cli": "^7.8.4",
+    "@babel/core": "^7.9.0",
+    "@babel/node": "^7.8.7",
+    "@babel/preset-env": "^7.9.5",
+    "nodemon": "^2.0.3"
   },
   "browserslist": "maintained node versions"
 }
