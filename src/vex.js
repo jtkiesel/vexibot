@@ -205,7 +205,7 @@ const sendMatchEmbed = async (content, match, event) => {
 const sendToSubscribedChannels = async (content, options, teams = []) => {
   const settings = await db.collection('settings').find({updatesChannel: {$exists: true}, $or: [{updatesFilter: {$exists: false}}, {updatesFilter: {$size: 0}}, {updatesFilter: {$in: teams}}]}).toArray();
   settings.map(setting => setting.updatesChannel).forEach(async id => {
-    const channel = client.channels.get(id);
+    const channel = client.channels.fetch(id);
     if (!channel) {
       return;
     }
