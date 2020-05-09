@@ -10,24 +10,24 @@ import { updateEvent } from './events';
 const sleep = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
 
 const updateTeams = async () => {
-  await updateTeamsForSeason(1, 130);
-  await updateTeamsForSeason(4, 131);
-  await updateTeamsForSeason(41, 129);
+  await updateTeamsForSeason(1, 139);
+  await updateTeamsForSeason(4, 140);
+  await updateTeamsForSeason(41, 138);
 };
 
 const updateEvents = async () => {
-  await updateEventsForSeason(1, 130);
-  await updateEventsForSeason(1, 130, 'future');
-  await updateEventsForSeason(4, 131);
-  await updateEventsForSeason(4, 131, 'future');
-  await updateEventsForSeason(41, 129);
-  await updateEventsForSeason(41, 129, 'future');
+  await updateEventsForSeason(1, 139);
+  await updateEventsForSeason(1, 139, 'future');
+  await updateEventsForSeason(4, 140);
+  await updateEventsForSeason(4, 140, 'future');
+  await updateEventsForSeason(41, 138);
+  await updateEventsForSeason(41, 138, 'future');
 };
 
 const updateMaxSkills = async () => {
-  await updateMaxSkillsForSeason(1, 130);
-  await updateMaxSkillsForSeason(4, 131);
-  await updateMaxSkillsForSeason(41, 129);
+  await updateMaxSkillsForSeason(1, 139);
+  await updateMaxSkillsForSeason(4, 140);
+  await updateMaxSkillsForSeason(41, 138);
 };
 
 const updateAllTeams = async () => {

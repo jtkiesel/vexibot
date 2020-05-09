@@ -24,7 +24,7 @@ export default async (message, args) => {
       }
       alliance[j] = team._id.id;
       let opr;
-      if ([130, 131].includes(team._id.season)) {
+      if ([139, 140].includes(team._id.season)) {
         const ranking = (await db.collection('rankings').aggregate()
           .match({'_id.team': team._id, opr: {$exists: true}})
           .lookup({from: 'events', localField: '_id.event', foreignField: '_id', as: 'events'})

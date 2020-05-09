@@ -34,15 +34,15 @@ export default async (message, args) => {
   if (['h', 'hs', 'high', 'highschool'].includes(grade)) {
     program = 'VRC';
     grade = 'High School';
-    season = 130;
+    season = 139;
   } else if (['m', 'ms', 'mid', 'middle', 'middleschool'].includes(grade)) {
     program = 'VRC';
     grade = 'Middle School';
-    season = 130;
+    season = 139;
   } else if (['c', 'u', 'college', 'uni', 'university', 'vexu'].includes(grade)) {
     program = 'VEXU';
     grade = 'College';
-    season = 131;
+    season = 140;
   } else {
     message.reply('please enter a valid grade, such as **h**, **m**, or **c**.');
     return;

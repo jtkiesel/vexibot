@@ -17,7 +17,7 @@ export default async (message, args) => {
       console.error(err);
     }
     if (team) {
-      const season = isNaN(teamId.charAt(0)) ? 131 : 130;
+      const season = isNaN(teamId.charAt(0)) ? 140 : 139;
       teamId = team._id.id;
       let maxSkill;
       try {
