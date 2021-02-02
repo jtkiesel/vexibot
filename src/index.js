@@ -29,7 +29,8 @@ const commandInfo = {
 };
 const commands = {};
 
-let helpDescription = `\`${prefix}help\`: Provides information about all commands.`;
+let helpDescription = `If you have any questions or issues with vexibot, please DM or mention sexiBoiJaron#1675 (<@${ownerId}>)
+\`${prefix}help\`: Provides information about all commands.`;
 let db, events, vex, vexdata;
 
 const clean = text => {
