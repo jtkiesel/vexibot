@@ -1,16 +1,17 @@
-import { MessageEmbed } from 'discord.js';
+import { Message, MessageEmbed } from 'discord.js';
 
-import { addFooter } from '..';
+import { addFooter, Command } from '..';
 
-export default message => {
-  const ping = Date.now();
-  const embed = new MessageEmbed()
-    .setColor('RANDOM')
-    .setDescription('🏓 Pong!');
-  message.channel.send({embed}).then(reply => {
-    embed.setDescription(`${embed.description} \`${(Date.now() - ping) / 1000}s\``);
-    reply.edit({embed})
-      .then(reply => addFooter(message, reply))
-      .catch(console.error);
-  }).catch(console.error);
-};
+class PingCommand implements Command {
+  async execute(message: Message): Promise<Message> {
+    const ping = Date.now();
+    const embed = new MessageEmbed()
+      .setColor('RANDOM')
+      .setDescription('🏓 Pong!');
+    let reply = await message.channel.send(embed);
+    reply = await reply.edit(embed.setDescription(`${embed.description} \`${(Date.now() - ping) / 1000}s\``));
+    return addFooter(message, reply);
+  }
+}
+
+export default new PingCommand();

@@ -23,7 +23,7 @@ npm install
 Start the bot
 
 ```
-npm run dev
+npm run start
 ```
 
 ## Deployment
@@ -39,7 +39,7 @@ npm run build
 Start the bot
 
 ```
-npm start
+node build
 ```
 
 ## Authors

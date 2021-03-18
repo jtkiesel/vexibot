@@ -1,4 +1,4 @@
-const programToId = {
+export const programToId = {
   'VRC': 1,
   'VEXU': 4,
   'CREATE': 37,
@@ -6,7 +6,7 @@ const programToId = {
   'VIQC': 41
 };
 
-const idToProgram = {
+export const idToProgram = {
   1: 'VRC',
   4: 'VEXU',
   37: 'CREATE',
@@ -21,7 +21,7 @@ const idToProgramEmoji = {
   41: '<:viqc:464677535461146624>'
 };
 
-const seasonToId = {
+export const seasonToId = {
   'Bridge Battle': -4,
   'Elevation': -3,
   'Clean Sweep': 1,
@@ -38,7 +38,7 @@ const seasonToId = {
   'Change Up': 139
 };
 
-const idToSeason = {
+export const idToSeason = {
   '-4': 'Bridge Battle',
   '-3': 'Elevation',
   '-2': 'Elevation',
@@ -77,7 +77,7 @@ const idToSeason = {
   '140': 'Change Up'
 };
 
-const idToSeasonUrl = {
+export const idToSeasonUrl = {
   '-4': 'https://www.roboticseducation.org/vrc-bridge-battle/',
   '-3': 'https://www.roboticseducation.org/vrc-elevation/',
   '-2': 'https://www.roboticseducation.org/vrc-elevation/',
@@ -116,7 +116,7 @@ const idToSeasonUrl = {
   '140': 'https://www.vexrobotics.com/vexedr/competition/vrc-current-game/'
 };
 
-const grades = [
+export const grades = [
   'All',
   'Elementary',
   'Middle School',
@@ -153,56 +153,32 @@ const decodeSkills = ['Programming', 'Driver'];
 
 const seasons = Object.keys(idToSeason).map(season => parseInt(season));
 
-const encodeProgram = program => programToId[program];
+export const encodeProgram = (program: string): number => programToId[program];
 
-const decodeProgram = program => idToProgram[program];
+export const decodeProgram = (program: number): string => idToProgram[program];
 
-const decodeSeason = id => idToSeason[id];
+export const decodeSeason = (id: number): string => idToSeason[id];
 
-const decodeSeasonUrl = id => idToSeasonUrl[id];
+export const decodeSeasonUrl = (id: number): string => idToSeasonUrl[id];
 
-const encodeGrade = grade => grades.indexOf(grade);
+export const encodeGrade = (grade: string): number => grades.indexOf(grade);
 
-const decodeGrade = grade => grades[grade];
+export const decodeGrade = (grade: number): string => grades[grade];
 
-const encodeEvent = type => events.indexOf(type);
+export const encodeEvent = (type: string): number => events.indexOf(type);
 
-const decodeEvent = type => events[type];
+export const decodeEvent = (type: number): string => events[type];
 
-const decodeRound = round => rounds[round];
+export const decodeRound = (round: number): string => rounds[round];
 
-const roundIndex = round => roundKeys.indexOf(round);
+export const roundIndex = (round: number): number => roundKeys.indexOf(round);
 
-const encodeSkill = type => encodeSkills.indexOf(type);
+export const encodeSkill = (type: string): number => encodeSkills.indexOf(type);
 
-const decodeSkill = type => decodeSkills[type];
+export const decodeSkill = (type: number): string => decodeSkills[type];
 
-const seasonToVexu = season => (season === -4) ? null : seasons[seasons.indexOf(season) + 1];
+export const seasonToVexu = (season: number): number => (season === -4) ? null : seasons[seasons.indexOf(season) + 1];
 
-const decodeProgramEmoji = id => idToProgramEmoji[id];
+export const decodeProgramEmoji = (id: number): string => idToProgramEmoji[id];
 
-const emojiToUrl = emoji => `https://cdn.discordapp.com/emojis/${emoji.match(/([0-9]+)(?!.*[0-9])/)[1]}.png`;
-
-export {
-  programToId,
-  idToProgram,
-  seasonToId,
-  idToSeason,
-  decodeSeason,
-  idToSeasonUrl,
-  decodeSeasonUrl,
-  grades,
-  encodeProgram,
-  decodeProgram,
-  encodeGrade,
-  decodeGrade,
-  encodeEvent,
-  decodeEvent,
-  decodeRound,
-  encodeSkill,
-  decodeSkill,
-  roundIndex,
-  seasonToVexu,
-  decodeProgramEmoji,
-  emojiToUrl
-};
+export const emojiToUrl = (emoji: string): string => `https://cdn.discordapp.com/emojis/${emoji.match(/([0-9]+)(?!.*[0-9])/)[1]}.png`;

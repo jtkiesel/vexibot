@@ -1,21 +1,28 @@
-import { get, post } from 'axios';
+import axios from 'axios';
 import { load } from 'cheerio';
 import { tz } from 'moment-timezone';
 import tzlookup from 'tz-lookup';
 
-import { db } from '.';
+import { db, sleep } from '.';
 import { decodeProgram, decodeSeason, encodeProgram, encodeGrade } from './dbinfo';
 import { updateEvent } from './events';
+import * as awards from './persistence/awards';
+import * as events from './persistence/events';
+import * as matches from './persistence/matches';
+import * as programs from './persistence/programs';
+import * as rankings from './persistence/rankings';
+import * as seasons from './persistence/seasons';
+import * as skills from './persistence/skills';
+import * as teams from './persistence/teams';
 
-const sleep = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
-
-const updateTeams = async () => {
+/*
+const updateTeams = async (): Promise<void> => {
   await updateTeamsForSeason(1, 139);
   await updateTeamsForSeason(4, 140);
   await updateTeamsForSeason(41, 138);
 };
 
-const updateEvents = async () => {
+const updateEvents = async (): Promise<void> => {
   await updateEventsForSeason(1, 139);
   await updateEventsForSeason(1, 139, 'future');
   await updateEventsForSeason(4, 140);
@@ -24,14 +31,14 @@ const updateEvents = async () => {
   await updateEventsForSeason(41, 138, 'future');
 };
 
-const updateMaxSkills = async () => {
+const updateMaxSkills = async (): Promise<void> => {
   await updateMaxSkillsForSeason(1, 139);
   await updateMaxSkillsForSeason(4, 140);
   await updateMaxSkillsForSeason(41, 138);
 };
 
-const updateAllTeams = async () => {
-  const programs = await db.collection('programs').find().project({seasons: 1}).toArray();
+const updateAllTeams = async (): Promise<void> => {
+  const programs = await db().collection('programs').find().project({seasons: 1}).toArray();
   for (const program of programs) {
     for (const season of program.seasons) {
       try {
@@ -43,31 +50,27 @@ const updateAllTeams = async () => {
   }
 };
 
-const updateAllEvents = async () => {
-  try {
-    const programs = await db.collection('programs').find().project({seasons: 1}).toArray();
-    for (const program of programs) {
-      let season;
-      for (season of program.seasons) {
-        try {
-          await updateEventsForSeason(program._id, season);
-        } catch (err) {
-          console.error(err);
-        }
-      }
+const updateAllEvents = async (): Promise<void> => {
+  const programs = await db().collection('programs').find().project({seasons: 1}).toArray();
+  for (const program of programs) {
+    let season: number;
+    for (season of program.seasons) {
       try {
-        await updateEventsForSeason(program._id, season, 'future');
+        await updateEventsForSeason(program._id, season);
       } catch (err) {
         console.error(err);
       }
     }
-  } catch (err) {
-    console.error(err);
+    try {
+      await updateEventsForSeason(program._id, season, 'future');
+    } catch (err) {
+      console.error(err);
+    }
   }
 };
 
-const updateAllMaxSkills = async () => {
-  const programs = await db.collection('programs').find().project({seasons: 1}).toArray();
+const updateAllMaxSkills = async (): Promise<void> => {
+  const programs = await db().collection('programs').find().project({seasons: 1}).toArray();
   for (const program of programs) {
     const seasons = program.seasons.sort((a, b) => a - b);
     for (const season of seasons) {
@@ -80,8 +83,8 @@ const updateAllMaxSkills = async () => {
   }
 };
 
-const updateExistingEvents = async () => {
-  const events = await db.collection('events').find().toArray();
+const updateExistingEvents = async (): Promise<void> => {
+  const events = await db().collection('events').find().toArray();
   for (const event of events) {
     try {
       await updateEvent(event);
@@ -91,28 +94,24 @@ const updateExistingEvents = async () => {
   }
 };
 
-const updateCurrentEvents = async () => {
+const updateCurrentEvents = async (): Promise<void> => {
   const now = new Date();
-  try {
-    const documents = await db.collection('events').find({dates: {$elemMatch: {end: {$gt: now}, start: {$lt: now}}}}).toArray();
-    for (const event of documents) {
-      try {
-        await updateEvent(event);
-      } catch (err) {
-        console.error(err);
-      }
+  const documents = await db().collection('events').find({dates: {$elemMatch: {end: {$gt: now}, start: {$lt: now}}}}).toArray();
+  for (const event of documents) {
+    try {
+      await updateEvent(event);
+    } catch (err) {
+      console.error(err);
     }
-  } catch (err) {
-    console.error(err);
   }
 };
 
 const updateProgramsAndSeasons = async () => {
   try {
-    const programs = (await get('https://www.robotevents.com/api/programs')).data.data.map(formatProgram);
+    const programs = (await axios.get('https://www.robotevents.com/api/programs')).data.data.map(formatProgram);
     programs.forEach(program => {
       program.seasons.forEach(season => {
-        db.collection('seasons').updateOne(
+        db().collection('seasons').updateOne(
           {_id: season._id},
           {$set: season},
           {upsert: true}
@@ -126,7 +125,7 @@ const updateProgramsAndSeasons = async () => {
       });
       const seasons = program.seasons.map(season => season._id);
       delete program.seasons;
-      db.collection('programs').updateOne(
+      db().collection('programs').updateOne(
         {_id: program._id},
         {$set: program, $addToSet: {seasons: {$each: seasons}}},
         {upsert: true}
@@ -144,7 +143,7 @@ const updateProgramsAndSeasons = async () => {
 };
 
 const getCsrfTokenAndCookie = async () => {
-  const response = await get('https://www.robotevents.com');
+  const response = await axios.get('https://www.robotevents.com');
   const $ = load(response.data);
   return {csrfToken: $('meta[name="csrf-token"]').attr('content'), cookie: response.headers['set-cookie'].map(cookie => cookie.slice(0, cookie.indexOf(';') + 1)).join(' ')};
 };
@@ -152,7 +151,7 @@ const getCsrfTokenAndCookie = async () => {
 const updateTeamsForSeason = async (program, season) => {
   try {
     const {csrfToken, cookie} = await getCsrfTokenAndCookie();
-    const teamGroups = (await post('https://www.robotevents.com/api/teams/latLngGrp', {
+    const teamGroups = (await axios.post('https://www.robotevents.com/api/teams/latLngGrp', {
       programs: [program],
       season_id: season,
       when: 'past'
@@ -167,7 +166,7 @@ const updateTeamsForSeason = async (program, season) => {
 
 const updateEventsForSeason = async (program, season, when = 'past') => {
   try {
-    const events = (await post('https://www.robotevents.com/api/events', {
+    const events = (await axios.post('https://www.robotevents.com/api/events', {
       programs: [program],
       season_id: season,
       when
@@ -188,7 +187,7 @@ const updateEventsForSeason = async (program, season, when = 'past') => {
 const updateMaxSkillsForSeason = async (program, season) => {
   try {
     const ranks = {};
-    const maxSkills = (await get(`https://www.robotevents.com/api/seasons/${season}/skills?untilSkillsDeadline=0&grade_level=All`))
+    const maxSkills = (await axios.get(`https://www.robotevents.com/api/seasons/${season}/skills?untilSkillsDeadline=0&grade_level=All`))
       .data.map(maxSkill => formatMaxSkill(maxSkill, program, season)).sort((a, b) => a._id.rank - b._id.rank);
     for (const maxSkill of maxSkills) {
       const {grade} = maxSkill._id;
@@ -196,14 +195,14 @@ const updateMaxSkillsForSeason = async (program, season) => {
       maxSkill._id.rank = rank;
       ranks[grade] = rank;
       try {
-        await db.collection('maxSkills').updateOne({_id: maxSkill._id}, {$set: maxSkill}, {upsert: true});
+        await db().collection('maxSkills').updateOne({_id: maxSkill._id}, {$set: maxSkill}, {upsert: true});
       } catch (err) {
         console.error(err);
       }
-      db.collection('teams').updateOne({_id: {id: maxSkill.team.id, program, season}}, {$set: {grade}}, {upsert: true}).catch(console.error);
+      db().collection('teams').updateOne({_id: {id: maxSkill.team.id, program, season}}, {$set: {grade}}, {upsert: true}).catch(console.error);
     }
     for (const grade of Object.keys(ranks)) {
-      await db.collection('maxSkills').deleteMany({'_id.season': season, '_id.grade': grade, '_id.rank': {$gt: ranks[grade]}});
+      await db().collection('maxSkills').deleteMany({'_id.season': season, '_id.grade': grade, '_id.rank': {$gt: ranks[grade]}});
     }
   } catch (err) {
     if (err.response && err.response.status === 404) {
@@ -213,11 +212,11 @@ const updateMaxSkillsForSeason = async (program, season) => {
     }
   }
 };
-
-const updateTeamsInGroup = async (program, season, teamGroup, csrfToken, cookie, timeout = 1000) => {
+*/
+/*const updateTeamsInGroup = async (program, season, teamGroup, csrfToken, cookie, timeout = 1000) => {
   const {lat, lng} = teamGroup.position;
   try {
-    const resp = await post('https://www.robotevents.com/api/teams/getTeamsForLatLng', {
+    const resp = await axios.post('https://www.robotevents.com/api/teams/getTeamsForLatLng', {
       programs: [program],
       when: 'past',
       season_id: season,
@@ -234,8 +233,8 @@ const updateTeamsInGroup = async (program, season, teamGroup, csrfToken, cookie,
     teams.forEach(team => {
       const filter = {_id: team._id};
       const update = {$set: team};
-      db.collection('teams').findOne(filter, {projection: {_id: 0, city: 1, region: 1}}).then(oldTeam => {
-        if (oldTeam) {
+      db().collection('teams').findOne(filter, {projection: {_id: 0, city: 1, region: 1}}).then(oldTeam => {*/
+        /*if (oldTeam) {
           const unset = {};
           if (team.city !== oldTeam.city || team.region !== oldTeam.region) {
             unset.country = '';
@@ -252,10 +251,10 @@ const updateTeamsInGroup = async (program, season, teamGroup, csrfToken, cookie,
           if (Object.keys(unset).length) {
             update.$unset = unset;
           }
-        }
-        db.collection('teams').updateOne(filter, update, {upsert: true}).catch(console.error);
+        }*/
+        /*db().collection('teams').updateOne(filter, update, {upsert: true}).catch(console.error);
         if (!oldTeam) {
-          //await vex.sendToSubscribedChannels('Team registered', {embed: vex.createTeamEmbed(team)}, [team._id]);
+          //await vex.sendToSubscribedChannels('Team registered', {embed: vex.makeTeamEmbed(team)}, [team._id]);
           console.log(`${decodeProgram(program)} ${team._id.id} registered for ${decodeSeason(season)}`);
         }
       }).catch(console.error);
@@ -276,8 +275,8 @@ const updateTeamsInGroup = async (program, season, teamGroup, csrfToken, cookie,
       }
     }
   }
-};
-
+};*/
+/*
 const formatProgram = program => {
   return {
     _id: program.id,
@@ -296,15 +295,15 @@ const formatSeason = (season, program) => {
     end: Number(season.end_year)
   };
 };
-
-const formatTeam = (team, program, season, lat, lng) => {
-  const {city, name, team_name, robot_name} = team;
+*/
+/*const formatTeam = (team, program, season, lat, lng) => {
+  const {city, name, team_name, robot_name} = team;*/
   /*if (program === 1 && isNaN(team.team.charAt(0))) {
     console.log(`Found VEXU ${team.team} in VRC group`);
     program = 4;
     season = dbinfo.seasonToVexu(season);
   }*/
-  return Object.assign({
+  /*return Object.assign({
     _id: {
       id: team.team,
       program,
@@ -318,8 +317,8 @@ const formatTeam = (team, program, season, lat, lng) => {
   team_name && {name: team_name},
   robot_name && {robot: robot_name},
   program === encodeProgram('VEXU') && {grade: encodeGrade('College')});
-};
-
+};*/
+/*
 const formatEvent = event => {
   const {sku, season_id, program_id, name, date, lat, lng, email, phone, webcast_link} = event;
   let timezone;
@@ -393,3 +392,4 @@ export {
   updateEventsForSeason,
   updateMaxSkillsForSeason
 };
+*/

@@ -1,24 +1,22 @@
-import { get } from 'axios';
-import { load } from 'cheerio';
+import axios from 'axios';
+import cheerio from 'cheerio';
 import { matrix, multiply } from 'mathjs';
 import { CholeskyDecomposition, Matrix, pseudoInverse } from 'ml-matrix';
 import { tz } from 'moment-timezone';
 import tzlookup from 'tz-lookup';
 
-import { db } from '.';
+import { db, sleep } from '.';
 import * as vex from './vex';
 import { decodeProgram, decodeSeason, decodeSkill, encodeEvent, encodeGrade, encodeProgram, encodeSkill, roundIndex, seasonToVexu } from './dbinfo';
 
-const sleep = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
-
-const guessSeason = async (program, date) => {
+const guessSeason = async (program: number, date: number): Promise<number> => {
   let start = (new Date(date)).getFullYear();
   const seasonEnd = Date.parse(`5/15/${start}`);
 
   if (date < seasonEnd) {
     start--;
   }
-  const season = await db.collection('seasons').findOne({program, start});
+  const season = await db().collection('seasons').findOne({program, start});
   return season ? season._id : 0;
 };
 
@@ -28,12 +26,12 @@ const genders = [
   'girls_only'
 ];
 
-const encodeGenders = gender => genders.indexOf(gender);
+const encodeGenders = (gender: string): number => genders.indexOf(gender);
 
-const encodeBoolean = value => Boolean(value.toLowerCase() === 'yes');
+const encodeBoolean = (value: string): boolean => value.toLowerCase() === 'yes';
 
-const getTeam_id = (id, {season, program}) => {
-  if (program === 1 && isNaN(id.charAt(0))) {
+const getTeamId = (id: string, {season, program}): vex.TeamId => {
+  if (program === 1 && isNaN(parseInt(id.charAt(0)))) {
     console.warn(`Found VEXU ${id} in VRC event`);
     program = 4;
     season = seasonToVexu(season);
@@ -85,13 +83,13 @@ const formatMatch = (match, event) => {
 };
 
 const formatRanking = (ranking, event) => {
-  const {division, rank, wins, losses, ties, wp, ap, sp, total_points, high_score} = ranking;
+  const {division, rank, wins, losses, ties, wp, ap, sp} = ranking;
   const played = wins + losses + ties;
   return Object.assign({
     _id: {
       event: event._id,
       division,
-      team: getTeam_id(ranking.teamnum, event),
+      team: getTeamId(ranking.teamnum, event),
     },
     rank,
     played
@@ -107,16 +105,16 @@ const formatRanking = (ranking, event) => {
   played && {
     winPct: wins / played
   },
-  total_points != null && played && {
-    avgScore: total_points / played,
-    totalScore: total_points
+  ranking.total_points != null && played && {
+    avgScore: ranking.total_points / played,
+    totalScore: ranking.total_points
   },
-  high_score != null && {
-    highScore: high_score
+  ranking.high_score != null && {
+    highScore: ranking.high_score
   });
 };
 
-const getAwards = ($, event) => {
+const getAwards = ($: cheerio.Root, event) => {
   const awardsTab = $('#tab-awards');
   let awardsHeaders = awardsTab.find('tr > th:contains(Team #)');
   let standardAwards = true;
@@ -146,7 +144,7 @@ const getAwards = ($, event) => {
         },
         division,
         name,
-        team: getTeam_id(id, event)
+        team: getTeamId(id, event)
       };
     }).get());
   }, []);
@@ -197,9 +195,9 @@ const updateSkillsAndTeams = async (skills, event) => {
   for (let index = 0; index < skills.length; index++) {
     const skill = skills[index];
     const teamReg = skill.team_reg;
-    let team_id;
+    let teamId;
     if (teamReg) {
-      team_id = {
+      teamId = {
         id: teamReg.team.team,
         program: teamReg.team.program_id,
         season: teamReg.season_id
@@ -263,9 +261,9 @@ const updateSkillsAndTeams = async (skills, event) => {
         teamReg.prior_competition && {rookie: teamReg.prior_competition === 0},
         teamReg.genders && {genders: encodeGenders(teamReg.genders)}
       );
-      await db.collection('teams').updateOne({_id: team_id}, {$set: team}, {upsert: true}).catch(console.error);
+      await db().collection('teams').updateOne({_id: teamId}, {$set: team}, {upsert: true}).catch(console.error);
     } else {
-      team_id = getTeam_id(skill.team, event);
+      teamId = getTeamId(skill.team, event);
     }
     const update = {
       _id: {
@@ -274,11 +272,11 @@ const updateSkillsAndTeams = async (skills, event) => {
         index
       },
       rank: skill.rank,
-      team: team_id,
+      team: teamId,
       score: skill.highscore,
       attempts: skill.attempts
     };
-    const res = await db.collection('skills').findOneAndUpdate({_id: update._id}, {$set: update}, {upsert: true});
+    const res = await db().collection('skills').findOneAndUpdate({_id: update._id}, {$set: update}, {upsert: true});
     const old = res.value;
     if (!old && update.attempts !== 0 || old && update.score !== old.score) {
       await vex.sendToSubscribedChannels(`New ${decodeSkill(update._id.type)} Skills score`, {embed: vex.createSkillsEmbed(update, event)}, [update.team]);
@@ -369,10 +367,10 @@ const updateMatchesAndRankings = async (matches, rankings, event) => {
       } else {
         change = 'scheduled';
         delete match.score;
-        unset.score = '';
+        //unset.score = '';
       }
       if (scoresVector.length) {
-        const array = alliancesMatrix.toArray();
+        const array = alliancesMatrix.toArray() as number[][];
         const cholesky = new CholeskyDecomposition(array);
         if (cholesky.isPositiveDefinite()) {
           oprVector = cholesky.solve(Matrix.columnVector(scoresVector)).to1DArray();
@@ -382,9 +380,9 @@ const updateMatchesAndRankings = async (matches, rankings, event) => {
       }
       let res;
       if (!Object.keys(unset).length) {
-        res = await db.collection('matches').findOneAndUpdate({_id: match._id}, {$set: match}, {upsert: true}).catch(console.error);
+        res = await db().collection('matches').findOneAndUpdate({_id: match._id}, {$set: match}, {upsert: true}).catch(console.error);
       } else {
-        res = await db.collection('matches').findOneAndUpdate({_id: match._id}, {$set: match, $unset: unset}, {upsert: true}).catch(console.error);
+        res = await db().collection('matches').findOneAndUpdate({_id: match._id}, {$set: match, $unset: unset}, {upsert: true}).catch(console.error);
       }
       const old = res.value;
       try {
@@ -464,11 +462,11 @@ const updateMatchesAndRankings = async (matches, rankings, event) => {
         change = 'scheduled';
         delete match.redScore;
         delete match.blueScore;
-        unset.redScore = '';
-        unset.blueScore = '';
+        /*unset.redScore = '';
+        unset.blueScore = '';*/
       }
       if (scoresVector.length) {
-        const array = alliancesMatrix.toArray();
+        const array = alliancesMatrix.toArray() as number[][];
         const cholesky = new CholeskyDecomposition(array);
         if (cholesky.isPositiveDefinite()) {
           oprVector = cholesky.solve(Matrix.columnVector(scoresVector)).to1DArray();
@@ -481,9 +479,9 @@ const updateMatchesAndRankings = async (matches, rankings, event) => {
       }
       let res;
       if (!Object.keys(unset).length) {
-        res = await db.collection('matches').findOneAndUpdate({_id: match._id}, {$set: match}, {upsert: true}).catch(console.error);
+        res = await db().collection('matches').findOneAndUpdate({_id: match._id}, {$set: match}, {upsert: true}).catch(console.error);
       } else {
-        res = await db.collection('matches').findOneAndUpdate({_id: match._id}, {$set: match, $unset: unset}, {upsert: true}).catch(console.error);
+        res = await db().collection('matches').findOneAndUpdate({_id: match._id}, {$set: match, $unset: unset}, {upsert: true}).catch(console.error);
       }
       const old = res.value;
       try {
@@ -518,10 +516,10 @@ const updateMatchesAndRankings = async (matches, rankings, event) => {
         ranking.ccwm = opr - dpr;
       }
     }
-    await db.collection('rankings').replaceOne({_id: ranking._id}, ranking, {upsert: true});
+    await db().collection('rankings').replaceOne({_id: ranking._id}, ranking, {upsert: true});
   }
   for (const division of Object.keys(maxRanks)) {
-    await db.collection('rankings').deleteMany({'_id.event': event._id, '_id.division': division, rank: {$gt: maxRanks[division]}});
+    await db().collection('rankings').deleteMany({'_id.event': event._id, '_id.division': division, rank: {$gt: maxRanks[division]}});
   }
 };
 
@@ -561,7 +559,7 @@ const getDates = ($, timezone) => {
 };
 
 const getEventData = async event => {
-  const $ = load((await get(`https://www.robotevents.com/${event._id}.html`)).data);
+  const $ = cheerio.load((await axios.get(`https://www.robotevents.com/${event._id}.html`)).data);
   const {lat, lng} = event;
   let timezone;
   try {
@@ -575,17 +573,17 @@ const getEventData = async event => {
   const teams = await Promise.all($('#teamList #data-table tbody tr').map(async (_, team) => {
     const [id, name, org, city, region, country] = $(team).find('td').map((index, field) => {
       switch (index) {
-      case 0:
-        return $(field).find('a').first().text().trim();
-      case 1:
-      case 2:
-        return $(field).text().trim();
-      case 3:
-        return $(field).text().match(/^\s*(.+?),?\s*\n(?:\s*(.+?),\s*\n)?(?:\s*(.+?))?\s*$/).slice(1);
+        case 0:
+          return $(field).find('a').first().text().trim();
+        case 1:
+        case 2:
+          return $(field).text().trim();
+        case 3:
+          return $(field).text().match(/^\s*(.+?),?\s*\n(?:\s*(.+?),\s*\n)?(?:\s*(.+?))?\s*$/).slice(1);
       }
     }).get();
 
-    const _id = getTeam_id(id, event);
+    const _id = getTeamId(id, event);
     const update = Object.assign({
       _id,
       city
@@ -596,17 +594,17 @@ const getEventData = async event => {
     country && {country},
     _id.program === encodeProgram('VEXU') && {grade: encodeGrade('College')});
 
-    await db.collection('teams').updateOne({_id: update._id}, {$set: update}, {upsert: true});
+    await db().collection('teams').updateOne({_id: update._id}, {$set: update}, {upsert: true});
 
     return id;
   }).get());
 
-  await updateSkillsAndTeams(getSkills($, event), event);
+  await updateSkillsAndTeams(getSkills($), event);
 
   const awards = getAwards($, event);
   for (const award of awards) {
     try {
-      const result = await db.collection('awards').findOneAndReplace({_id: award._id}, award, {upsert: true});
+      const result = await db().collection('awards').findOneAndReplace({_id: award._id}, award, {upsert: true});
       const oldAward = result.value;
       let change, teams;
       if (!oldAward && !award.team) {
@@ -626,7 +624,7 @@ const getEventData = async event => {
       console.error(err);
     }
   }
-  await db.collection('awards').deleteMany({'_id.event': event._id, '_id.index': {$gte: awards.length}});
+  await db().collection('awards').deleteMany({'_id.event': event._id, '_id.index': {$gte: awards.length}});
 
   const divisions = getDivisions($);
   const matches = getMatches($, event).filter(match => divisions[match._id.division]).sort(matchCompare);
@@ -635,7 +633,7 @@ const getEventData = async event => {
 
   const mainBody = $('#front-app .panel .panel-body').first();
   const type = mainBody.find('p:contains(Type of Event)').first().text().trim().match(/Type of Event:\s*(.+)/i)[1];
-  const [capacity, spots] = mainBody.find('p:contains(Capacity)').first().text().trim().match(/Capacity.*?([0-9]+).*?Spots Open.*?([0-9]*(?:%\+-)?)/i).slice(1).map(val => isNaN(val) ? val : Number(val));
+  const [capacity, spots] = mainBody.find('p:contains(Capacity)').first().text().trim().match(/Capacity.*?([0-9]+).*?Spots Open.*?([0-9]*(?:%\+-)?)/i).slice(1).map(val => isNaN(parseInt(val)) ? val : Number(val));
   const regPerOrg = mainBody.find('p:contains(Max Registrations per Organization)').first().text().trim().match(/[0-9]+/);
   const opens = mainBody.find('p:contains(Registration Opens)').first().text().trim().match(/Registration Opens[^0-9A-Z]*(.+)/i);
   const deadline = mainBody.find('p:contains(Registration Deadline)').first().text().trim().match(/Registration Deadline[^0-9A-Z]*(.+)/i);
@@ -677,8 +675,8 @@ const updateEvent = async (eventObject, timeout = 1000) => {
 
     const filter = {_id: event._id};
     const update = {$set: event};
-    const oldEvent = await db.collection('events').findOne(filter, {projection: {_id: 0, email: 1, phone: 1, webcast: 1}});
-    if (oldEvent) {
+    const oldEvent = await db().collection('events').findOne(filter, {projection: {_id: 0, email: 1, phone: 1, webcast: 1}});
+    /*if (oldEvent) {
       const unset = {};
       if (!event.email) {
         unset.email = '';
@@ -692,11 +690,11 @@ const updateEvent = async (eventObject, timeout = 1000) => {
       if (Object.keys(unset).length) {
         update.$unset = unset;
       }
-    }
-    await db.collection('events').updateOne(filter, update, {upsert: true});
+    }*/
+    await db().collection('events').updateOne(filter, update, {upsert: true});
     if (!oldEvent) {
       try {
-        await vex.sendToSubscribedChannels('Event created', {embed: vex.createEventEmbed(event)});
+        await vex.sendToSubscribedChannels('Event created', {embed: vex.makeEventEmbed(event)});
       } catch (err) {
         console.error(err);
       }
@@ -705,7 +703,7 @@ const updateEvent = async (eventObject, timeout = 1000) => {
   } catch (err) {
     if (err.response && err.response.status === 404) {
       console.log(`${eventObject._id} is not an event.`);
-      db.collection('events').deleteOne({_id: eventObject._id});
+      db().collection('events').deleteOne({_id: eventObject._id});
     } else {
       console.error(`${eventObject._id} failed to update:`);
       console.error(err);
