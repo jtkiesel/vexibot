@@ -1,16 +1,20 @@
-import { MessageEmbed } from 'discord.js';
+import {ApplyOptions} from '@sapphire/decorators';
+import {Command, CommandOptions} from '@sapphire/framework';
+import type {Message} from 'discord.js';
 
-import { addFooter } from '..';
+@ApplyOptions<CommandOptions>({
+  name: 'ping',
+  aliases: ['pong'],
+  description: 'ping pong',
+})
+export class PingCommand extends Command {
+  public async messageRun(message: Message): Promise<unknown> {
+    const reply = await message.channel.send('Ping?');
 
-export default message => {
-  const ping = Date.now();
-  const embed = new MessageEmbed()
-    .setColor('RANDOM')
-    .setDescription('🏓 Pong!');
-  message.channel.send({embed}).then(reply => {
-    embed.setDescription(`${embed.description} \`${(Date.now() - ping) / 1000}s\``);
-    reply.edit({embed})
-      .then(reply => addFooter(message, reply))
-      .catch(console.error);
-  }).catch(console.error);
-};
+    const ping = Math.round(this.container.client.ws.ping);
+    const timestampDelta = reply.createdTimestamp - message.createdTimestamp;
+    const content = `Pong! Bot latency ${ping}ms. API latency ${timestampDelta}ms.`;
+
+    return reply.edit(content);
+  }
+}

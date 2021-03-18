@@ -1,0 +1,10 @@
+{
+  "extends": "./node_modules/gts/tsconfig-google.json",
+  "compilerOptions": {
+    "outDir": "build",
+    "lib": ["ESNext"],
+    "esModuleInterop": true,
+    "experimentalDecorators": true
+  },
+  "include": ["src"]
+}

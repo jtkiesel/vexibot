@@ -1,6 +1,6 @@
 {
   "name": "vexibot",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Discord bot that provides services related to the VEX Robotics Competition, primarily providing information and statistics related to the competition.",
   "keywords": [
     "Discord",
@@ -10,47 +10,40 @@
     "competition"
   ],
   "homepage": "https://github.com/jtkiesel/vexibot#readme",
-  "bugs": {
-    "url": "https://github.com/jtkiesel/vexibot/issues"
-  },
+  "bugs": "https://github.com/jtkiesel/vexibot/issues",
   "license": "MIT",
   "author": {
-    "name": "Jordan T Kiesel"
+    "name": "Jordan Kiesel",
+    "url": "https://github.com/jtkiesel"
   },
-  "main": "build/index.js",
+  "main": "src/index.ts",
   "repository": {
     "type": "git",
     "url": "https://github.com/jtkiesel/vexibot.git"
   },
   "scripts": {
-    "dev": "nodemon --inspect --exec babel-node src",
-    "prod": "npm run build && npm run start",
-    "heroku-postbuild": "npm run build",
-    "start": "NODE_ENV=production node build",
-    "build": "babel src -d build"
+    "start": "nodemon --exec ts-node src/index.ts"
   },
   "dependencies": {
-    "axios": "^0.19.2",
-    "cheerio": "^1.0.0-rc.3",
-    "cron": "^1.8.2",
-    "discord.js": "^12.1.1",
-    "he": "^1.2.0",
-    "mathjs": "^6.6.2",
-    "ml-matrix": "^6.4.1",
-    "moment-timezone": "^0.5.28",
-    "mongodb": "^3.5.5",
-    "tz-lookup": "^6.1.25"
-  },
-  "engines": {
-    "node": "^13.11.0",
-    "npm": "^6.13.7"
+    "@sapphire/decorators": "^3.1.4",
+    "@sapphire/discord.js-utilities": "^4.1.3",
+    "@sapphire/framework": "^2.2.0",
+    "@sapphire/plugin-logger": "^2.1.0",
+    "axios": "^0.24.0",
+    "axios-rate-limit": "^1.3.0",
+    "discord.js": "^13.3.1",
+    "dotenv": "^10.0.0",
+    "gts": "^3.1.0",
+    "nodemon": "^2.0.15",
+    "ts-node": "^10.4.0"
   },
   "devDependencies": {
-    "@babel/cli": "^7.8.4",
-    "@babel/core": "^7.9.0",
-    "@babel/node": "^7.8.7",
-    "@babel/preset-env": "^7.9.5",
-    "nodemon": "^2.0.3"
+    "@types/node": "^16.11.10",
+    "typescript": "^4.5.2"
   },
+  "engines": {
+    "node": ">=16.6.0"
+  },
+  "private": true,
   "browserslist": "maintained node versions"
 }

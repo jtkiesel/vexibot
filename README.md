@@ -8,46 +8,38 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Prerequisites
 
-* [Node.js](https://nodejs.org)
+- [Node.js](https://nodejs.org/)
 
 ### Installing
 
-Clone or download this repository, then open your terminal application and navigate to the repository directory to run the following commands:
-
 Install dependencies
 
-```
+```sh-session
 npm install
 ```
 
 Start the bot
 
-```
-npm run dev
-```
-
-## Deployment
-
-Open your terminal application and navigate to the repository directory to run the following commands:
-
-Create production build
-
-```
-npm run build
-```
-
-Start the bot
-
-```
+```sh-session
 npm start
 ```
 
+## Running the tests
+
+```sh-session
+npm test
+```
+
+## Versioning
+
+We use [SemVer](https://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/jtkiesel/vexibot/tags).
+
 ## Authors
 
-* **Jordan Kiesel** - [LinkedIn](https://www.linkedin.com/in/jtkiesel)
+- **Jordan Kiesel** - [LinkedIn](https://www.linkedin.com/in/jtkiesel/)
 
 See also the list of [contributors](https://github.com/jtkiesel/vexibot/contributors) who participated in this project.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.

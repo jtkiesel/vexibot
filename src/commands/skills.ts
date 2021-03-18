@@ -1,59 +1,73 @@
-import { MessageEmbed } from 'discord.js';
+import {ApplyOptions} from '@sapphire/decorators';
+import {Args, Command, CommandOptions} from '@sapphire/framework';
+import {LazyPaginatedMessage} from '@sapphire/discord.js-utilities';
+import {Constants, Message, MessageEmbed} from 'discord.js';
+import {SeasonsRequestBuilder, TeamsRequestBuilder} from '../robot-events';
+import {robotEventsClient, robotEventsV1Client} from '..';
+import {SeasonSkillsRequestBuilder} from '../robot-events/v1/clients/skills';
 
-import { db, addFooter } from '..';
-import { getTeamId, validTeamId, getTeam } from '../vex';
-import { decodeProgram, decodeSeason, decodeSeasonUrl, decodeGrade } from '../dbinfo';
-
-const rankEmojis = ['🥇', '🥈', '🥉'];
-
-export default async (message, args) => {
-  let teamId = getTeamId(message, args);
-  if (validTeamId(teamId)) {
-    let team;
-    try {
-      team = await getTeam(teamId);
-      team = team[0];
-    } catch (err) {
-      console.error(err);
+@ApplyOptions<CommandOptions>({
+  aliases: ['skill'],
+  description: 'retrieve skills rankings/scores achieved by a team',
+})
+export class SkillsCommand extends Command {
+  public async messageRun(message: Message, args: Args): Promise<unknown> {
+    if (args.finished) {
+      return message.channel.send('You must provide a team number');
     }
-    if (team) {
-      const season = isNaN(teamId.charAt(0)) ? 140 : 139;
-      teamId = team._id.id;
-      let maxSkill;
-      try {
-        maxSkill = await db.collection('maxSkills').findOne({'_id.season': season, 'team.id': teamId});
-      } catch (err) {
-        console.error(err);
-      }
-      if (maxSkill) {
-        const program = decodeProgram(maxSkill.team.program);
-        let rank = maxSkill._id.rank;
-        rank = (rank <= 3) ? rankEmojis[rank - 1] : rank;
 
-        const embed = new MessageEmbed()
-          .setColor('GOLD')
-          .setAuthor(teamId, null, `https://www.robotevents.com/teams/${program}/${teamId}`)
-          .setTitle(`${program} ${decodeSeason(season)}`)
-          .setURL(decodeSeasonUrl(season))
-          .addField(`${decodeGrade(maxSkill._id.grade)} Rank`, rank, true)
-          .addField('Score', maxSkill.score, true)
-          .addField('Programming', maxSkill.programming, true)
-          .addField('Driver', maxSkill.driver, true)
-          .addField('Max Programming', maxSkill.maxProgramming, true)
-          .addField('Max Driver', maxSkill.maxDriver, true);
-        try {
-          const reply = await message.channel.send({embed});
-          addFooter(message, reply);
-        } catch (err) {
-          console.error(err);
+    const number = args.next();
+    const teams = await robotEventsClient.teams
+      .findAll(
+        new TeamsRequestBuilder().programIds(1, 4).numbers(number).build()
+      )
+      .toArray();
+    if (!teams.length) {
+      return message.channel.send('No team found');
+    }
+
+    const team = teams[0];
+    const seasons = await robotEventsClient.seasons
+      .findAll(new SeasonsRequestBuilder().teamIds(team.id).build())
+      .toArray();
+    const paginatedMessage = new LazyPaginatedMessage({
+      template: new MessageEmbed()
+        .setColor(Constants.Colors.GREEN)
+        .setAuthor(
+          `${team.program.code} ${team.number}`,
+          undefined,
+          `https://www.robotevents.com/teams/${team.program.code}/${team.number}`
+        ),
+    }).setSelectMenuOptions(pageIndex => {
+      return {label: seasons[pageIndex - 1].name};
+    });
+    seasons.forEach(season =>
+      paginatedMessage.addAsyncPageEmbed(async builder => {
+        builder.setTitle(season.name);
+        const skills = await robotEventsV1Client.skills.findAllBySeason(
+          new SeasonSkillsRequestBuilder()
+            .seasonId(season.id)
+            .grade(team.grade)
+            .build()
+        );
+        const skill = skills.find(({team: {id}}) => id === team.id);
+        if (!skill) {
+          return builder.setDescription('No skills scores found');
         }
-      } else {
-        message.reply(`that team hasn't competed in either skills challenge for ${decodeSeason(season)}.`).catch(console.error);
-      }
-    } else {
-      message.reply('that team ID has never been registered.').catch(console.error);
-    }
-  } else {
-    message.reply('please provide a valid team ID, such as **24B** or **BNS**.').catch(console.error);
+        return builder
+          .setTitle(season.name)
+          .addField('Rank', skill.rank.toString(), true)
+          .addField('Score', skill.scores.score.toString(), true)
+          .addField('Programming', skill.scores.programming.toString(), true)
+          .addField('Driver', skill.scores.driver.toString(), true)
+          .addField(
+            'Highest Programming',
+            skill.scores.maxProgramming.toString(),
+            true
+          )
+          .addField('Highest Driver', skill.scores.maxDriver.toString(), true);
+      })
+    );
+    return paginatedMessage.run(message);
   }
-};
+}
