@@ -1,4 +1,9 @@
-.vscode/
-build/
-node_modules/
-.DS_Store
+# dependencies
+/node_modules
+
+# testing
+/coverage
+
+# misc
+/.env
+/.vscode
