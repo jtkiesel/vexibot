@@ -4,6 +4,9 @@
 # testing
 /coverage
 
+# production
+/build
+
 # misc
 /.env
 /.vscode

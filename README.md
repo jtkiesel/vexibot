@@ -30,6 +30,26 @@ npm start
 npm test
 ```
 
+## Deployment
+
+Install dependencies
+
+```sh-session
+npm install
+```
+
+Compile source
+
+```sh-session
+npm run build
+```
+
+Start the bot
+
+```sh-session
+node build
+```
+
 ## Versioning
 
 We use [SemVer](https://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/jtkiesel/vexibot/tags).

@@ -21,4 +21,5 @@ const required = (name: string): string => {
 };
 
 export const discordToken = process.env.DISCORD_TOKEN;
+export const environment = process.env.NODE_ENV;
 export const robotEventsToken = required('ROBOT_EVENTS_TOKEN');

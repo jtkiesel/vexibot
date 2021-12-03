@@ -1,6 +1,7 @@
 import {LogLevel, SapphireClient} from '@sapphire/framework';
 import '@sapphire/plugin-logger/register';
-import {discordToken, robotEventsToken} from './config';
+import path from 'path';
+import {discordToken, environment, robotEventsToken} from './config';
 import {RobotEventsClient} from './robot-events';
 import {RobotEventsV1Client} from './robot-events/v1';
 
@@ -11,10 +12,11 @@ export const robotEventsClient = new RobotEventsClient({
 export const robotEventsV1Client = new RobotEventsV1Client({});
 
 const client = new SapphireClient({
-  defaultPrefix: '^',
+  baseUserDirectory:
+    environment === 'production' ? path.resolve('build') : path.resolve('src'),
   caseInsensitiveCommands: true,
+  defaultPrefix: '^',
   logger: {level: LogLevel.Debug},
-  shards: 'auto',
   intents: [
     'GUILDS',
     'GUILD_MESSAGES',
@@ -23,6 +25,7 @@ const client = new SapphireClient({
     'DIRECT_MESSAGE_REACTIONS',
   ],
   presence: {activities: [{name: 'for ^help', type: 'LISTENING'}]},
+  shards: 'auto',
 });
 
 const main = async () => {
