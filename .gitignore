@@ -5,8 +5,10 @@
 /coverage
 
 # production
-/build
+/dist
 
-# misc
+# environment variables
 /.env
+
+# IDE
 /.vscode
