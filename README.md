@@ -9,25 +9,26 @@ These instructions will get you a copy of the project up and running on your loc
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/)
+- [Yarn](https://yarnpkg.com/)
 
 ### Installing
 
 Install dependencies
 
 ```sh-session
-npm install
+yarn install
 ```
 
 Start the bot
 
 ```sh-session
-npm start
+yarn dev
 ```
 
 ## Running the tests
 
 ```sh-session
-npm test
+yarn test
 ```
 
 ## Deployment
@@ -35,19 +36,19 @@ npm test
 Install dependencies
 
 ```sh-session
-npm install
+yarn install
 ```
 
 Compile source
 
 ```sh-session
-npm run build
+yarn build
 ```
 
 Start the bot
 
 ```sh-session
-node build
+yarn start
 ```
 
 ## Versioning

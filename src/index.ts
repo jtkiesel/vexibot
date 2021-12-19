@@ -1,9 +1,8 @@
-import {LogLevel, SapphireClient} from '@sapphire/framework';
+import {SapphireClient} from '@sapphire/framework';
 import '@sapphire/plugin-logger/register';
-import path from 'path';
-import {discordToken, environment, robotEventsToken} from './config';
-import {RobotEventsClient} from './robot-events';
-import {RobotEventsV1Client} from './robot-events/v1';
+import {discordToken, logLevel, robotEventsToken} from './lib/config';
+import {RobotEventsClient} from './lib/robot-events';
+import {RobotEventsV1Client} from './lib/robot-events/v1';
 
 export const robotEventsClient = new RobotEventsClient({
   token: robotEventsToken,
@@ -12,18 +11,10 @@ export const robotEventsClient = new RobotEventsClient({
 export const robotEventsV1Client = new RobotEventsV1Client({});
 
 const client = new SapphireClient({
-  baseUserDirectory:
-    environment === 'production' ? path.resolve('build') : path.resolve('src'),
   caseInsensitiveCommands: true,
   defaultPrefix: '^',
-  logger: {level: LogLevel.Debug},
-  intents: [
-    'GUILDS',
-    'GUILD_MESSAGES',
-    'GUILD_MESSAGE_REACTIONS',
-    'DIRECT_MESSAGES',
-    'DIRECT_MESSAGE_REACTIONS',
-  ],
+  logger: {level: logLevel},
+  intents: ['GUILDS', 'GUILD_MESSAGES', 'DIRECT_MESSAGES'],
   presence: {activities: [{name: 'for ^help', type: 'LISTENING'}]},
   shards: 'auto',
 });
@@ -36,6 +27,7 @@ const main = async () => {
   } catch (error) {
     client.logger.fatal(error);
     client.destroy();
+    throw error;
   }
 };
 
