@@ -35,13 +35,10 @@ export class AwardsCommand extends Command {
       .findAll(new SeasonsRequestBuilder().teamIds(team.id).build())
       .toArray();
     const paginatedMessage = new LazyPaginatedMessage({
-      template: new MessageEmbed()
-        .setColor(Constants.Colors.PURPLE)
-        .setAuthor(
-          `${team.program.code} ${team.number}`,
-          undefined,
-          `https://www.robotevents.com/teams/${team.program.code}/${team.number}`
-        ),
+      template: new MessageEmbed().setColor(Constants.Colors.PURPLE).setAuthor({
+        name: `${team.program.code} ${team.number}`,
+        url: `https://www.robotevents.com/teams/${team.program.code}/${team.number}`,
+      }),
     }).setSelectMenuOptions(pageIndex => {
       return {label: seasons[pageIndex - 1].name};
     });

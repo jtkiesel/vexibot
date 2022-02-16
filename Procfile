@@ -1,1 +1,1 @@
-worker: yarn start
+process: yarn start

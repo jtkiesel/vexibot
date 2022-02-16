@@ -43,11 +43,10 @@ export class TeamsCommand extends Command {
       .filter(l => l?.trim())
       .join(', ');
     const embed = new MessageEmbed()
-      .setAuthor(
-        this.labelFrom(team),
-        undefined,
-        `https://www.robotevents.com/teams/${team.program.code}/${team.number}`
-      )
+      .setAuthor({
+        name: this.labelFrom(team),
+        url: `https://www.robotevents.com/teams/${team.program.code}/${team.number}`,
+      })
       .setDescription(team.team_name)
       .addField('Program', team.program.code, true)
       .addField('Grade', team.grade, true)
