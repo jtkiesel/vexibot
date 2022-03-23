@@ -1,5 +1,5 @@
 {
-  "extends": "@sapphire/ts-config/tsconfig.json",
+  "extends": "@sapphire/ts-config",
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "dist",

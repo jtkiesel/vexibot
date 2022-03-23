@@ -1,4 +1,5 @@
 # dependencies
+/.yarn/install-state.gz
 /node_modules
 
 # testing

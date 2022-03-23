@@ -1,40 +1,55 @@
 import {ApplyOptions} from '@sapphire/decorators';
-import {Args, Command, CommandOptions} from '@sapphire/framework';
 import {PaginatedMessage} from '@sapphire/discord.js-utilities';
-import {Constants, Message, MessageEmbed} from 'discord.js';
-import {Team, TeamsRequestBuilder} from '../../lib/robot-events';
+import {Command} from '@sapphire/framework';
 import {robotEventsClient} from '../..';
+import {Team, TeamsRequestBuilder} from '../../lib/robot-events';
+import {createErrorEmbed, createSuccessEmbed} from '../../lib/utils/embeds';
 
-@ApplyOptions<CommandOptions>({
+@ApplyOptions<Command.Options>({
   aliases: ['team'],
-  description: 'retrieve information about one or more teams',
+  description: 'Get information about a team',
 })
 export class TeamsCommand extends Command {
-  public async messageRun(message: Message, args: Args): Promise<unknown> {
-    if (args.finished) {
-      return message.channel.send('You must provide at least 1 team number');
-    }
-
-    const numbers = await args.repeat('string');
+  public override async chatInputRun(
+    interaction: Command.ChatInputInteraction
+  ) {
+    const number = interaction.options.getString('team', true);
     const teams = await robotEventsClient.teams
-      .findAll(new TeamsRequestBuilder().numbers(...numbers).build())
+      .findAll(new TeamsRequestBuilder().numbers(number).build())
       .toArray();
     if (!teams.length) {
-      return message.channel.send('No teams found');
+      return interaction.reply({
+        embeds: [createErrorEmbed('No such team found')],
+        ephemeral: true,
+      });
     }
 
     const paginatedMessage = new PaginatedMessage({
-      template: new MessageEmbed().setColor(Constants.Colors.GREEN),
-    }).setSelectMenuOptions(pageIndex => {
-      return {label: this.labelFrom(teams[pageIndex - 1])};
-    });
+      template: createSuccessEmbed(),
+    }).setSelectMenuOptions(page => ({label: this.labelFrom(teams[page - 1])}));
     teams
       .map(team => this.messageEmbedFrom(team))
       .forEach(embed => paginatedMessage.addPageEmbed(embed));
-    return paginatedMessage.run(message);
+    return paginatedMessage.run(interaction);
   }
 
-  private messageEmbedFrom(team: Team): MessageEmbed {
+  public override registerApplicationCommands(registry: Command.Registry) {
+    registry.registerChatInputCommand(
+      builder =>
+        builder
+          .setName(this.name)
+          .setDescription(this.description)
+          .addStringOption(team =>
+            team
+              .setName('team')
+              .setDescription('The team to get information for')
+              .setRequired(true)
+          ),
+      {idHints: ['956001113650393188']}
+    );
+  }
+
+  private messageEmbedFrom(team: Team) {
     const location = [
       team.location.city,
       team.location.region,
@@ -42,7 +57,7 @@ export class TeamsCommand extends Command {
     ]
       .filter(l => l?.trim())
       .join(', ');
-    const embed = new MessageEmbed()
+    const embed = createSuccessEmbed()
       .setAuthor({
         name: this.labelFrom(team),
         url: `https://www.robotevents.com/teams/${team.program.code}/${team.number}`,

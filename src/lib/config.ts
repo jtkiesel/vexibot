@@ -44,5 +44,6 @@ const required = (name: string): string => {
 
 export const discordToken = process.env.DISCORD_TOKEN;
 export const logLevel = parseLogLevel(process.env.LOG_LEVEL);
+export const nodeEnv = process.env.NODE_ENV;
 export const robotEventsToken = required('ROBOT_EVENTS_TOKEN');
 export const version = required('npm_package_version');

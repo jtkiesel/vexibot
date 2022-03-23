@@ -9,9 +9,9 @@ import {
   white,
   yellow,
 } from 'colorette';
-import {version} from '../lib/config';
+import {nodeEnv, version} from '../lib/config';
 
-const dev = process.env.NODE_ENV !== 'production';
+const dev = nodeEnv !== 'production';
 
 export class ReadyListener extends Listener<typeof Events.ClientReady> {
   private readonly style = dev ? yellow : blue;

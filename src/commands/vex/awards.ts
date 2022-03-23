@@ -1,7 +1,6 @@
 import {ApplyOptions} from '@sapphire/decorators';
 import {LazyPaginatedMessage} from '@sapphire/discord.js-utilities';
-import {Args, Command, CommandOptions} from '@sapphire/framework';
-import {Constants, Message, MessageEmbed} from 'discord.js';
+import {Command} from '@sapphire/framework';
 import {robotEventsClient} from '../..';
 import {
   Award,
@@ -9,25 +8,27 @@ import {
   TeamAwardsRequestBuilder,
   TeamsRequestBuilder,
 } from '../../lib/robot-events';
+import {createErrorEmbed, createSuccessEmbed} from '../../lib/utils/embeds';
 
-@ApplyOptions<CommandOptions>({
+@ApplyOptions<Command.Options>({
   aliases: ['award'],
-  description: 'retrieve awards awarded to a team',
+  description: 'Get awards awarded to a team',
 })
 export class AwardsCommand extends Command {
-  public async messageRun(message: Message, args: Args) {
-    if (args.finished) {
-      return message.channel.send('You must provide a team number');
-    }
-
-    const number = args.next();
+  public override async chatInputRun(
+    interaction: Command.ChatInputInteraction
+  ) {
+    const number = interaction.options.getString('team', true);
     const teams = await robotEventsClient.teams
       .findAll(
         new TeamsRequestBuilder().programIds(1, 4).numbers(number).build()
       )
       .toArray();
     if (!teams.length) {
-      return message.channel.send('No team found');
+      return interaction.reply({
+        embeds: [createErrorEmbed('No such team found')],
+        ephemeral: true,
+      });
     }
 
     const team = teams[0];
@@ -35,13 +36,11 @@ export class AwardsCommand extends Command {
       .findAll(new SeasonsRequestBuilder().teamIds(team.id).build())
       .toArray();
     const paginatedMessage = new LazyPaginatedMessage({
-      template: new MessageEmbed().setColor(Constants.Colors.PURPLE).setAuthor({
+      template: createSuccessEmbed().setAuthor({
         name: `${team.program.code} ${team.number}`,
         url: `https://www.robotevents.com/teams/${team.program.code}/${team.number}`,
       }),
-    }).setSelectMenuOptions(pageIndex => {
-      return {label: seasons[pageIndex - 1].name};
-    });
+    }).setSelectMenuOptions(page => ({label: seasons[page - 1].name}));
     seasons.forEach(season =>
       paginatedMessage.addAsyncPageEmbed(async builder => {
         const awardsByEventId = new Map<number, Award[]>();
@@ -71,6 +70,22 @@ export class AwardsCommand extends Command {
         return builder.setTitle(`${season.name} (${awards.length})`);
       })
     );
-    return paginatedMessage.run(message);
+    return paginatedMessage.run(interaction);
+  }
+
+  public override registerApplicationCommands(registry: Command.Registry) {
+    registry.registerChatInputCommand(
+      builder =>
+        builder
+          .setName(this.name)
+          .setDescription(this.description)
+          .addStringOption(team =>
+            team
+              .setName('team')
+              .setDescription('The team to get awards for')
+              .setRequired(true)
+          ),
+      {idHints: ['955839726756180018']}
+    );
   }
 }
