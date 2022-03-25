@@ -1,3 +1,4 @@
+import axios from 'axios';
 import type {Grade, Skill} from '.';
 import {Client} from '../client';
 
@@ -5,10 +6,17 @@ export class Skills extends Client {
   public async findAllBySeason(
     seasonSkillsRequest: SeasonSkillsRequest
   ): Promise<Skill[]> {
-    return this.get(
-      `/seasons/${seasonSkillsRequest.seasonId}/skills`,
-      seasonSkillsRequest.params()
-    );
+    try {
+      return await this.get(
+        `/seasons/${seasonSkillsRequest.seasonId}/skills`,
+        seasonSkillsRequest.params()
+      );
+    } catch (error) {
+      if (axios.isAxiosError(error) && error?.response?.status === 404) {
+        return [];
+      }
+      throw error;
+    }
   }
 }
 

@@ -25,10 +25,11 @@ export class AwardsCommand extends Command {
       )
       .toArray();
     if (!teams.length) {
-      return interaction.reply({
+      interaction.reply({
         embeds: [createErrorEmbed('No such team found')],
         ephemeral: true,
       });
+      return;
     }
 
     const team = teams[0];
@@ -70,7 +71,7 @@ export class AwardsCommand extends Command {
         return builder.setTitle(`${season.name} (${awards.length})`);
       })
     );
-    return paginatedMessage.run(interaction);
+    paginatedMessage.run(interaction);
   }
 
   public override registerApplicationCommands(registry: Command.Registry) {

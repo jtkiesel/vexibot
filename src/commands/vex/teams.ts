@@ -18,10 +18,11 @@ export class TeamsCommand extends Command {
       .findAll(new TeamsRequestBuilder().numbers(number).build())
       .toArray();
     if (!teams.length) {
-      return interaction.reply({
+      interaction.reply({
         embeds: [createErrorEmbed('No such team found')],
         ephemeral: true,
       });
+      return;
     }
 
     const paginatedMessage = new PaginatedMessage({
@@ -30,7 +31,7 @@ export class TeamsCommand extends Command {
     teams
       .map(team => this.messageEmbedFrom(team))
       .forEach(embed => paginatedMessage.addPageEmbed(embed));
-    return paginatedMessage.run(interaction);
+    paginatedMessage.run(interaction);
   }
 
   public override registerApplicationCommands(registry: Command.Registry) {

@@ -38,6 +38,6 @@ export class PingCommand extends Command {
       ].join('\n')
     );
 
-    return interaction.editReply({embeds: [embed]});
+    interaction.editReply({embeds: [embed]});
   }
 }
