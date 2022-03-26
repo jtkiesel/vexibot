@@ -1,13 +1,13 @@
 import {ApplyOptions} from '@sapphire/decorators';
-import type {ChatInputCommandSuccessPayload} from '@sapphire/framework';
+import type {ChatInputCommandAcceptedPayload} from '@sapphire/framework';
 import {Events, Listener, LogLevel} from '@sapphire/framework';
 import {cyan} from 'colorette';
 
-@ApplyOptions<Listener.Options>({event: Events.ChatInputCommandSuccess})
-export class CommandSuccessListener extends Listener<
-  typeof Events.ChatInputCommandSuccess
+@ApplyOptions<Listener.Options>({event: Events.ChatInputCommandAccepted})
+export class CommandAcceptedListener extends Listener<
+  typeof Events.ChatInputCommandAccepted
 > {
-  public override run({interaction, command}: ChatInputCommandSuccessPayload) {
+  public override run({interaction, command}: ChatInputCommandAcceptedPayload) {
     const shard = `[${cyan(interaction.guild?.shardId ?? 0)}]`;
     const commandName = cyan(command.name);
     const user = `${interaction.user.username}[${cyan(interaction.user.id)}]`;
