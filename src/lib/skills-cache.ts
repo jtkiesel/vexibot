@@ -9,9 +9,9 @@ export class SkillsCache {
     [1, [Grade.HIGH_SCHOOL, Grade.MIDDLE_SCHOOL]],
     [4, [Grade.COLLEGE]],
   ]);
-  private readonly skillByTeamIdBySeasonId = new Map<
+  private readonly skillByTeamIdByGradeBySeasonId = new Map<
     number,
-    Map<number, Skill>
+    Map<Grade, Map<number, Skill>>
   >();
 
   public constructor(
@@ -55,11 +55,20 @@ export class SkillsCache {
         },
       })
     );
-    this.skillByTeamIdBySeasonId.set(seasonId, skillByTeamId);
+    let skillByTeamIdByGrade =
+      this.skillByTeamIdByGradeBySeasonId.get(seasonId);
+    if (!skillByTeamIdByGrade) {
+      skillByTeamIdByGrade = new Map();
+      this.skillByTeamIdByGradeBySeasonId.set(seasonId, skillByTeamIdByGrade);
+    }
+    skillByTeamIdByGrade.set(grade, skillByTeamId);
   }
 
-  public get(teamId: number, seasonId: number) {
-    return this.skillByTeamIdBySeasonId.get(seasonId)?.get(teamId);
+  public get(seasonId: number, grade: Grade, teamId: number) {
+    return this.skillByTeamIdByGradeBySeasonId
+      .get(seasonId)
+      ?.get(grade)
+      ?.get(teamId);
   }
 }
 

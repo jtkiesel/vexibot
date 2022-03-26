@@ -12,9 +12,18 @@ export class CommandAcceptedListener extends Listener<
     const commandName = cyan(command.name);
     const user = `${interaction.user.username}[${cyan(interaction.user.id)}]`;
     const server = interaction.guild
-      ? `${interaction.guild.name}[${cyan(interaction.guild.id)}]`
-      : cyan('Direct Messages');
-    this.container.logger.debug(`${shard} - ${commandName} ${user} ${server}`);
+      ? `${interaction.guild.name}[${cyan(interaction.guild.id)}] `
+      : '';
+    const channel =
+      interaction.guild && interaction.channel
+        ? `${
+            interaction.guild.channels.cache.get(interaction.channel.id)?.name
+          }[${cyan(interaction.channel.id)}]`
+        : cyan('Direct Messages');
+
+    this.container.logger.debug(
+      `${shard} - ${commandName} ${user} ${server}${channel}`
+    );
   }
 
   public override onLoad() {

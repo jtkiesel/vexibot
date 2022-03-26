@@ -43,7 +43,7 @@ export class SkillsCommand extends Command {
     seasons.forEach(season =>
       paginatedMessage.addPageEmbed(builder => {
         builder.setTitle(season.name);
-        const skill = skillsCache.get(team.id, season.id);
+        const skill = skillsCache.get(season.id, team.grade, team.id);
         if (!skill) {
           return builder.setDescription('No skills scores found');
         }
