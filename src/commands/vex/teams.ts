@@ -13,7 +13,7 @@ export class TeamsCommand extends Command {
   public override async chatInputRun(
     interaction: Command.ChatInputInteraction
   ) {
-    const number = interaction.options.getString('team', true);
+    const number = interaction.options.getString(Option.TEAM, true);
     const teams = await robotEventsClient.teams
       .findAll(new TeamsRequestBuilder().numbers(number).build())
       .toArray();
@@ -36,13 +36,13 @@ export class TeamsCommand extends Command {
 
   public override registerApplicationCommands(registry: Command.Registry) {
     registry.registerChatInputCommand(
-      builder =>
-        builder
+      command =>
+        command
           .setName(this.name)
           .setDescription(this.description)
           .addStringOption(team =>
             team
-              .setName('team')
+              .setName(Option.TEAM)
               .setDescription('The team to get information for')
               .setRequired(true)
           ),
@@ -51,27 +51,32 @@ export class TeamsCommand extends Command {
   }
 
   private messageEmbedFrom(team: Team) {
-    const location = [
-      team.location.city,
-      team.location.region,
-      team.location.country,
-    ]
-      .filter(l => l?.trim())
-      .join(', ');
+    const {
+      location: {city, region, country},
+      program,
+      number,
+      team_name,
+      grade,
+      registered,
+      robot_name,
+    } = team;
+    const location = [city, region, country].filter(l => l?.trim()).join(', ');
     const embed = createSuccessEmbed()
       .setAuthor({
         name: this.labelFrom(team),
-        url: `https://www.robotevents.com/teams/${team.program.code}/${team.number}`,
+        url: `https://www.robotevents.com/teams/${program.code}/${number}`,
       })
-      .setDescription(team.team_name)
-      .addField('Program', team.program.code, true)
-      .addField('Grade', team.grade, true)
-      .addField('Active', team.registered ? 'Yes' : 'No', true);
-    if (team.robot_name?.trim()) {
-      embed.addField('Robot', team.robot_name, true);
+      .setDescription(team_name)
+      .addFields(
+        {name: 'Program', value: program.code, inline: true},
+        {name: 'Grade', value: grade, inline: true},
+        {name: 'Active', value: registered ? 'Yes' : 'No', inline: true}
+      );
+    if (robot_name?.trim()) {
+      embed.addFields({name: 'Robot', value: robot_name, inline: true});
     }
-    if (location?.trim()) {
-      embed.addField('Location', location, true);
+    if (location.trim()) {
+      embed.addFields({name: 'Location', value: location, inline: true});
     }
     return embed;
   }
@@ -79,4 +84,8 @@ export class TeamsCommand extends Command {
   private labelFrom(team: Team) {
     return `${team.program.code} ${team.number}`;
   }
+}
+
+enum Option {
+  TEAM = 'team',
 }

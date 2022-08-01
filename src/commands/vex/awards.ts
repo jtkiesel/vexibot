@@ -18,7 +18,7 @@ export class AwardsCommand extends Command {
   public override async chatInputRun(
     interaction: Command.ChatInputInteraction
   ) {
-    const number = interaction.options.getString('team', true);
+    const number = interaction.options.getString(Option.TEAM, true);
     const teams = await robotEventsClient.teams
       .findAll(
         new TeamsRequestBuilder().programIds(1, 4).numbers(number).build()
@@ -62,11 +62,11 @@ export class AwardsCommand extends Command {
           }
         });
         awardsByEventId.forEach(awardsForEvent =>
-          builder.addField(
-            awardsForEvent[0].event.name,
-            awardsForEvent.map(award => award.title).join('\n'),
-            true
-          )
+          builder.addFields({
+            name: awardsForEvent[0].event.name,
+            value: awardsForEvent.map(award => award.title).join('\n'),
+            inline: true,
+          })
         );
         return builder.setTitle(`${season.name} (${awards.length})`);
       })
@@ -76,17 +76,21 @@ export class AwardsCommand extends Command {
 
   public override registerApplicationCommands(registry: Command.Registry) {
     registry.registerChatInputCommand(
-      builder =>
-        builder
+      command =>
+        command
           .setName(this.name)
           .setDescription(this.description)
           .addStringOption(team =>
             team
-              .setName('team')
+              .setName(Option.TEAM)
               .setDescription('The team to get awards for')
               .setRequired(true)
           ),
       {idHints: ['955839726756180018']}
     );
   }
+}
+
+enum Option {
+  TEAM = 'team',
 }

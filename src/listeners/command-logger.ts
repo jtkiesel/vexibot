@@ -1,6 +1,10 @@
 import {ApplyOptions} from '@sapphire/decorators';
-import type {ChatInputCommandAcceptedPayload} from '@sapphire/framework';
-import {Events, Listener, LogLevel} from '@sapphire/framework';
+import {
+  type ChatInputCommandAcceptedPayload,
+  Events,
+  Listener,
+  LogLevel,
+} from '@sapphire/framework';
 import {cyan} from 'colorette';
 
 @ApplyOptions<Listener.Options>({event: Events.ChatInputCommandAccepted})

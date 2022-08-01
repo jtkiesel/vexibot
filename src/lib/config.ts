@@ -1,49 +1,64 @@
 import {LogLevel} from '@sapphire/framework';
-import {AssertionError} from 'assert';
 import {config} from 'dotenv';
 
 config();
 
-function assertIsString(
-  name: string,
-  value: string | undefined
-): asserts value is string {
-  if (value === undefined) {
-    throw new AssertionError({
-      message: `Required environment variable not set: ${name}`,
-    });
+class Config<T> {
+  private constructor(
+    private readonly name: string,
+    private readonly value?: T
+  ) {}
+
+  public static string(name: string) {
+    return new Config(name, process.env[name]);
+  }
+
+  public static number(name: string) {
+    const value = process.env[name];
+    return new Config(name, value ? parseFloat(value) : undefined);
+  }
+
+  public static logLevel(name: string) {
+    return new Config(name, Config.parseLogLevel(process.env[name]));
+  }
+
+  public orElse(value: T) {
+    return this.value ?? value;
+  }
+
+  public orElseThrow() {
+    if (this.value === undefined) {
+      throw new Error(`Required environment variable not set: ${this.name}`);
+    }
+    return this.value;
+  }
+
+  private static parseLogLevel(value?: string) {
+    switch (value?.toUpperCase()) {
+      case 'TRACE':
+        return LogLevel.Trace;
+      case 'DEBUG':
+        return LogLevel.Debug;
+      case 'INFO':
+        return LogLevel.Info;
+      case 'WARN':
+        return LogLevel.Warn;
+      case 'ERROR':
+        return LogLevel.Error;
+      case 'FATAL':
+        return LogLevel.Fatal;
+      case 'NONE':
+        return LogLevel.None;
+      case undefined:
+        return undefined;
+      default:
+        throw new Error(`Invalid log level: ${value}`);
+    }
   }
 }
 
-const parseLogLevel = (value: string | undefined): LogLevel | undefined => {
-  switch (value?.toUpperCase()) {
-    case 'TRACE':
-      return LogLevel.Trace;
-    case 'DEBUG':
-      return LogLevel.Debug;
-    case 'INFO':
-      return LogLevel.Info;
-    case 'WARN':
-      return LogLevel.Warn;
-    case 'ERROR':
-      return LogLevel.Error;
-    case 'FATAL':
-      return LogLevel.Fatal;
-    case 'NONE':
-      return LogLevel.None;
-    default:
-      return undefined;
-  }
-};
-
-const required = (name: string): string => {
-  const value = process.env[name];
-  assertIsString(name, value);
-  return value;
-};
-
-export const discordToken = process.env.DISCORD_TOKEN;
-export const logLevel = parseLogLevel(process.env.LOG_LEVEL);
-export const nodeEnv = process.env.NODE_ENV;
-export const robotEventsToken = required('ROBOT_EVENTS_TOKEN');
-export const version = required('npm_package_version');
+export const logLevel = Config.logLevel('LOG_LEVEL').orElse(LogLevel.Info);
+export const nodeEnv = Config.string('NODE_ENV').orElse('development');
+export const robotEventsToken =
+  Config.string('ROBOT_EVENTS_TOKEN').orElseThrow();
+export const version = Config.string('npm_package_version').orElseThrow();

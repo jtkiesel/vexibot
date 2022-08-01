@@ -5,7 +5,7 @@ import {
 } from '@sapphire/framework';
 import '@sapphire/plugin-logger/register';
 import {Constants, Intents} from 'discord.js';
-import {discordToken, logLevel, robotEventsToken} from './lib/config';
+import {logLevel, robotEventsToken} from './lib/config';
 import {RobotEventsClient, SeasonsRequestBuilder} from './lib/robot-events';
 import {RobotEventsV1Client} from './lib/robot-events/v1';
 import {SkillsCache} from './lib/skills-cache';
@@ -37,33 +37,27 @@ const client = new SapphireClient({
 });
 
 const main = async () => {
+  await setupSkillsCache().catch(client.logger.error);
   try {
-    const activeSeasons = await robotEventsClient.seasons
-      .findAll(
-        new SeasonsRequestBuilder().programIds(1, 4).active(true).build()
-      )
-      .toArray();
-    skillsCache
-      .init()
-      .then(() =>
-        setInterval(
-          () =>
-            skillsCache
-              .update(activeSeasons)
-              .catch(error => client.logger.error(error)),
-          3_600_000
-        )
-      )
-      .catch(error => client.logger.error(error));
-
     client.logger.info('Logging in');
-    await client.login(discordToken);
+    await client.login();
     client.logger.info('Logged in');
   } catch (error) {
     client.logger.fatal(error);
     client.destroy();
     throw error;
   }
+};
+
+const setupSkillsCache = async () => {
+  const activeSeasons = await robotEventsClient.seasons
+    .findAll(new SeasonsRequestBuilder().programIds(1, 4).active(true).build())
+    .toArray();
+  await skillsCache.init();
+  setInterval(
+    () => skillsCache.update(activeSeasons).catch(client.logger.error),
+    3_600_000
+  );
 };
 
 main();

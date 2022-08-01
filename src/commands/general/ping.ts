@@ -1,13 +1,10 @@
 import {inlineCode} from '@discordjs/builders';
 import {ApplyOptions} from '@sapphire/decorators';
 import {Command} from '@sapphire/framework';
-import type {Message} from 'discord.js';
+import {Message} from 'discord.js';
 import {createInfoEmbed} from '../../lib/utils/embeds';
 
-@ApplyOptions<Command.Options>({
-  description: 'Test connection to Discord',
-  chatInputCommand: {register: true, idHints: ['954985659146313800']},
-})
+@ApplyOptions<Command.Options>({description: 'Test connection to Discord'})
 export class PingCommand extends Command {
   public override async chatInputRun(
     interaction: Command.ChatInputInteraction
@@ -15,14 +12,18 @@ export class PingCommand extends Command {
     const interactionReceived = Date.now();
     const fromDiscord = interactionReceived - interaction.createdTimestamp;
 
-    const reply = (await interaction.reply({
+    const reply = await interaction.reply({
       embeds: [createInfoEmbed('Ping? 👀')],
       ephemeral: true,
       fetchReply: true,
-    })) as Message;
+    });
+    const replyCreated =
+      reply instanceof Message
+        ? reply.createdTimestamp
+        : Date.parse(reply.timestamp);
 
-    const toDiscord = reply.createdTimestamp - interactionReceived;
-    const roundTrip = reply.createdTimestamp - interaction.createdTimestamp;
+    const toDiscord = replyCreated - interactionReceived;
+    const roundTrip = replyCreated - interaction.createdTimestamp;
     const gatewayHeartbeat =
       interaction.guild?.shard.ping ?? interaction.client.ws.ping;
     const client = interaction.client.user?.username;
@@ -39,5 +40,12 @@ export class PingCommand extends Command {
     );
 
     interaction.editReply({embeds: [embed]});
+  }
+
+  public override registerApplicationCommands(registry: Command.Registry) {
+    registry.registerChatInputCommand(
+      command => command.setName(this.name).setDescription(this.description),
+      {idHints: ['988533582693797999', '954985659146313800']}
+    );
   }
 }

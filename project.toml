@@ -1,5 +1,0 @@
-[[build.buildpacks]]
-uri = "heroku/nodejs-engine"
-
-[[build.buildpacks]]
-uri = "heroku/nodejs-yarn@0.2.1"

@@ -1,5 +1,5 @@
-import type {Events, Piece} from '@sapphire/framework';
-import {Listener, Store} from '@sapphire/framework';
+import {ApplyOptions} from '@sapphire/decorators';
+import {Events, type Piece, Listener, type Store} from '@sapphire/framework';
 import {
   blue,
   gray,
@@ -11,12 +11,13 @@ import {
 } from 'colorette';
 import {nodeEnv, version} from '../lib/config';
 
-const dev = nodeEnv !== 'production';
+const dev = nodeEnv === 'development';
 
-export class ReadyListener extends Listener<typeof Events.ClientReady> {
+@ApplyOptions<Listener.Options>({event: Events.ClientReady, once: true})
+export class ClientReadyListener extends Listener<typeof Events.ClientReady> {
   private readonly style = dev ? yellow : blue;
 
-  public run() {
+  public override run() {
     this.printBanner();
     this.printStoreDebugInformation();
   }
@@ -43,7 +44,7 @@ export class ReadyListener extends Listener<typeof Events.ClientReady> {
 
   private styleStore(store: Store<Piece>, index: number, all: Store<Piece>[]) {
     const last = index === all.length - 1;
-    const size = this.style(store.size.toString().padEnd(3, ' '));
+    const size = this.style(`${store.size}`.padEnd(3, ' '));
     return gray(`${last ? '└─' : '├─'} Loaded ${size} ${store.name}.`);
   }
 }
