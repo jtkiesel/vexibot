@@ -9,7 +9,9 @@ import {
   white,
   yellow,
 } from 'colorette';
-import {nodeEnv, version} from '../lib/config';
+import {nodeEnv} from '../lib/config';
+
+const {version} = require('../../package.json');
 
 const dev = nodeEnv === 'development';
 
