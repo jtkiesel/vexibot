@@ -4,7 +4,7 @@ import {
   SapphireClient,
 } from '@sapphire/framework';
 import '@sapphire/plugin-logger/register';
-import {Constants, Intents} from 'discord.js';
+import {GatewayIntentBits, Partials} from 'discord.js';
 import {logLevel, robotEventsToken} from './lib/config';
 import {RobotEventsClient, SeasonsRequestBuilder} from './lib/robot-events';
 import {RobotEventsV1Client} from './lib/robot-events/v1';
@@ -27,11 +27,11 @@ ApplicationCommandRegistries.setDefaultBehaviorWhenNotIdentical(
 
 const client = new SapphireClient({
   shards: 'auto',
-  partials: [Constants.PartialTypes.CHANNEL],
+  partials: [Partials.Channel],
   intents: [
-    Intents.FLAGS.GUILDS,
-    Intents.FLAGS.GUILD_MESSAGES,
-    Intents.FLAGS.DIRECT_MESSAGES,
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.DirectMessages,
   ],
   logger: {level: logLevel},
 });
@@ -50,14 +50,15 @@ const main = async () => {
 };
 
 const setupSkillsCache = async () => {
-  const activeSeasons = await robotEventsClient.seasons
-    .findAll(new SeasonsRequestBuilder().programIds(1, 4).active(true).build())
-    .toArray();
   await skillsCache.init();
-  setInterval(
-    () => skillsCache.update(activeSeasons).catch(client.logger.error),
-    3_600_000
-  );
+  setInterval(async () => {
+    const activeSeasons = await robotEventsClient.seasons
+      .findAll(
+        new SeasonsRequestBuilder().programIds(1, 4).active(true).build()
+      )
+      .toArray();
+    skillsCache.update(activeSeasons).catch(client.logger.error);
+  }, 3_600_000);
 };
 
 main();

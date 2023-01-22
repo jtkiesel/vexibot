@@ -1,21 +1,20 @@
 import {ApplyOptions} from '@sapphire/decorators';
 import {PaginatedMessage} from '@sapphire/discord.js-utilities';
 import {Command} from '@sapphire/framework';
+import {EmbedBuilder, type ChatInputCommandInteraction} from 'discord.js';
 import {robotEventsClient, skillsCache} from '../..';
 import {
   SeasonsRequestBuilder,
   TeamsRequestBuilder,
 } from '../../lib/robot-events';
-import {createErrorEmbed, createSuccessEmbed} from '../../lib/utils/embeds';
+import {Color} from '../../lib/utils/embeds';
 
 @ApplyOptions<Command.Options>({
   aliases: ['skill'],
   description: 'Get skills rankings/scores achieved by a team',
 })
 export class SkillsCommand extends Command {
-  public override async chatInputRun(
-    interaction: Command.ChatInputInteraction
-  ) {
+  public override async chatInputRun(interaction: ChatInputCommandInteraction) {
     const number = interaction.options.getString(Option.TEAM, true);
     const teams = await robotEventsClient.teams
       .findAll(
@@ -24,7 +23,11 @@ export class SkillsCommand extends Command {
       .toArray();
     if (!teams.length) {
       interaction.reply({
-        embeds: [createErrorEmbed('No such team found')],
+        embeds: [
+          new EmbedBuilder()
+            .setColor(Color.Red)
+            .setDescription('No such team found'),
+        ],
         ephemeral: true,
       });
       return;
@@ -35,7 +38,7 @@ export class SkillsCommand extends Command {
       .findAll(new SeasonsRequestBuilder().teamIds(team.id).build())
       .toArray();
     const paginatedMessage = new PaginatedMessage({
-      template: createSuccessEmbed().setAuthor({
+      template: new EmbedBuilder().setColor(Color.Green).setAuthor({
         name: `${team.program.code} ${team.number}`,
         url: `https://www.robotevents.com/teams/${team.program.code}/${team.number}`,
       }),

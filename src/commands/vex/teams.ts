@@ -1,35 +1,38 @@
 import {ApplyOptions} from '@sapphire/decorators';
 import {PaginatedMessage} from '@sapphire/discord.js-utilities';
 import {Command} from '@sapphire/framework';
+import {EmbedBuilder, type ChatInputCommandInteraction} from 'discord.js';
 import {robotEventsClient} from '../..';
-import {Team, TeamsRequestBuilder} from '../../lib/robot-events';
-import {createErrorEmbed, createSuccessEmbed} from '../../lib/utils/embeds';
+import {TeamsRequestBuilder, type Team} from '../../lib/robot-events';
+import {Color} from '../../lib/utils/embeds';
 
 @ApplyOptions<Command.Options>({
   aliases: ['team'],
   description: 'Get information about a team',
 })
 export class TeamsCommand extends Command {
-  public override async chatInputRun(
-    interaction: Command.ChatInputInteraction
-  ) {
-    const number = interaction.options.getString(Option.TEAM, true);
+  public override async chatInputRun(interaction: ChatInputCommandInteraction) {
+    const number = interaction.options.getString(Option.Team, true);
     const teams = await robotEventsClient.teams
       .findAll(new TeamsRequestBuilder().numbers(number).build())
       .toArray();
     if (!teams.length) {
       interaction.reply({
-        embeds: [createErrorEmbed('No such team found')],
+        embeds: [
+          new EmbedBuilder()
+            .setColor(Color.Red)
+            .setDescription('No such team found'),
+        ],
         ephemeral: true,
       });
       return;
     }
 
     const paginatedMessage = new PaginatedMessage({
-      template: createSuccessEmbed(),
+      template: new EmbedBuilder().setColor(Color.Green),
     }).setSelectMenuOptions(page => ({label: this.labelFrom(teams[page - 1])}));
     teams
-      .map(team => this.messageEmbedFrom(team))
+      .map(team => this.embedFrom(team))
       .forEach(embed => paginatedMessage.addPageEmbed(embed));
     paginatedMessage.run(interaction);
   }
@@ -42,7 +45,7 @@ export class TeamsCommand extends Command {
           .setDescription(this.description)
           .addStringOption(team =>
             team
-              .setName(Option.TEAM)
+              .setName(Option.Team)
               .setDescription('The team to get information for')
               .setRequired(true)
           ),
@@ -50,7 +53,7 @@ export class TeamsCommand extends Command {
     );
   }
 
-  private messageEmbedFrom(team: Team) {
+  private embedFrom(team: Team) {
     const {
       location: {city, region, country},
       program,
@@ -61,13 +64,14 @@ export class TeamsCommand extends Command {
       robot_name,
     } = team;
     const location = [city, region, country].filter(l => l?.trim()).join(', ');
-    const embed = createSuccessEmbed()
+    const embed = new EmbedBuilder()
+      .setColor(Color.Green)
       .setAuthor({
         name: this.labelFrom(team),
         url: `https://www.robotevents.com/teams/${program.code}/${number}`,
       })
       .setDescription(team_name)
-      .addFields(
+      .setFields(
         {name: 'Program', value: program.code, inline: true},
         {name: 'Grade', value: grade, inline: true},
         {name: 'Active', value: registered ? 'Yes' : 'No', inline: true}
@@ -87,5 +91,5 @@ export class TeamsCommand extends Command {
 }
 
 enum Option {
-  TEAM = 'team',
+  Team = 'team',
 }

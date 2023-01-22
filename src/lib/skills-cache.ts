@@ -3,8 +3,6 @@ import {Grade, RobotEventsV1Client} from './robot-events/v1';
 import {SeasonSkillsRequestBuilder} from './robot-events/v1/clients/skills';
 
 export class SkillsCache {
-  private readonly robotEventsClient;
-  private readonly robotEventsV1Client;
   private readonly gradesByProgram = new Map<number, Grade[]>([
     [1, [Grade.HIGH_SCHOOL, Grade.MIDDLE_SCHOOL]],
     [4, [Grade.COLLEGE]],
@@ -15,12 +13,9 @@ export class SkillsCache {
   >();
 
   public constructor(
-    robotEventsClient: RobotEventsClient,
-    robotEventsV1Client: RobotEventsV1Client
-  ) {
-    this.robotEventsClient = robotEventsClient;
-    this.robotEventsV1Client = robotEventsV1Client;
-  }
+    private readonly robotEventsClient: RobotEventsClient,
+    private readonly robotEventsV1Client: RobotEventsV1Client
+  ) {}
 
   public async init() {
     const seasons = await this.robotEventsClient.seasons
