@@ -1,13 +1,10 @@
+import {ProgramId} from '@robotevents/client';
 import {ApplyOptions} from '@sapphire/decorators';
 import {PaginatedMessage} from '@sapphire/discord.js-utilities';
 import {Command} from '@sapphire/framework';
 import {EmbedBuilder, type ChatInputCommandInteraction} from 'discord.js';
-import {robotEventsClient, skillsCache} from '../..';
-import {
-  SeasonsRequestBuilder,
-  TeamsRequestBuilder,
-} from '../../lib/robot-events';
-import {Color} from '../../lib/utils/embeds';
+import {robotEventsClient, skillsCache} from '../../index.js';
+import {Color} from '../../lib/embeds.js';
 
 @ApplyOptions<Command.Options>({
   aliases: ['skill'],
@@ -16,12 +13,10 @@ import {Color} from '../../lib/utils/embeds';
 export class SkillsCommand extends Command {
   public override async chatInputRun(interaction: ChatInputCommandInteraction) {
     const number = interaction.options.getString(Option.TEAM, true);
-    const teams = await robotEventsClient.teams
-      .findAll(
-        new TeamsRequestBuilder().programIds(1, 4).numbers(number).build()
-      )
-      .toArray();
-    if (!teams.length) {
+    const teams = robotEventsClient.teams.findAll(t =>
+      t.programIds(ProgramId.VRC, ProgramId.VEXU).numbers(number)
+    );
+    if (!(await teams.hasNext())) {
       interaction.reply({
         embeds: [
           new EmbedBuilder()
@@ -33,9 +28,9 @@ export class SkillsCommand extends Command {
       return;
     }
 
-    const team = teams[0];
+    const team = await teams.next();
     const seasons = await robotEventsClient.seasons
-      .findAll(new SeasonsRequestBuilder().teamIds(team.id).build())
+      .findAll(s => s.teamIds(team.id))
       .toArray();
     const paginatedMessage = new PaginatedMessage({
       template: new EmbedBuilder().setColor(Color.Green).setAuthor({

@@ -1,31 +1,19 @@
-import {
-  ApplicationCommandRegistries,
-  RegisterBehavior,
-  SapphireClient,
-} from '@sapphire/framework';
+import {ProgramId, RobotEventsClient} from '@robotevents/client';
+import {RobotEventsV1Client} from '@robotevents/client/v1';
+import {SapphireClient} from '@sapphire/framework';
 import '@sapphire/plugin-logger/register';
 import {GatewayIntentBits, Partials} from 'discord.js';
-import {logLevel, robotEventsToken} from './lib/config';
-import {RobotEventsClient, SeasonsRequestBuilder} from './lib/robot-events';
-import {RobotEventsV1Client} from './lib/robot-events/v1';
-import {SkillsCache} from './lib/skills-cache';
+import {logLevel} from './lib/config.js';
+import {SkillsCache} from './lib/skills-cache.js';
 
-export const robotEventsClient = new RobotEventsClient({
-  token: robotEventsToken,
-});
-
+export const robotEventsClient = new RobotEventsClient();
 export const robotEventsV1Client = new RobotEventsV1Client({});
-
 export const skillsCache = new SkillsCache(
   robotEventsClient,
   robotEventsV1Client
 );
 
-ApplicationCommandRegistries.setDefaultBehaviorWhenNotIdentical(
-  RegisterBehavior.Overwrite
-);
-
-const client = new SapphireClient({
+const discordClient = new SapphireClient({
   shards: 'auto',
   partials: [Partials.Channel],
   intents: [
@@ -37,15 +25,21 @@ const client = new SapphireClient({
 });
 
 const main = async () => {
-  await setupSkillsCache().catch(client.logger.error);
   try {
-    client.logger.info('Logging in');
-    await client.login();
-    client.logger.info('Logged in');
+    discordClient.logger.info('Caching world skills rankings');
+    await setupSkillsCache();
+    discordClient.logger.info('Cached world skills rankings');
   } catch (error) {
-    client.logger.fatal(error);
-    client.destroy();
-    throw error;
+    discordClient.logger.error(error);
+  }
+  try {
+    discordClient.logger.info('Logging in');
+    await discordClient.login();
+    discordClient.logger.info('Logged in');
+  } catch (error) {
+    discordClient.logger.fatal(error);
+    discordClient.destroy();
+    process.exit(1);
   }
 };
 
@@ -53,11 +47,9 @@ const setupSkillsCache = async () => {
   await skillsCache.init();
   setInterval(async () => {
     const activeSeasons = await robotEventsClient.seasons
-      .findAll(
-        new SeasonsRequestBuilder().programIds(1, 4).active(true).build()
-      )
+      .findAll(s => s.programIds(ProgramId.VRC, ProgramId.VEXU).active(true))
       .toArray();
-    skillsCache.update(activeSeasons).catch(client.logger.error);
+    await skillsCache.update(activeSeasons);
   }, 3_600_000);
 };
 

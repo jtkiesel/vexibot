@@ -1,10 +1,10 @@
+import type {Team} from '@robotevents/client';
 import {ApplyOptions} from '@sapphire/decorators';
 import {PaginatedMessage} from '@sapphire/discord.js-utilities';
 import {Command} from '@sapphire/framework';
 import {EmbedBuilder, type ChatInputCommandInteraction} from 'discord.js';
-import {robotEventsClient} from '../..';
-import {TeamsRequestBuilder, type Team} from '../../lib/robot-events';
-import {Color} from '../../lib/utils/embeds';
+import {robotEventsClient} from '../../index.js';
+import {Color} from '../../lib/embeds.js';
 
 @ApplyOptions<Command.Options>({
   aliases: ['team'],
@@ -14,7 +14,7 @@ export class TeamsCommand extends Command {
   public override async chatInputRun(interaction: ChatInputCommandInteraction) {
     const number = interaction.options.getString(Option.Team, true);
     const teams = await robotEventsClient.teams
-      .findAll(new TeamsRequestBuilder().numbers(number).build())
+      .findAll(t => t.numbers(number))
       .toArray();
     if (!teams.length) {
       interaction.reply({
@@ -65,7 +65,6 @@ export class TeamsCommand extends Command {
     } = team;
     const location = [city, region, country].filter(l => l?.trim()).join(', ');
     const embed = new EmbedBuilder()
-      .setColor(Color.Green)
       .setAuthor({
         name: this.labelFrom(team),
         url: `https://www.robotevents.com/teams/${program.code}/${number}`,

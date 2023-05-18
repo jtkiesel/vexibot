@@ -1,9 +1,9 @@
 import {ApplyOptions} from '@sapphire/decorators';
 import {
-  type ChatInputCommandAcceptedPayload,
   Events,
   Listener,
   LogLevel,
+  type ChatInputCommandAcceptedPayload,
 } from '@sapphire/framework';
 import {cyan} from 'colorette';
 

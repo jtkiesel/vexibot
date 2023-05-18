@@ -1,15 +1,10 @@
+import {ProgramId, type Award} from '@robotevents/client';
 import {ApplyOptions} from '@sapphire/decorators';
 import {LazyPaginatedMessage} from '@sapphire/discord.js-utilities';
 import {Command} from '@sapphire/framework';
 import {EmbedBuilder, type ChatInputCommandInteraction} from 'discord.js';
-import {robotEventsClient} from '../..';
-import {
-  SeasonsRequestBuilder,
-  TeamAwardsRequestBuilder,
-  TeamsRequestBuilder,
-  type Award,
-} from '../../lib/robot-events';
-import {Color} from '../../lib/utils/embeds';
+import {robotEventsClient} from '../../index.js';
+import {Color} from '../../lib/embeds.js';
 
 @ApplyOptions<Command.Options>({
   aliases: ['award'],
@@ -19,9 +14,7 @@ export class AwardsCommand extends Command {
   public override async chatInputRun(interaction: ChatInputCommandInteraction) {
     const number = interaction.options.getString(Option.TEAM, true);
     const teams = await robotEventsClient.teams
-      .findAll(
-        new TeamsRequestBuilder().programIds(1, 4).numbers(number).build()
-      )
+      .findAll(t => t.programIds(ProgramId.VRC, ProgramId.VEXU).numbers(number))
       .toArray();
     if (!teams.length) {
       interaction.reply({
@@ -37,7 +30,7 @@ export class AwardsCommand extends Command {
 
     const team = teams[0];
     const seasons = await robotEventsClient.seasons
-      .findAll(new SeasonsRequestBuilder().teamIds(team.id).build())
+      .findAll(s => s.teamIds(team.id))
       .toArray();
     const paginatedMessage = new LazyPaginatedMessage({
       template: new EmbedBuilder().setColor(Color.Green).setAuthor({
@@ -49,12 +42,7 @@ export class AwardsCommand extends Command {
       paginatedMessage.addAsyncPageEmbed(async builder => {
         const awardsByEventId = new Map<number, Award[]>();
         const awards = await robotEventsClient.awards
-          .findAllByTeam(
-            new TeamAwardsRequestBuilder()
-              .teamId(team.id)
-              .seasonIds(season.id)
-              .build()
-          )
+          .findAllByTeam(a => a.teamId(team.id).seasonIds(season.id))
           .toArray();
         awards.forEach(award => {
           const awardsForEventId = awardsByEventId.get(award.event.id);

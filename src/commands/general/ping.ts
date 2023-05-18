@@ -1,8 +1,11 @@
-import {inlineCode} from '@discordjs/builders';
 import {ApplyOptions} from '@sapphire/decorators';
 import {Command} from '@sapphire/framework';
-import {EmbedBuilder, type ChatInputCommandInteraction} from 'discord.js';
-import {Color} from '../../lib/utils/embeds';
+import {
+  EmbedBuilder,
+  inlineCode,
+  type ChatInputCommandInteraction,
+} from 'discord.js';
+import {Color} from '../../lib/embeds.js';
 
 @ApplyOptions<Command.Options>({description: 'Test connection to Discord'})
 export class PingCommand extends Command {

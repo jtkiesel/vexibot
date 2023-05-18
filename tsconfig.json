@@ -1,10 +1,11 @@
 {
   "extends": "@sapphire/ts-config",
   "compilerOptions": {
-    "allowUnreachableCode": false,
-    "allowUnusedLabels": false,
-    "rootDir": "src",
+    "importHelpers": false,
+    "module": "NodeNext",
+    "moduleResolution": "nodenext",
     "outDir": "dist",
+    "rootDir": "src",
     "tsBuildInfoFile": "dist/.tsbuildinfo"
   },
   "include": ["src"]

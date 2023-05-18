@@ -13,31 +13,30 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Environment Variables
 
-|       Variable       | Required |    Default    |                                  Description                                   |
-| :------------------: | :------: | :-----------: | :----------------------------------------------------------------------------: |
-|   `DISCORD_TOKEN`    |    ✓     |               |                  Token of the Discord account to log in with                   |
-| `ROBOT_EVENTS_TOKEN` |    ✓     |               |                             Robot Events API token                             |
-|     `LOG_LEVEL`      |          |    `INFO`     |                               Minimum log level                                |
-| `MESSAGE_CACHE_SIZE` |          |     `250`     | Maximum number of messages to cache per channel, including all pinned messages |
-|      `NODE_ENV`      |          | `development` |                        Node.JS application environment                         |
+|       Variable       | Required |    Default    |                 Description                 |
+| :------------------: | :------: | :-----------: | :-----------------------------------------: |
+|   `DISCORD_TOKEN`    |    ✓     |               | Token of the Discord account to log in with |
+| `ROBOT_EVENTS_TOKEN` |    ✓     |               |           Robot Events API token            |
+|     `LOG_LEVEL`      |          |    `INFO`     |              Minimum log level              |
+|      `NODE_ENV`      |          | `development` |       Node.JS application environment       |
 
 ### Installing
 
 Install dependencies
 
-```sh-session
+```sh
 yarn install
 ```
 
 Start the bot
 
-```sh-session
+```sh
 yarn dev
 ```
 
 ## Running the tests
 
-```sh-session
+```sh
 yarn test
 ```
 
@@ -45,19 +44,19 @@ yarn test
 
 Install dependencies
 
-```sh-session
+```sh
 yarn install
 ```
 
 Compile source
 
-```sh-session
+```sh
 yarn build
 ```
 
 Start the bot
 
-```sh-session
+```sh
 yarn start
 ```
 

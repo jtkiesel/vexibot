@@ -11,40 +11,40 @@
   ],
   "homepage": "https://github.com/jtkiesel/vexibot#readme",
   "bugs": "https://github.com/jtkiesel/vexibot/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jtkiesel/vexibot.git"
+  },
   "license": "MIT",
   "author": {
     "name": "Jordan Kiesel",
     "url": "https://github.com/jtkiesel"
   },
+  "type": "module",
   "main": "dist/index.js",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/jtkiesel/vexibot.git"
-  },
   "scripts": {
-    "build": "tsc",
+    "build": "yarn clean && tsc",
     "clean": "rm -fr dist",
-    "dev": "tsc-watch --onSuccess \"yarn start\"",
-    "start": "node dist"
+    "dev": "yarn clean && tsc-watch --onSuccess \"yarn start\"",
+    "start": "node --enable-source-maps dist"
   },
   "dependencies": {
-    "@sapphire/decorators": "^6.0.0",
-    "@sapphire/discord.js-utilities": "^6.0.1",
-    "@sapphire/framework": "^4.0.2",
-    "@sapphire/plugin-logger": "^3.0.1",
-    "axios": "^1.2.3",
-    "axios-rate-limit": "^1.3.0",
-    "colorette": "^2.0.19",
-    "discord.js": "^14.7.1",
+    "@robotevents/client": "^1.1.2",
+    "@sapphire/decorators": "^6.0.1",
+    "@sapphire/discord.js-utilities": "^6.1.0",
+    "@sapphire/framework": "^4.4.3",
+    "@sapphire/plugin-logger": "^3.0.4",
+    "colorette": "^2.0.20",
+    "discord.js": "^14.11.0",
     "dotenv": "^16.0.3"
   },
   "devDependencies": {
-    "@sapphire/ts-config": "^3.3.4",
-    "tsc-watch": "^6.0.0",
-    "typescript": "^4.9.4"
+    "@sapphire/ts-config": "^4.0.0",
+    "tsc-watch": "^6.0.4",
+    "typescript": "^5.0.4"
   },
+  "packageManager": "yarn@3.5.1",
   "engines": {
     "node": ">=16.9.0"
-  },
-  "packageManager": "yarn@3.3.1"
+  }
 }

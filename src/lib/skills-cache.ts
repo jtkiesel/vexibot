@@ -1,11 +1,10 @@
-import {RobotEventsClient, Season, SeasonsRequestBuilder} from './robot-events';
-import {Grade, RobotEventsV1Client} from './robot-events/v1';
-import {SeasonSkillsRequestBuilder} from './robot-events/v1/clients/skills';
+import {ProgramId, RobotEventsClient, type Season} from '@robotevents/client';
+import {Grade, type RobotEventsV1Client} from '@robotevents/client/v1';
 
 export class SkillsCache {
   private readonly gradesByProgram = new Map<number, Grade[]>([
-    [1, [Grade.HIGH_SCHOOL, Grade.MIDDLE_SCHOOL]],
-    [4, [Grade.COLLEGE]],
+    [ProgramId.VRC, [Grade.HighSchool, Grade.MiddleSchool]],
+    [ProgramId.VEXU, [Grade.College]],
   ]);
   private readonly skillByTeamIdByGradeBySeasonId = new Map<
     number,
@@ -19,7 +18,7 @@ export class SkillsCache {
 
   public async init() {
     const seasons = await this.robotEventsClient.seasons
-      .findAll(new SeasonsRequestBuilder().programIds(1, 4).build())
+      .findAll(s => s.programIds(ProgramId.VRC, ProgramId.VEXU))
       .toArray();
     await this.update(seasons);
   }
@@ -35,8 +34,8 @@ export class SkillsCache {
 
   private async updateSeasonGrade(seasonId: number, grade: Grade) {
     const skillByTeamId = new Map<number, Skill>();
-    const skills = await this.robotEventsV1Client.skills.findAllBySeason(
-      new SeasonSkillsRequestBuilder().seasonId(seasonId).grade(grade).build()
+    const skills = await this.robotEventsV1Client.skills.findAllBySeason(s =>
+      s.seasonId(seasonId).grade(grade)
     );
     skills.forEach(({team, rank, scores}) =>
       skillByTeamId.set(team.id, {

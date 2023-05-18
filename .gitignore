@@ -2,9 +2,6 @@
 /.yarn/install-state.gz
 /node_modules
 
-# testing
-/coverage
-
 # production
 /dist
 
